@@ -54,8 +54,8 @@ def sma(data:np.ndarray,period:int):
     return SMA(data,period)
 
 #@timing_decorator
-def detect_cross_over(sma_12,sma_26,start_index,end_index):
-    for i in range(start_index,len(sma_12)):
+def detect_cross_over(sma_12,sma_26):
+    for i in range(1,len(sma_12)):
         if (sma_12[i-1] < sma_26[i-1]) and (sma_12[i] > sma_26[i]):
             return i - 1
     return -1
@@ -70,20 +70,22 @@ def calculate_stoploss(close:float,stoploss_percentage:float):
 
 #   @timing_decorator
 def target_stoploss_checker(target:float,stop_loss:float,data:np.ndarray):
+
     for i in range(len(data)):
+        
         if data[i] > target:
-            print("TAREGT HIT")
-            return i 
+            print("TARGET HIT")
+            return i,"TARGET" 
         elif data[i] < stop_loss:
-            print("STOP LOSS HIT")
-            return i 
-    return -1
+            print("STOPLOSS HIT")
+            return i, "STOPLOSS"
+    return -1,""
 
 
 kite_connect = setup_kite()
+print(kite_connect)
 
-
-access_token = 'P0Jy8EoLsy1hK5fe84JICt9udS3hQDYZ'
+access_token = 'oy2TfeIMRHlHAr7FSMgZ9mNtGH635sM7'
 
 kite_connect.set_access_token(access_token)
 
@@ -94,38 +96,7 @@ history_data = kite_connect.historical_data(instrument_token='128028676',from_da
 
 close, timestamp = convert_data(history_data)
 
-# day_start_index = find_start_index(timestamp=timestamp)
 
-
-
-# cross_over_index = detect_cross_over(sma_12,sma_26,day_start_index)
-
-# print(timestamp[cross_over_index],close[cross_over_index], "Entry"," ","Buy")
-# target = calculate_target(close[cross_over_index],target_percentage)
-# stoploss = calculate_stoploss(close[cross_over_index],stoploss_percentage)
-# print(target,stoploss)
-
-
-
-
-# one_day_dfference = cross_over_index - day_start_index
-# one_day_offset = day_start_index + one_day_dfference
-# square_off_index = cross_over_index + (360 - one_day_dfference)
-
-
-
-
-
-# print(timestamp[one_day_offset:square_off_index])
-
-# tg_sl_index = target_stoploss_checker(target,stoploss,close[one_day_offset:square_off_index])
-
-
-
-# if tg_sl_index == -1:
-#     print(
-#         timestamp[square_off_index],close[square_off_index],"SELL"," ","Square off", close[square_off_index] - close[cross_over_index] 
-#     )
 
 
 # consdering 1minute candle
@@ -142,56 +113,148 @@ sma_12 = sma(close,period=12)
 sma_26 = sma(close,period=26)
 count = 0 
 
-day_start_index = find_start_index(timestamp=timestamp) # The Following timestamp would be of start date, 09:15
+tg_sl = False
+
+start_index = find_start_index(timestamp=timestamp) # The Following timestamp would be of start date, 09:15
+square_off_index = start_index + square_off_offset
+day_end_index = start_index + square_off_offset
+
+
+trade_count = 0
+
+
+win = 0
+loss = 0 
+
+win_streak = 0
+loss_streak = 0
+current_win_streak = 0
+current_loss_streak = 0
+
+current_gain = 0
+current_loss = 0
+
+max_gain = 0
+max_loss = 0
 while True:
     
-    print("FIRST DATA->",timestamp[day_start_index])
-
-    square_off_index = day_start_index + square_off_offset
     
-    cross_over_index = detect_cross_over(
-            sma_12=sma_12,
-            sma_26=sma_26,
-            start_index=day_start_index,
-            end_index = (day_start_index + square_off_offset)
+
+    cross_over_index_offset = detect_cross_over(
+            sma_12=sma_12[start_index:day_end_index],
+            sma_26=sma_26[start_index:day_end_index]
         )
     
+    
 
-    print("CROSSOVER->",timestamp[cross_over_index], close[cross_over_index+1])
-    if cross_over_index == -1:
+    # print("BUY ENTRY->",timestamp[start_index + cross_over_index_offset + 1], close[start_index + cross_over_index_offset])
+    print("DATE AND TIME:",timestamp[start_index + cross_over_index_offset ]," Price:",close[start_index + cross_over_index_offset ],"BUY/SELL:BUY","TRIGGER:","ENTRY")
+    buy_price = close[start_index + cross_over_index_offset ]
+    if cross_over_index_offset == -1:
         print("No Cross Over for the day")
-        #Change the current_day_index for the next day index
+        
+        start_index += one_day_offset
+        day_end_index += one_day_offset
+        square_off_index = square_off_index + one_day_offset
+        
         continue
     
+        
     
-    
-    target = calculate_target(close=close[cross_over_index],target_percentage=target_percentage)
-    stoploss = calculate_stoploss(close=close[cross_over_index],stoploss_percentage=stoploss_percentage)
-    tg_sl_index = target_stoploss_checker(target,stoploss,close[cross_over_index + 1 : square_off_index])
-
-    
-    
-    
-    if tg_sl_index == -1:
-        print(
-            "Square off", timestamp[square_off_index]," ",close[square_off_index]
-        )
-    
-    
-    day_start_index += one_day_offset 
-
-    
+    target = calculate_target(close=close[start_index + cross_over_index_offset],target_percentage=target_percentage)
+    stoploss = calculate_stoploss(close=close[start_index + cross_over_index_offset],stoploss_percentage=stoploss_percentage)
+    tg_sl_index_offset,tg_sl_label = target_stoploss_checker(target,stoploss,close[start_index + cross_over_index_offset + 1 : square_off_index])
     
 
-    # if cross_over_index == -1:
-        # print("No cross over The whole day")
-    if count == 2:
+    
+    
+    
+    if tg_sl_index_offset == -1:
+        
+        if tg_sl:
+            start_index = start_index + ((day_end_index - start_index) + (one_day_offset - square_off_offset))
+        else:
+            start_index = start_index + one_day_offset
+
+        # print("SQUARING OFF SELL",timestamp[square_off_index],close[square_off_index])
+        print("DATE AND TIME:",timestamp[square_off_index],"PRICE:",close[start_index + cross_over_index_offset ],"BUY/SELL:SELL","TRIGGER:SQUARE OFF")
+        sell_price = close[start_index + cross_over_index_offset ]
+        
+        if sell_price > buy_price:
+            print("WIN", " GAIN:",sell_price-buy_price)
+            win += 1
+            
+            current_gain = sell_price - buy_price
+            if current_gain > max_gain:
+                max_gain = current_gain
+            
+            current_win_streak += 1
+            if current_win_streak > win_streak:
+                win_streak = current_win_streak
+            current_loss_streak = 0
+        
+        else:
+            print("WIN", " LOSSES:",sell_price-buy_price)
+            current_loss_streak += 1
+            current_loss = sell_price - buy_price
+            
+            if abs(current_loss) > abs(max_loss):
+                max_loss = current_loss
+            if current_loss_streak > loss_streak:
+                loss_streak = current_loss_streak
+            current_win_streak = 0
+            loss += 1
+        
+        trade_count += 1
+        day_end_index = day_end_index + one_day_offset
+        square_off_index = square_off_index + one_day_offset
+    
+    else:
+        tg_sl = True
+        trade_count += 1
+        # print("TG/SL SELL->",timestamp[start_index + tg_sl_index_offset])
+        print("DATE AND TIME:",timestamp[start_index + tg_sl_index_offset],"PRICE:",close[start_index + tg_sl_index_offset],"BUY/SELL:SELL","TRIGGER:",tg_sl_label)
+        sell_price = close[start_index + tg_sl_index_offset]
+        
+        if sell_price > buy_price:
+            print("WIN", " GAIN:",sell_price-buy_price)
+            win += 1
+            
+            current_gain = sell_price - buy_price
+            if current_gain > max_gain:
+                max_gain = current_gain
+            
+            current_win_streak += 1
+            if current_win_streak > win_streak:
+                win_streak = current_win_streak
+            current_loss_streak = 0
+        
+        else:
+            print("WIN", " LOSSES:",sell_price-buy_price)
+            current_loss_streak += 1
+            current_loss = sell_price - buy_price
+            
+            if abs(current_loss) > abs(max_loss):
+                max_loss = current_loss
+            if current_loss_streak > loss_streak:
+                loss_streak = current_loss_streak
+            current_win_streak = 0
+            loss += 1
+        
+        start_index = start_index + tg_sl_index_offset + 1  
+
+
+       
+    if count == 23:
         break
     count += 1
 
+print("Trade Count=",trade_count)
+print("Win->",win)
+print("Loss->",loss)
 
+print("win streak->",win_streak)
+print("loss streak->",loss_streak)
 
-# print(len(sma_12),len(sma_26))
-# offset = 375
-# print(timestamp[start_index:(start_index + offset )])
-
+print("Max Gains:",max_gain)
+print("Max Losses:",max_loss)
