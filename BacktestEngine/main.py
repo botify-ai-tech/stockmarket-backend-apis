@@ -1,15 +1,14 @@
 
 from dotenv import load_dotenv
 
-from Data import process_historic_data
-from Zerodha import setup_kite, fetch_data
-from Data import process_user_input
-from Indicator import sma
-from Utils import find_start_index
-from Analysis import cross_over
-from Operations import target_stoploss_checker,calculate_target,calculate_stoploss,update_result_dict
-
-from Const import Offset
+from BacktestEngine.Data import process_historic_data
+from BacktestEngine.Zerodha import setup_kite, fetch_data
+from BacktestEngine.Data import process_user_input
+from BacktestEngine.Indicator import sma
+from BacktestEngine.Utils import find_start_index
+from BacktestEngine.Analysis import cross_over
+from BacktestEngine.Operations import target_stoploss_checker,calculate_target,calculate_stoploss,update_result_dict
+from BacktestEngine.Const import Offset
 
 load_dotenv()
 
@@ -28,10 +27,6 @@ def run():
     sma_26 = sma(data=close,period=26)
 
     strategy_start_date = '2024-07-15'
-
-    
-    
-    
     start_index = find_start_index(timestamp=timestamp,taregt_dt=strategy_start_date) # Find The index of element Which matches the start date with time as 09:15
     square_off_index = start_index + Offset.one_day_square_off
     day_end_index = start_index + Offset.one_day
