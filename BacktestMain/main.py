@@ -1,4 +1,4 @@
-from Backtest.Models import Backtest
+from BacktestMain.Models import Backtest
 from TechnicalIndicator.SMA.main import Sma
 from TechnicalAnalysis.CrossOver.main import CrossOver
 
