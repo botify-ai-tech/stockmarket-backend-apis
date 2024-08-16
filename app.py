@@ -1,6 +1,6 @@
 import uvicorn
 from fastapi import FastAPI
-from main import run
+from BacktestEngine.main import run
 
 
 app = FastAPI()
