@@ -1,17 +1,20 @@
 
 from dotenv import load_dotenv
 
-from BacktestEngine.Data import process_historic_data
-from BacktestEngine.Zerodha import setup_kite, fetch_data
-from BacktestEngine.Data import process_user_input
-from BacktestEngine.Indicator import sma
-from BacktestEngine.Utils import find_start_index
-from BacktestEngine.Analysis import cross_over
-from BacktestEngine.Operations import target_stoploss_checker,calculate_target,calculate_stoploss,update_result_dict
-from BacktestEngine.Const import Offset
+from server.utils.BacktestEngine.data import process_historic_data
+from server.utils.BacktestEngine.zerodha import setup_kite, fetch_data
+from server.utils.BacktestEngine.data import process_user_input
+from server.utils.BacktestEngine.indicator import sma
+from server.utils.BacktestEngine.utils import find_start_index
+from server.utils.BacktestEngine.analysis import cross_over
+from server.utils.BacktestEngine.operations import target_stoploss_checker,calculate_target,calculate_stoploss,update_result_dict
+from server.utils.BacktestEngine.const import Offset
+from fastapi import APIRouter
 
-load_dotenv()
+backtest_router = APIRouter()
 
+
+@backtest_router.post("/backtest")
 def run():
     kite = setup_kite()
 
@@ -148,12 +151,3 @@ def run():
     return result
 
     
-
-
-
-
-
-
-
-if __name__ == '__main__':
-      run()
