@@ -5,3 +5,6 @@ python-doten==1.0.1
 uvicorn==0.30.6
 requests==2.32.3
 undetected-chromedriver==3.5.5
+kiteconnect==5.0.1
+numpy==2.0.1
+pandas==2.2.2
