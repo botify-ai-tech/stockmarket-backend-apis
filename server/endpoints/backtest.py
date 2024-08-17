@@ -1,5 +1,4 @@
 
-from dotenv import load_dotenv
 
 from server.utils.BacktestEngine.data import process_historic_data
 from server.utils.BacktestEngine.zerodha import setup_kite, fetch_data
@@ -7,19 +6,31 @@ from server.utils.BacktestEngine.data import process_user_input
 from server.utils.BacktestEngine.indicator import sma
 from server.utils.BacktestEngine.utils import find_start_index
 from server.utils.BacktestEngine.analysis import cross_over
-from server.utils.BacktestEngine.operations import target_stoploss_checker,calculate_target,calculate_stoploss,update_result_dict
+from server.utils.BacktestEngine.operations import target_stoploss_checker,calculate_target,calculate_stoploss,update_result_dict, genreate_from_date
 from server.utils.BacktestEngine.const import Offset
 from fastapi import APIRouter
+from server.schemas.backtest import UserInput
+from dotenv import load_dotenv
+load_dotenv()
 
 backtest_router = APIRouter()
 
 
-@backtest_router.post("/backtest")
-def run():
+@backtest_router.post("")
+def run(backtest_parameter:UserInput):
+    print("user_input->",backtest_parameter)
     kite = setup_kite()
 
+    from_date = genreate_from_date(to_date=backtest_parameter.to_date)
     # strategy_start_date = 2024-07-15, from_date as 2024-06-15 For indicator
-    user_input = process_user_input(instrument='SBIN',from_date='2024-06-15',to_date='2024-08-13',interval='minute',target_percentage=5,stoploss_percentage=2)
+    user_input = process_user_input(
+                            instrument=backtest_parameter.stock_name,
+                            from_date=from_date,
+                            to_date=backtest_parameter.to_date,
+                            interval=backtest_parameter.interval,
+                            target_percentage=backtest_parameter.target_percentage,
+                            stoploss_percentage=backtest_parameter.stoploss_percentage
+                        )
     historic_data = fetch_data(user_input=user_input,kite=kite)
     timestamp, close = process_historic_data(historic_data)
 
@@ -29,7 +40,7 @@ def run():
     sma_12 = sma(data=close,period=12)
     sma_26 = sma(data=close,period=26)
 
-    strategy_start_date = '2024-07-15'
+    strategy_start_date = backtest_parameter.from_date
     start_index = find_start_index(timestamp=timestamp,taregt_dt=strategy_start_date) # Find The index of element Which matches the start date with time as 09:15
     square_off_index = start_index + Offset.one_day_square_off
     day_end_index = start_index + Offset.one_day

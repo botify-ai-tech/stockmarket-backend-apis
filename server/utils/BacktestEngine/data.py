@@ -1,6 +1,5 @@
 import numpy as np
-from BacktestEngine.FileRead import fetch_instrument_token
-
+from .fileread import fetch_instrument_token
 def process_user_input(instrument:str,from_date:str,to_date:str,interval:str,target_percentage:float,stoploss_percentage:float)->dict:
     return {
         'instrument': fetch_instrument_token(instrument=instrument),

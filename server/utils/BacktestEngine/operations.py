@@ -1,4 +1,5 @@
 import numpy as np
+from datetime import datetime,timedelta
 
 def target_stoploss_checker(target: float, stop_loss: float, data: np.ndarray):
     hit_index = np.argmax((data > target) | (data < stop_loss))
@@ -57,3 +58,9 @@ def update_result_dict(result_dict:dict,sell_price:float,buy_price:float) -> Non
             result_dict['loss_streak'] = result_dict['current_loss_streak']
         result_dict['current_win_streak'] = 0
         result_dict['loss'] += 1
+
+
+def genreate_from_date(to_date:str):
+    input_date = datetime.strptime(to_date, "%Y-%m-%d")
+    prior_date = input_date - timedelta(days=60)
+    return prior_date.strftime("%Y-%m-%d")

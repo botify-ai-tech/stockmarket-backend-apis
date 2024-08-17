@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-class Zerodh(BaseModel):
+class UserInput(BaseModel):
     stock_name:str
     from_date:str
     to_date:str
