@@ -8,16 +8,7 @@ def target_stoploss_checker(target: float, stop_loss: float, data: np.ndarray):
     print("TARGET HIT" if data[hit_index] > target else "STOP LOSS HIT")
     return hit_index, "TARGET" if data[hit_index] > target else "STOPLOSS"
 
-# def target_stoploss_checker(target:float,stop_loss:float,data:np.ndarray):
-# 
-    # for i in range(len(data)):
-        # if data[i] > target:
-            # print("TARGET HIT")
-            # return i,"TARGET" 
-        # elif data[i] < stop_loss:
-            # print("STOPLOSS HIT")
-            # return i, "STOPLOSS"
-    # return -1,"" 
+
 
 def calculate_target(close: float, target_percentage: float) -> float:
     return close * (1 + target_percentage / 100)

@@ -7,7 +7,7 @@ class UserInput(BaseModel):
     interval:str
     target_percentage:float
     stoploss_percentage:float
-
+    mis:bool
 
 
 
