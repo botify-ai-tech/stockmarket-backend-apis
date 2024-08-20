@@ -29,7 +29,7 @@ ratio_router = APIRouter()
 
 
 @ratio_router.post("/ratio")
-def money_con_ration(share: RatioBase):
+def money_con_ration(share_schemas: RatioBase):
     remote_url = "https://darshan184.rejoice:RBJITAq3ocVXX23KABUqLeBO8HSWMd3nUqFE8XlFd27qdDibu1@hub.lambdatest.com/wd/hub"
 
     chrome_options = Options()
@@ -47,6 +47,8 @@ def money_con_ration(share: RatioBase):
 
     all_screener_data_list = []
     all_screener_data_dict = {}
+
+    share = share_schemas.symbol
 
     # time.sleep(random.randint(1, 10))
     driver.refresh()
@@ -87,7 +89,7 @@ def money_con_ration(share: RatioBase):
 
     # ------------------------------------------------------------ Share details ------------------------------------------------------------
     print("Share details")
-    # time.sleep(random.randint(1, 10))
+    time.sleep(random.randint(1, 10))
     # Share Name
     share_name = driver.find_element(
         By.XPATH, "//div[@class='card card-large']//div//div//h1"
@@ -784,41 +786,43 @@ def money_con_ration(share: RatioBase):
 
     # ----------------------------------------------------------- About the Company --------------------------------------------
     print("About the Company")
+    try:
+        driver.refresh()
+        # time.sleep(random.randint(1, 10))
 
-    driver.refresh()
-    # time.sleep(random.randint(1, 10))
+        about_wait = WebDriverWait(driver, 10)
+        about_wait.until(
+            lambda driver: driver.find_element(
+                By.XPATH, "//div[@id='company_info']//ul[@class='comp_inf company_slider']"
+            )
+        )
 
-    about_wait = WebDriverWait(driver, 10)
-    about_wait.until(
-        lambda driver: driver.find_element(
+        about = driver.find_element(
             By.XPATH, "//div[@id='company_info']//ul[@class='comp_inf company_slider']"
         )
-    )
+        about_html = about.get_attribute("outerHTML")
 
-    about = driver.find_element(
-        By.XPATH, "//div[@id='company_info']//ul[@class='comp_inf company_slider']"
-    )
-    about_html = about.get_attribute("outerHTML")
+        soup = BeautifulSoup(about_html, "html.parser")
+        data = {}
+        section_headers = soup.find_all("h3", class_="all_title_inner com_brdb")
 
-    soup = BeautifulSoup(about_html, "html.parser")
-    data = {}
-    section_headers = soup.find_all("h3", class_="all_title_inner com_brdb")
+        for header in section_headers:
+            section_title = header.get_text(strip=True)
+            section_list = []
 
-    for header in section_headers:
-        section_title = header.get_text(strip=True)
-        section_list = []
+            # Find the next sibling <ul> that contains the details
+            ul = header.find_next_sibling("ul")
+            if ul:
+                for li in ul.find_all("li"):
+                    key = li.find("span").get_text(strip=True)
+                    value = li.find("p").get_text(strip=True)
+                    section_list.append({key: value})
 
-        # Find the next sibling <ul> that contains the details
-        ul = header.find_next_sibling("ul")
-        if ul:
-            for li in ul.find_all("li"):
-                key = li.find("span").get_text(strip=True)
-                value = li.find("p").get_text(strip=True)
-                section_list.append({key: value})
+            data[section_title] = section_list
 
-        data[section_title] = section_list
-
-    all_screener_data_dict[share_name]["Money Control"]["About the Company"] = data
+        all_screener_data_dict[share_name]["Money Control"]["About the Company"] = data
+    except:
+        pass
 
     driver.quit()
     gc.collect()
@@ -924,9 +928,9 @@ def money_con_ration(share: RatioBase):
 
     print("Collect all the data")
 
-    file_path = f"all_screener_data//{share}.json"
-    with open(file_path, "w", encoding="iso-8859-1") as f:
-        json.dump(all_screener_data_list, f, indent=4)
+    # file_path = f"all_screener_data//{share}.json"
+    # with open(file_path, "w", encoding="iso-8859-1") as f:
+    #     json.dump(all_screener_data_list, f, indent=4)
 
     try:
         driver.quit()

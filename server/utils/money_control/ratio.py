@@ -42,7 +42,7 @@ def ratio(share):
     # time.sleep(random.randint(1, 10))
     search.send_keys(Keys.ENTER)
 
-    # time.sleep(random.randint(1, 10))
+    time.sleep(random.randint(1, 10))
     driver.find_element(By.XPATH, "//div[@class='yuRUbf']//div//span//a").click()
 
     url = driver.current_url
