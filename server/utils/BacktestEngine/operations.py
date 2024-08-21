@@ -1,15 +1,20 @@
 import numpy as np
 from datetime import datetime,timedelta
 
+# def target_stoploss_checker(target: float, stop_loss: float, data: np.ndarray):
+    # hit_index = np.argmax((data > target) | (data < stop_loss))
+    # if hit_index == 0 and not ((data[0] > target) or (data[0] < stop_loss)):
+        # return -1,""
+    # print("TARGET HIT" if data[hit_index] > target else "STOP LOSS HIT")
+    # return hit_index , "TARGET" if data[hit_index] > target else "STOPLOSS"
+
 def target_stoploss_checker(target: float, stop_loss: float, data: np.ndarray):
-    hit_index = np.argmax((data > target) | (data < stop_loss))
-    if hit_index == 0 and not ((data[0] > target) or (data[0] < stop_loss)):
-        return -1,""
-    print("TARGET HIT" if data[hit_index] > target else "STOP LOSS HIT")
-    return hit_index, "TARGET" if data[hit_index] > target else "STOPLOSS"
-
-
-
+    for i in range(0,len(data)):
+        if data[i] > target:
+            return i , "TARGET"
+        elif data[i] < stop_loss:
+            return i , "STOPLOSS"
+    return -1,""
 def calculate_target(close: float, target_percentage: float) -> float:
     return close * (1 + target_percentage / 100)
 

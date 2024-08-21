@@ -1,9 +1,10 @@
+import time
 from server.utils.BacktestEngine.data import process_historic_data
 from server.utils.BacktestEngine.zerodha import setup_kite, fetch_data
 from server.utils.BacktestEngine.data import process_user_input
 from server.utils.BacktestEngine.operations import genreate_from_date
 from server.utils.BacktestEngine.mis import mis_run
-from server.utils.BacktestEngine.cnc import cnc_run
+from server.utils.BacktestEngine.cnc import cnc_run,cnc_run_v2
 from fastapi import APIRouter
 from server.schemas.backtest import UserInput
 from dotenv import load_dotenv
@@ -29,7 +30,7 @@ def run(backtest_parameter:UserInput):
                         )
     historic_data = fetch_data(user_input=user_input,kite=kite)
     timestamp, close = process_historic_data(historic_data)
-    
+    execution_time_start = time.time()
     if backtest_parameter.mis:
         result = mis_run(
             timestamp=timestamp,
@@ -44,6 +45,7 @@ def run(backtest_parameter:UserInput):
            strategy_start_date=backtest_parameter.from_date,
            user_input=user_input
        )
+    print("TOTAL EXECUTION TIME:",time.time()-execution_time_start)
 
     return result
 

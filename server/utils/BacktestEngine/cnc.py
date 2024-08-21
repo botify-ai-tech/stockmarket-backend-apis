@@ -38,43 +38,25 @@ def cnc_run(
     sma_12 = sma(data=close,period=12)
     sma_26 = sma(data=close,period=26)
 
-    target_stoploss = False
     day_count = len(timestamp[start_index:]) // Offset.one_day
     no_of_day = 0
     result = {}
     trades = []
-    
     in_trade = False
-    # day_change = False
     target_stoploss_index = -1
-    count = 0
-    while no_of_day != day_count:
-        # while start_index + Offset.one_day < len(close):
 
-        print("FIRST DATA OF THE DAY:",timestamp[start_index])
+    same_day_trade = False
+    
+    while no_of_day != day_count:
+        print("FIRST DATA OF THE DAY:",timestamp[start_index ])
+        cross_over_index_offset = cross_over(sma_12[start_index:day_end_index+1], sma_26[start_index:day_end_index+1])
+        
         if not in_trade:
-            # if target_stoploss_index != -1:
-            #     print("TARGET STOP LOSS INDEX IS NOT -1")
-            #     start_index += (Offset.one_day - (target_stoploss_index-1))
-            #     target_stoploss_index = -1
-            
-            cross_over_index_offset = cross_over(sma_12[start_index:day_end_index], sma_26[start_index:day_end_index])
-            
             if cross_over_index_offset == -1:
-                print("No Cross Over for the day")
-                ###
-                """
-                NO ENTRY THE WHOLE DAY
-                """
-                if target_stoploss_index == -1:
-                    start_index += Offset.one_day
-                else:
-                    start_index += (Offset.one_day-target_stoploss_index)
+                print("No cross overs for the day")
+                start_index = start_index + Offset.one_day
                 day_end_index += Offset.one_day
                 no_of_day += 1
-                ###
-                continue
-
             else:
                 cross_over_index_offset += 1
                 buy_index = start_index + cross_over_index_offset
@@ -84,47 +66,95 @@ def cnc_run(
                 trades.append({'Date':timestamp[buy_index],'price:':buy_price,'Buy/Sell':'BUY','Trigger':'ENTRY'})
                 print('Date',timestamp[buy_index],'price:',buy_price,'Buy/Sell','BUY','Trigger','ENTRY')
                 in_trade = True
-        
+                
+
         if in_trade:
-            target_stoploss_index,target_stoploss_label = target_stoploss_checker(target=target,stop_loss=stoploss,data = close[start_index + cross_over_index_offset + 1 : day_end_index ])
+            target_stoploss_index,target_stoploss_label = target_stoploss_checker(target=target,stop_loss=stoploss,data = close[start_index + cross_over_index_offset  : day_end_index +1 ])
             if target_stoploss_index == -1:
-                #   print("No Target or StopLoss Hit for the day")
-                ###
-                start_index = start_index + (Offset.one_day - start_index) + 1
-                day_end_index += Offset.one_day
-                cross_over_index_offset = -1 
+                print("NO TG/SL HIT FOR THE DAY.....",same_day_trade)
+                if not same_day_trade:
+                    start_index = start_index + Offset.one_day
+                else:
+                    print("CURRNET START INDEX:",timestamp[start_index])
+                    start_index = (start_index - same_day_target_stoploss_index ) + (Offset.one_day) - 1
+                    same_day_trade = False
+                day_end_index = day_end_index + Offset.one_day
                 no_of_day += 1
-                ###
-                continue
             else:
-                print("TG/SL INDEX",target_stoploss_index)
                 sell_index = start_index + target_stoploss_index
                 sell_price = close[sell_index]
-                trades.append({'Date':timestamp[sell_index],'price:':sell_price,'Buy/Sell':'BUY','Trigger':target_stoploss_label})
                 print('Date',timestamp[sell_index],'price:',sell_price,'Buy/Sell','BUY','Trigger',target_stoploss_label)
-                start_index += target_stoploss_index + 1
-                update_result_dict(stats,buy_price=buy_price,sell_price=sell_price)
+                start_index = start_index + target_stoploss_index + 1
                 in_trade = False
+                same_day_trade = True
+                same_day_target_stoploss_index = target_stoploss_index 
+        
+        
+    
+
+def cnc_run_v2(
+    close:np.ndarray,
+    timestamp:np.ndarray,
+    strategy_start_date:str,
+    user_input:dict
+):
+    
+    stats = {
+        'trade_count':0,
+        'current_gain':0,
+        'current_loss':0,
+        'max_gain':0,
+        'max_loss':0,
+        'current_gain':0,
+        'current_loss':0,
+        'max_gain':0,
+        'max_loss':0,
+        'win':0,
+        'loss':0,
+        'loss_streak':0,
+        'win_streak':0,
+        'current_win_streak':0,
+        'current_loss_streak':0
+    }
+
+    # strategy_start_date = backtest_parameter.from_date
+    start_index = find_start_index(timestamp=timestamp,taregt_dt=strategy_start_date) # Find The index of element Which matches the start date with time as 09:15
+    # square_off_index = start_index + Offset.one_day_square_off
+    day_end_index = start_index+ Offset.one_day_square_off
+
+    sma_12 = sma(data=close,period=12)
+    sma_26 = sma(data=close,period=26)
+
+    day_count = len(timestamp[start_index:]) // Offset.one_day
+    no_of_day = 0
+    result = {}
+    trades = []
+    in_trade = False
+    same_day_trade = False
+    cross_over_index_offset = 0
+    target_stoploss_index = 0
+    count = 0
+    while ((cross_over_index_offset != -1)  or (target_stoploss_index != -1)):
+        print("FIRST DATA OF THE DAY:",timestamp[start_index])
+        cross_over_index_offset = cross_over(sma_12[start_index:], sma_26[start_index:])
+        
+        buy_index = start_index +  cross_over_index_offset + 1
+        buy_price = close[buy_index]
+        target = calculate_target(close=close[buy_index],target_percentage=user_input['target'])
+        stoploss = calculate_stoploss(close=close[buy_index],stoploss_percentage=user_input['stoploss'])
+        trades.append({'Date':timestamp[buy_index],'price:':buy_price,'Buy/Sell':'BUY','Trigger':'ENTRY'})
+        print('Date',timestamp[buy_index],'price:',buy_price,'Buy/Sell','BUY','Trigger','ENTRY')
+        in_trade = True
+        print(
+            timestamp[buy_index + 1]
+        )
+        if in_trade:
+            target_stoploss_index,target_stoploss_label = target_stoploss_checker(target=target,stop_loss=stoploss,data = close[buy_index + 1 : ])
+            sell_index = start_index + (target_stoploss_index + 1)
+            sell_price = close[sell_index]
+            print('Date',timestamp[sell_index],'price:',sell_price,'Buy/Sell','BUY','Trigger',target_stoploss_label)
+            start_index = start_index + target_stoploss_index + 2
         
         count += 1
         if count == 3:
             break
-
-    
-    # stats_result = {
-        # 'Total Number of Trades':stats['trade_count'],
-        # 'Winning Streak':stats['win_streak'],
-        # 'Number of Wins':stats['win'],
-        # 'Losing Streak':stats['loss_streak'],
-        # 'Number of Losses':stats['loss'],
-        # 'Max Loss':stats['max_loss'],
-        # 'Max gains':stats['max_gain']
-    # }
-    # 
-    # result={
-        # 'Trades':trades,
-        # 'stats':stats_result
-    # }
-
-    # return result
-
