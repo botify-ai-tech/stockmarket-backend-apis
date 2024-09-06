@@ -785,44 +785,44 @@ def money_con_ration(share_schemas: RatioBase):
         pass
 
     # ----------------------------------------------------------- About the Company --------------------------------------------
-    print("About the Company")
-    try:
-        driver.refresh()
-        # time.sleep(random.randint(1, 10))
+    # print("About the Company")
+    # try:
+    #     driver.refresh()
+    #     # time.sleep(random.randint(1, 10))
 
-        about_wait = WebDriverWait(driver, 10)
-        about_wait.until(
-            lambda driver: driver.find_element(
-                By.XPATH, "//div[@id='company_info']//ul[@class='comp_inf company_slider']"
-            )
-        )
+    #     about_wait = WebDriverWait(driver, 10)
+    #     about_wait.until(
+    #         lambda driver: driver.find_element(
+    #             By.XPATH, "//div[@id='company_info']//ul[@class='comp_inf company_slider']"
+    #         )
+    #     )
 
-        about = driver.find_element(
-            By.XPATH, "//div[@id='company_info']//ul[@class='comp_inf company_slider']"
-        )
-        about_html = about.get_attribute("outerHTML")
+    #     about = driver.find_element(
+    #         By.XPATH, "//div[@id='company_info']//ul[@class='comp_inf company_slider']"
+    #     )
+    #     about_html = about.get_attribute("outerHTML")
 
-        soup = BeautifulSoup(about_html, "html.parser")
-        data = {}
-        section_headers = soup.find_all("h3", class_="all_title_inner com_brdb")
+    #     soup = BeautifulSoup(about_html, "html.parser")
+    #     data = {}
+    #     section_headers = soup.find_all("h3", class_="all_title_inner com_brdb")
 
-        for header in section_headers:
-            section_title = header.get_text(strip=True)
-            section_list = []
+    #     for header in section_headers:
+    #         section_title = header.get_text(strip=True)
+    #         section_list = []
 
-            # Find the next sibling <ul> that contains the details
-            ul = header.find_next_sibling("ul")
-            if ul:
-                for li in ul.find_all("li"):
-                    key = li.find("span").get_text(strip=True)
-                    value = li.find("p").get_text(strip=True)
-                    section_list.append({key: value})
+    #         # Find the next sibling <ul> that contains the details
+    #         ul = header.find_next_sibling("ul")
+    #         if ul:
+    #             for li in ul.find_all("li"):
+    #                 key = li.find("span").get_text(strip=True)
+    #                 value = li.find("p").get_text(strip=True)
+    #                 section_list.append({key: value})
 
-            data[section_title] = section_list
+    #         data[section_title] = section_list
 
-        all_screener_data_dict[share_name]["Money Control"]["About the Company"] = data
-    except:
-        pass
+    #     all_screener_data_dict[share_name]["Money Control"]["About the Company"] = data
+    # except:
+    #     pass
 
     driver.quit()
     gc.collect()
@@ -862,52 +862,56 @@ def money_con_ration(share_schemas: RatioBase):
         "Cash Flow Ratios"
     )
 
-    all_screener_data_dict[share_name]["Money Control"][
-        "Cash Flow Ratios"
-    ] = operating_cash_flow_to_sales_ratio
+    all_screener_data_dict[share_name]["Money Control"]["Ratios"].update(
+        {"Cash Flow Ratios": operating_cash_flow_to_sales_ratio}
+    )
+
+    # all_screener_data_dict[share_name]["Money Control"][
+    #     "Cash Flow Ratios"
+    # ] = operating_cash_flow_to_sales_ratio
 
     # -------------------------------------------------------------- Efficiency Ratio -------------------------------------------------------------------
     print("Efficiency Ratio")
     efficiency_ratio = efficiency_ratios(all_screener_data_dict, share_name)
     efficiency_ratio = efficiency_ratio.get("Efficiency Ratios")
-    all_screener_data_dict[share_name]["Money Control"][
-        "Efficiency Ratios"
-    ] = efficiency_ratio
+    all_screener_data_dict[share_name]["Money Control"]["Ratios"].update(
+        {"Efficiency Ratios": efficiency_ratio}
+    )
 
     # ------------------------------------------------------------- Profitability Ratios -------------------------------------------------------------
     print("Profitability Ratios")
     profitability_ratio = profitability_ratios(all_screener_data_dict, share_name)
     profitability_ratio = profitability_ratio.get("Profitability Ratios")
-    all_screener_data_dict[share_name]["Money Control"][
-        "Profitability Ratios"
-    ] = profitability_ratio
+    all_screener_data_dict[share_name]["Money Control"]["Ratios"].update(
+        {"Profitability Ratios": profitability_ratio}
+    )
 
     # -------------------------------------------------------- Market Valuation Ratios --------------------------------------------------------
     print("Market Valuation Ratios")
     market_valuation_ratio = market_valuation_ratios(all_screener_data_dict, share_name)
     market_valuation_ratio = market_valuation_ratio.get("Market Valuation Ratios")
 
-    all_screener_data_dict[share_name]["Money Control"][
-        "Market Valuation Ratios"
-    ] = market_valuation_ratio
+    all_screener_data_dict[share_name]["Money Control"]["Ratios"].update(
+        {"Market Valuation Ratios": market_valuation_ratio}
+    )
 
     #  ------------------------------------------------------ Additional Ratios --------------------------------------------------
     print("Additional Ratios")
     additional_ratio_details = additional_ratios(all_screener_data_dict, share_name)
     additional_data = additional_ratio_details.get("Additional Ratios")
 
-    all_screener_data_dict[share_name]["Money Control"][
-        "Additional Ratios"
-    ] = additional_data
+    all_screener_data_dict[share_name]["Money Control"]["Ratios"].update(
+        {"Additional Ratios": additional_data}
+    )
 
     # ------------------------------------------------------ Other rations --------------------------------------------------
     print("Other rations")
     other_ratios_details = other_ratios(all_screener_data_dict, share_name)
     other_ratios_data = other_ratios_details.get("Other Ratios")
 
-    all_screener_data_dict[share_name]["Money Control"][
-        "Other Ratios"
-    ] = other_ratios_data
+    all_screener_data_dict[share_name]["Money Control"]["Ratios"].update(
+        {"Other Ratios": other_ratios_data}
+    )
 
     # ----------------------------------------------------- Risk and Solvency Ratios -----------------------------------------------------
     print("Risk and Solvency Ratios")
@@ -918,13 +922,19 @@ def money_con_ration(share_schemas: RatioBase):
         "Risk and Solvency Ratios"
     )
 
-    all_screener_data_dict[share_name]["Money Control"][
-        "Risk and Solvency Ratios"
-    ] = risk_and_solvency_ratios_data
+    all_screener_data_dict[share_name]["Money Control"]["Ratios"].update(
+        {"Risk and Solvency Ratios": risk_and_solvency_ratios_data}
+    )
 
     # ------------------------------------------------------- Save the data -------------------------------------------------------
 
-    all_screener_data_list.append(all_screener_data_dict)
+    all_screener_data_list.append(
+        {
+            "share_name": share_name,
+            "share_price": share_price,
+            "Money Control": all_screener_data_dict[share_name]["Money Control"],
+        }
+    )
 
     print("Collect all the data")
 

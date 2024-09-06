@@ -42,8 +42,8 @@ def calculate_cash_flow_to_sales_ratio(json_data, share_name):
                     cash_from_investing_activity[year] = float(value.replace(",", ""))
 
     # Calculate the ratio for each year where data is available
-    ratios_sales = {"cash flows name": "Operating Cash Flow to Sales Ratio"}
-    ratios_fcf = {"cash flows name": "Free Cash Flow (FCF)"}
+    ratios_sales = {"Ratio": "Operating Cash Flow to Sales Ratio"}
+    ratios_fcf = {"Ratio": "Free Cash Flow (FCF)"}
 
     for year in sorted(cash_from_operations.keys(), reverse=True)[:5]:
         if year in sales_data:
@@ -122,9 +122,9 @@ def efficiency_ratios(json_data, share_name):
                     current_liabilities[year] = int(value.replace(",", ""))
 
     # print(average_payables)
-    ratios_receivables_turnover = {"efficiency name": "Receivables Turnover Ratio"}
-    ratio_payables_turnover = {"efficiency name": "Payables Turnover Ratio"}
-    ratio_working_capital = {"efficiency name": "Working Capital Turnover Ratio"}
+    ratios_receivables_turnover = {"Ratio": "Receivables Turnover Ratio"}
+    ratio_payables_turnover = {"Ratio": "Payables Turnover Ratio"}
+    ratio_working_capital = {"Ratio": "Working Capital Turnover Ratio"}
     working_capital = {}
 
     for year in sorted(receivables_turnover_ratio.keys(), reverse=True)[:5]:
@@ -200,7 +200,7 @@ def profitability_ratios(json_data, share_name):
                     depreciation[year] = int(value.replace(",", ""))
 
     ebitda = {}
-    ebitda_margin = {"profitability name": "EBITDA Margin"}
+    ebitda_margin = {"Ratio": "EBITDA Margin"}
 
     for year in sorted(operating_profit.keys(), reverse=True)[:5]:
         if year in depreciation:
@@ -251,7 +251,7 @@ def market_valuation_ratios(json_data, share_name):
                 if year.startswith("Mar"):
                     cash_equivalents[year] = float(value.replace(",", ""))
 
-    market_cap_ratios = {"Enterprise Value to Sales": "EV/Sales"}
+    market_cap_ratios = {"Ratio": "EV/Sales"}
     ev = {}
     for year in sorted(sales_data.keys(), reverse=True)[:5]:
         if year in total_debt and year in cash_equivalents:
@@ -337,9 +337,9 @@ def additional_ratios(json_data, share_name):
     equity = {}
     ebit = {}
     cost_of_investment = {}
-    equity_ratio = {"additional name": "Equity Ratio "}
-    debt_ratio = {"additional name": "Debt Ratio"}
-    return_on_investment = {"additional name": "Return on Investment"}
+    equity_ratio = {"Ratio": "Equity Ratio "}
+    debt_ratio = {"Ratio": "Debt Ratio"}
+    return_on_investment = {"Ratio": "Return on Investment"}
 
     for year in sorted(equity_capital.keys(), reverse=True)[:5]:
         if year in reserves:
@@ -431,9 +431,9 @@ def other_ratios(json_data, share_name):
     fcf = {}
     current_liabilities_ration = {}
 
-    price_to_free_cash_flow = {"Operating Cash Flow Name": "Free Cash Flow(FCF)"}
+    price_to_free_cash_flow = {"Ratio": "Free Cash Flow(FCF)"}
     operating_cash_flow_ratio = {
-        "Operating Cash Flow Name": "Operating Cash Flow Ratio"
+        "Ratio": "Operating Cash Flow Ratio"
     }
 
     for year in sorted(cash_from_operations.keys(), reverse=True)[:5]:
@@ -612,7 +612,7 @@ def risk_and_solvency_ratios(json_data, share_name):
                     sales_data[year] = int(value.replace(",", ""))
 
     # Calculate Altman Z-Score
-    altman_z_score = {"solvency name": "Altman Z-Score"}
+    altman_z_score = {"Ratio": "Altman Z-Score"}
     for year in sorted(total_assets.keys(), reverse=True)[:5]:
         if year in working_capital and year in retained_earnings and year in ebit and year in total_liabilities:
             t1 = working_capital[year] / total_assets[year]
@@ -625,7 +625,7 @@ def risk_and_solvency_ratios(json_data, share_name):
             altman_z_score[year] = f"{z_score:.4f}"
 
     # Calculate DSCR
-    dscr = {"solvency name": "Debt Service Coverage Ratio (DSCR)"}
+    dscr = {"Ratio": "Debt Service Coverage Ratio (DSCR)"}
     interest_paid = {}
     principal_repayment = {}
 

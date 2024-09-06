@@ -1,10 +1,18 @@
-beautifulsoup4==4.12.3
 fastapi==0.112.1
-selenium==4.23.1
-python-dotenv==1.0.1
 uvicorn==0.30.6
 requests==2.32.3
+yt-dlp==2024.8.6
+torch==2.0.1
+torchaudio
+torchvision
+openai-whisper @ git+https://github.com/openai/whisper.git@ba3f3cd54b0e5b8ce1ab3de13e32122d0d5f98ab
+numpy==1.23.5
+pandas==2.2.2
+python-dotenv==1.0.1
+python-multipart==0.0.9
+beautifulsoup4==4.12.3
+selenium==4.23.1
 undetected-chromedriver==3.5.5
 kiteconnect==5.0.1
-numpy==2.0.1
-pandas==2.2.2
+PyMuPDF==1.24.9
+openai==1.41.1
