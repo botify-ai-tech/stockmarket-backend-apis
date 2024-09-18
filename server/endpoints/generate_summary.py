@@ -1,3 +1,5 @@
+import os
+import shutil
 from fastapi import APIRouter, File, HTTPException, UploadFile
 from fastapi.responses import JSONResponse
 
@@ -5,6 +7,7 @@ from server.utils.comman import generate_financial_summary
 
 
 summary_router = APIRouter()
+STATIC_FOLDER = "static"
 
 
 @summary_router.post("/generate-summary")
@@ -13,6 +16,13 @@ async def generate_summary(files: UploadFile = File(...)):
     try:
         if not files.file:
             raise HTTPException(status_code=400, detail="No file uploaded")
+        
+        # os.makedirs(STATIC_FOLDER, exist_ok=True)
+
+        # # Save the uploaded file to the static folder
+        # file_location = os.path.join(STATIC_FOLDER, files.filename)
+        # with open(file_location, "wb") as file_object:
+        #     shutil.copyfileobj(files.file, file_object)
         
         analysis = await generate_financial_summary(files)
         if not analysis:
