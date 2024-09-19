@@ -168,45 +168,41 @@ async def gpt_overall_summarize(text, detailed=False, retries=2):
 
 async def generate_overall_summary(chunk_summaries, max_tokens_per_chunk=2000):
 
-    try:
-        chunk_summaries = await asyncio.gather(*chunk_summaries)
+    chunk_summaries = await asyncio.gather(*chunk_summaries)
 
-        numeric_chunks = [
-            chunk for chunk in chunk_summaries if isinstance(chunk["sequence_number"], int)
-        ]
-        non_numeric_chunks = [
-            chunk for chunk in chunk_summaries if isinstance(chunk["sequence_number"], str)
-        ]
+    numeric_chunks = [
+        chunk for chunk in chunk_summaries if isinstance(chunk["sequence_number"], int)
+    ]
+    non_numeric_chunks = [
+        chunk for chunk in chunk_summaries if isinstance(chunk["sequence_number"], str)
+    ]
 
-        numeric_chunks_sorted = sorted(numeric_chunks, key=lambda x: x["sequence_number"])
+    numeric_chunks_sorted = sorted(numeric_chunks, key=lambda x: x["sequence_number"])
 
-        combined_summary_text = " ".join(
-            [chunk["analysis"] for chunk in numeric_chunks_sorted if chunk["analysis"]]
-        )
+    combined_summary_text = " ".join(
+        [chunk["analysis"] for chunk in numeric_chunks_sorted if chunk["analysis"]]
+    )
 
-        text_chunks = await split_text_into_chunks(
-            combined_summary_text, max_tokens_per_chunk=max_tokens_per_chunk
-        )
+    text_chunks = await split_text_into_chunks(
+        combined_summary_text, max_tokens_per_chunk=max_tokens_per_chunk
+    )
 
-        final_concise_summary_parts = []
-        # print("\n=========>", final_concise_summary_parts)
-        final_detailed_summary_parts = []
-        # print("\n=========>", final_detailed_summary_parts)
+    final_concise_summary_parts = []
+    # print("\n=========>", final_concise_summary_parts)
+    final_detailed_summary_parts = []
+    # print("\n=========>", final_detailed_summary_parts)
 
-        for chunk in text_chunks:
-            concise_summary_part = await gpt_overall_summarize(chunk, detailed=False)
-            detailed_summary_part = await gpt_overall_summarize(chunk, detailed=True)
-            final_concise_summary_parts.append(str(concise_summary_part))
-            final_detailed_summary_parts.append(str(detailed_summary_part))
+    for chunk in text_chunks:
+        concise_summary_part = await gpt_overall_summarize(chunk, detailed=False)
+        detailed_summary_part = await gpt_overall_summarize(chunk, detailed=True)
+        final_concise_summary_parts.append(str(concise_summary_part))
+        final_detailed_summary_parts.append(str(detailed_summary_part))
 
-        final_concise_overall_summary = " ".join(final_concise_summary_parts)
-        final_detailed_overall_summary = " ".join(final_detailed_summary_parts)
+    final_concise_overall_summary = " ".join(final_concise_summary_parts)
+    final_detailed_overall_summary = " ".join(final_detailed_summary_parts)
 
-        return final_concise_overall_summary, final_detailed_overall_summary
-    except Exception as e:
-        return str(e)
+    return final_concise_overall_summary, final_detailed_overall_summary
 
-import PyPDF2
 
 async def generate_financial_summary(file, chunk_size=50, overlap=2):
     try:

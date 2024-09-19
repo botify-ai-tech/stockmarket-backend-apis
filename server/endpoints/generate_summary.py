@@ -1,5 +1,3 @@
-import os
-import shutil
 from fastapi import APIRouter, File, HTTPException, UploadFile
 from fastapi.responses import JSONResponse
 
