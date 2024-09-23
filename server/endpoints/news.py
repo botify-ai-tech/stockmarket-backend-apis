@@ -44,24 +44,38 @@ def globle_news(input: News):
     search = input.search
     search = re.sub(r"\s+", " ", search).strip()
 
-    existing_news = (
-        session.query(StockNews)
-        .filter(
-            or_(
-                StockNews.company_name.ilike(f"{search}%"),
-                StockNews.company_name.ilike(f"%{search}"),
+    try:
+        existing_news = (
+            session.query(StockNews)
+            .filter(
+                or_(
+                    StockNews.company_name.ilike(f"{search}%"),
+                    StockNews.company_name.ilike(f"%{search}"),
+                )
             )
+            .all()
         )
-        .all()
-    )
-    all_news_data = [jsonify(results) for results in existing_news]
+        all_news_data = [jsonify(results) for results in existing_news]
 
-    return JSONResponse(
-        status_code=200,
-        content={
-            "success": True,
-            "data": all_news_data,
-            "error": None,
-            "message": "News fetched successfully.",
-        },
-    )
+        return JSONResponse(
+            status_code=200,
+            content={
+                "success": True,
+                "data": all_news_data,
+                "error": None,
+                "message": "News fetched successfully.",
+            },
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        return JSONResponse(
+            status_code=500,
+            content={
+                "success": False,
+                "data": None,
+                "error": str(e),
+                "message": "Something went wrong!",
+            },
+        )

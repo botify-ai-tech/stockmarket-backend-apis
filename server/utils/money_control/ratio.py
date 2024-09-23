@@ -1,26 +1,23 @@
+import os
 import time
 import random
+import requests
 from bs4 import BeautifulSoup
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.support.wait import WebDriverWait
-from undetected_chromedriver import Chrome, ChromeOptions
-from selenium.webdriver.chrome.service import Service as ChromeService
-import requests
 
+from dotenv import load_dotenv
 
-from selenium.webdriver.chrome.service import Service
-
-from selenium.webdriver.support import expected_conditions as EC
+load_dotenv()
 
 
 def ratio(share):
     print("RATIO")
 
-    remote_url = "https://darshan184.rejoice:RBJITAq3ocVXX23KABUqLeBO8HSWMd3nUqFE8XlFd27qdDibu1@hub.lambdatest.com/wd/hub"
+    remote_url = os.getenv("LAMBDA_CHROME_URL")
 
     chrome_options = Options()
 

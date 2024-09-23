@@ -1,5 +1,6 @@
 import gc
 import json
+import os
 import time
 import random
 from bs4 import BeautifulSoup
@@ -23,6 +24,9 @@ from server.utils.money_control.scan import scans
 from server.utils.money_control.ratio import ratio
 from server.utils.money_control.seasonality import seasonality
 from server.schemas.ratio import RatioBase
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 ratio_router = APIRouter()
@@ -30,7 +34,8 @@ ratio_router = APIRouter()
 
 @ratio_router.post("/ratio")
 def money_con_ration(share_schemas: RatioBase):
-    remote_url = "https://darshan184.rejoice:RBJITAq3ocVXX23KABUqLeBO8HSWMd3nUqFE8XlFd27qdDibu1@hub.lambdatest.com/wd/hub"
+
+    remote_url = os.getenv("LAMBDA_CHROME_URL")
 
     chrome_options = Options()
     chrome_options.browser_version = "latest"
@@ -782,6 +787,7 @@ def money_con_ration(share_schemas: RatioBase):
 
     except Exception as e:
         print(e)
+        all_screener_data_dict[share_name]["Money Control"]["Sector PE"] = ""
         pass
 
     # ----------------------------------------------------------- About the Company --------------------------------------------
