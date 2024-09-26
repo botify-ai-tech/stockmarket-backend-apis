@@ -144,7 +144,7 @@ def globle_news():
                 sectors=sectors,
                 category=category,
             )
-            session.merge(news_entry)
+            session.add(news_entry)
             session.commit()
 
             start_news += 1

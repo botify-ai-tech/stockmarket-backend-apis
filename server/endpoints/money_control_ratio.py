@@ -4,6 +4,7 @@ import os
 import time
 import random
 from bs4 import BeautifulSoup
+from fastapi.responses import JSONResponse
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
@@ -952,5 +953,13 @@ def money_con_ration(share_schemas: RatioBase):
         driver.quit()
     except:
         pass
-
-    return all_screener_data_list
+    
+    return JSONResponse(
+                status_code=200,
+                content={
+                    "success": True,
+                    "data": all_screener_data_list,
+                    "error": None,
+                    "message": "News fetched successfully.",
+                },
+            )
