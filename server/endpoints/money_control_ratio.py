@@ -1,5 +1,4 @@
 import gc
-import json
 import os
 import time
 import random
@@ -56,17 +55,8 @@ def money_con_ration(share_schemas: RatioBase):
 
     share = share_schemas.symbol
 
-    # time.sleep(random.randint(1, 10))
     driver.refresh()
-    # time.sleep(random.randint(1, 10))
-    # with open("all_share.txt", "r") as f:
-    #     all_share = f.readlines()
-    # lines = [line.strip() for line in lines]
 
-    # # Shuffle the list to randomize the order
-    # random.shuffle(lines)
-    # for share in lines:
-    # try:
     search_wait = WebDriverWait(driver, 10)
     search_wait.until(
         lambda driver: driver.find_element(
@@ -953,13 +943,13 @@ def money_con_ration(share_schemas: RatioBase):
         driver.quit()
     except:
         pass
-    
+
     return JSONResponse(
-                status_code=200,
-                content={
-                    "success": True,
-                    "data": all_screener_data_list,
-                    "error": None,
-                    "message": "News fetched successfully.",
-                },
-            )
+        status_code=200,
+        content={
+            "success": True,
+            "data": all_screener_data_list,
+            "error": None,
+            "message": "News fetched successfully.",
+        },
+    )

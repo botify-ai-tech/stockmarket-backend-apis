@@ -1,6 +1,6 @@
 import json
 import os
-import re
+import regex as re
 import time
 from dotenv import load_dotenv
 from datetime import datetime, timedelta
@@ -11,6 +11,7 @@ import requests
 from fastapi.responses import JSONResponse
 from fastapi import HTTPException
 
+from prompt import gemini_prompt
 from server.db.base import Session
 from server.models.news import StockNews
 
@@ -27,7 +28,7 @@ twenty_four_hours_ago = datetime.now() - timedelta(hours=24)
 
 
 def globle_news():
-    try:
+    # try:
         response = requests.get("https://pulse.zerodha.com/")
         if response.status_code != 200:
             raise Exception(
@@ -39,7 +40,7 @@ def globle_news():
         html_contents = soup.find_all("li", class_="box item")
 
         if not html_contents:
-            raise Exception("No results found, Please try again after some time.")
+            raise HTTPException(status_code=404, detail="No data found, Please try again after some time.")
 
         # news_items = []
         start_news = 0
@@ -92,23 +93,37 @@ def globle_news():
             existing_news = session.query(StockNews).filter_by(title=title).first()
             if existing_news:
                 continue
-            time.sleep(4)
-            model = genai.GenerativeModel("gemini-1.5-flash")
-            analysis = model.generate_content(
-                f"""Task: Analyze the provided JSON news data and extract the following information:\nCompany Name: Identify the primary company or organization that is the central focus of the news. [Technology, Healthcare, Financials, Consumer Discretionary, Consumer Staples, Energy, Utilities, Materials, Industrials, Real Estate, Telecommunications] these are sectors pick Sectors Involved from this list. \nStock Name: Provide the corresponding stock ticker symbol for the company, ensuring it is listed on either the National Stock Exchange (NSE) or the Bombay Stock Exchange (BSE).\nSectors Involved: Determine the relevant industry sectors that are directly impacted or mentioned in the news.\nCategory of News: Classify the news based on its content into one or more categories (e.g., Market Movement, Macroeconomic Factors, Mergers and Acquisitions, Regulatory/Policy Updates, Financial Performance, Product Launches).\nInstructions:\nPrioritize Central Company: If multiple companies are mentioned, prioritize the one that is most central to the news content.\nIdentify Relevant Sectors: Include only sectors that are directly affected or discussed in the news.\nAccurate Categorization: Choose the most fitting category based on the primary content of the news.\nConsider Contextual Factors: When predicting stock movement, consider factors such as market trends, industry-specific news, and the overall sentiment of the news.\nAdhere to Format: Strictly follow the specified JSON format and do not include any additional information beyond what is requested.\nFormat:\n\n{{  "Company Name": "Name of the company",  "Stock Name": "Stock ticker symbol (NSE or BSE)",  "Sectors Involved": ["Sector 1", "Sector 2", ...],  "Category of News": "News category"}}\n\n\nAdditional Considerations:\nData Quality: Ensure that the JSON data is clean, accurate, and relevant to the news analysis.\nStrict Note:\nDo not provide any additional information or explanation in the response.\n input data: {news_item}"""
-            )
-            print("data is provieded by Gemini AI")
 
+            time.sleep(4)
+            prompt = gemini_prompt(news_item)
+            model = genai.GenerativeModel("gemini-1.5-flash")
+            analysis = model.generate_content(prompt)
+            print("data is provieded by Gemini AI")
+            
             ai_data = analysis.text
-            pattern = r"\{.*?\}"
+            pattern = r"""\{(?:[^{}]|(?R))*\}"""
 
             matches = re.findall(pattern, ai_data, re.DOTALL)[0]
-
+            print(matches)
             data = json.loads(matches)
-            company_name = data["Company Name"] if data["Company Name"] else ""
-            stock_name = data["Stock Name"] if data["Stock Name"] else ""
-            sectors = data["Sectors Involved"] if data["Sectors Involved"] else []
-            category = data["Category of News"] if data["Category of News"] else ""
+
+            title = data["article"]["title"] if data["article"]["title"] else ""
+            published_date = data["article"]["published_date"] if data["article"]["published_date"] else ""
+            summary = data["article"]["summary"] if data["article"]["summary"] else ""
+            classification = data["classification"]["primary_class"] if data["classification"]["primary_class"] else ""
+            type_of_impact = data["impact_analysis"]["type_of_impact"] if data["impact_analysis"]["type_of_impact"] else ""
+            impact_description = data["impact_analysis"]["majority_market_impact"]["impact_description"] if data["impact_analysis"]["majority_market_impact"]["impact_description"] else ""
+            sectors_impacted = data["impact_analysis"]["sectors_impacted"]["sector_list"] if data["impact_analysis"]["sectors_impacted"]["sector_list"] else ""
+            category_impacted = data["category_impacted"]["category_list"] if data["category_impacted"]["category_list"] else ""
+            Country = data["Country"]["country_name"] if data["Country"]["country_name"] else ""
+            company_name = data["company_name"]["company_name"] if data["company_name"]["company_name"] else ""
+            stocks_impacted = data["impact_analysis"]["stocks_impacted"]["stock_list"] if data["impact_analysis"]["stocks_impacted"]["stock_list"] else ""
+            scale_of_impact = data["impact_explanation"]["scale_of_impact"] if data["impact_explanation"]["scale_of_impact"] else ""
+            timeframe_of_impact = data["impact_explanation"]["timeframe_of_impact"] if data["impact_explanation"]["timeframe_of_impact"] else ""
+            investor_sentiment = data["impact_explanation"]["nature_of_impact"]["investor_sentiment"] if data["impact_explanation"]["nature_of_impact"]["investor_sentiment"] else ""
+            market_volatility = data["impact_explanation"]["nature_of_impact"]["market_volatility"] if data["impact_explanation"]["nature_of_impact"]["market_volatility"] else ""
+            Impact_detailed_explanation = data["impact_explanation"]["Impact_detailed_explanation"] if data["impact_explanation"]["Impact_detailed_explanation"] else ""
+
 
             if "day ago" in time_to_out_news:
                 ago_news = 24.0
@@ -133,17 +148,28 @@ def globle_news():
 
             news_entry = StockNews(
                 title=title,
-                description=description,
+                published_date=published_date,
+                summary=summary,
+                classification=classification,
+                type_of_impact=type_of_impact,
+                description=impact_description,
+                sectors=sectors_impacted,
+                category=category_impacted,
+                Country=Country,
+                company_name=company_name,
+                stock_name=stocks_impacted,
+                scale_of_impact=scale_of_impact,
+                timeframe_of_impact=timeframe_of_impact,
+                investor_sentiment=investor_sentiment,
+                market_volatility=market_volatility,
+                detailed_explanation=Impact_detailed_explanation,
                 time_to_out_news=time_to_out_news,
                 feed=feed,
-                link=link,
+                other_news_link=link,
                 similar=similar_news,
                 created_at=updated_time,
-                company_name=company_name,
-                stock_name=stock_name,
-                sectors=sectors,
-                category=category,
             )
+
             session.add(news_entry)
             session.commit()
 
@@ -162,18 +188,18 @@ def globle_news():
             },
         )
 
-    except HTTPException:
-        raise
-    except Exception as e:
-        return JSONResponse(
-            status_code=500,
-            content={
-                "success": False,
-                "data": None,
-                "error": str(e),
-                "message": "Something went wrong!",
-            },
-        )
+    # except HTTPException:
+    #     raise
+    # except Exception as e:
+    #     return JSONResponse(
+    #         status_code=500,
+    #         content={
+    #             "success": False,
+    #             "data": None,
+    #             "error": str(e),
+    #             "message": "Something went wrong!",
+    #         },
+    #     )
 
 
 if __name__ == "__main__":
