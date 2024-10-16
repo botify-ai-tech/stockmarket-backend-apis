@@ -48,14 +48,15 @@ def jsonify(data):
 
 
 @news_router.post("/publice-news")
-def globle_news(search: str = None, db: Session = Depends(get_db)):
+def globle_news(search: str = None, sector: str = None, db: Session = Depends(get_db)):
 
     try:
         if not search:
             existing_news = crud.news.get_new_without_search_query(db)
         else:
             search = re.sub(r"\s+", " ", search).strip()
-            existing_news = crud.news.get_new_search_query(db, search)
+            sectors = re.sub(r"\s+", " ", sector).strip()
+            existing_news = crud.news.get_new_search_query(db, search, sectors)
 
         all_news_data = [jsonify(results) for results in existing_news]
 

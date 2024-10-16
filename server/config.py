@@ -15,5 +15,8 @@ class Settings(BaseSettings):
     MAIL_FROM: str = os.environ.get("MAIL_FROM")
     MAIL_PORT: str = os.environ.get("MAIL_PORT")
     MAIL_SERVER: str = os.environ.get("MAIL_SERVER")
+    PINECONE_API_KEY: str = os.environ.get("PINECONE_API_KEY")
+    GEMINI_AI_KEY: str = os.environ.get("GEMINI_AI_KEY")
+    OPENAI_API_KEY: str = os.environ.get("OPENAI_API_KEY")
 
 settings = Settings()

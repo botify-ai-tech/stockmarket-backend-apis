@@ -8,7 +8,9 @@ import time
 import fitz
 import google.generativeai as genai
 from dotenv import load_dotenv
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import ThreadPoolExecutor
+
+from server.utils.backgound_task import background_pinecone_task
 
 load_dotenv()
 
@@ -213,7 +215,7 @@ async def generate_overall_summary(chunk_summaries, max_tokens_per_chunk=2000):
     return final_concise_overall_summary, final_detailed_overall_summary
 
 
-async def generate_financial_summary(file, chunk_size=50, overlap=2):
+async def generate_financial_summary(file, user_id, background_tasks, chunk_size=50, overlap=2):
     try:
 
         input_binary = await file.read()
@@ -223,6 +225,10 @@ async def generate_financial_summary(file, chunk_size=50, overlap=2):
     except Exception as e:
         logging.critical(f"Unable to open the PDF file: {e}")
         return []
+    
+    # backgound process
+    background_tasks.add_task(background_pinecone_task, doc, user_id)
+
 
     total_pages = doc.page_count
     # Check and print page groups to debug

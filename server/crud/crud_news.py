@@ -27,15 +27,15 @@ class CRUDNEWS(CRUDBase[NewsItem, CreateNews, UpdateNews]):
     def update(self, db: Session, *, db_obj: NewsItem, obj_in: UpdateNews) -> NewsItem:
         return super().update(db, db_obj=db_obj, obj_in=obj_in)
 
-    def get_new_search_query(self, db: Session, search: str) -> NewsItem:
+    def get_new_search_query(self, db: Session, search: str, sector: str) -> NewsItem:
         return (
             db.query(NewsItem)
             .filter(
                 and_(
                     NewsItem.created_at >= last_24_hours,
                     or_(
-                        # NewsItem.company_name.ilike(f"{search}%"),
                         NewsItem.company_name.ilike(f"%{search}%"),
+                        NewsItem.sectors.any(sector)  
                     ),
                 )
             )
