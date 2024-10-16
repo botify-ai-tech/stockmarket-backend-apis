@@ -1,7 +1,9 @@
-from fastapi import APIRouter, File, HTTPException, UploadFile
+from fastapi import APIRouter, File, HTTPException, UploadFile, Depends
 from fastapi.responses import JSONResponse
 
 from server.utils.comman import generate_financial_summary
+from sqlalchemy.orm import Session
+from server.endpoints.deps import get_db
 
 
 summary_router = APIRouter()
@@ -9,7 +11,9 @@ STATIC_FOLDER = "static"
 
 
 @summary_router.post("/generate-summary")
-async def generate_summary(files: UploadFile = File(...)):
+async def generate_summary(
+    files: UploadFile = File(...), db: Session = Depends(get_db)
+):
 
     try:
         if not files.file:

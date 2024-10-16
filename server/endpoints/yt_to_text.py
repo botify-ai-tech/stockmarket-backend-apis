@@ -4,14 +4,16 @@ import yt_dlp
 import shutil
 import whisper
 from fastapi.responses import JSONResponse
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
+from sqlalchemy.orm import Session
+from server.endpoints.deps import get_db
 
 
 yt_router = APIRouter()
 
 
 @yt_router.post("/youtube-to-text")
-def youtube_to_text(yt_link: str):
+def youtube_to_text(yt_link: str, db: Session = Depends(get_db)):
     try:
         if not yt_link:
             raise HTTPException(status_code=404, detail="YouTube link is required")

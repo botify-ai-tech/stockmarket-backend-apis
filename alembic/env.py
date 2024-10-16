@@ -3,8 +3,10 @@ import os
 
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
-from server.models.news import StockNews
-from server.db.base import Base
+from server.models.news import NewsItem
+from server.models.user import User, EmailOtp
+# from server.db.base import Base
+from server.db.base_class import Base
 from alembic import context
 from dotenv import load_dotenv
 

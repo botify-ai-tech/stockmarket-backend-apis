@@ -10,16 +10,16 @@ from datetime import datetime, timedelta
 
 from dotenv import load_dotenv
 
-from prompt import gemini_prompt
-from server.db.base import Session
-from server.models.news import StockNews
+from server.utils.prompt import gemini_prompt
+from server.db.base import SessionLocal
+from server.models.news import NewsItem
 
 load_dotenv()
 
 gemini_ai_key = os.getenv("GEMINI_AI_KEY")
 genai.configure(api_key=gemini_ai_key)
 
-session = Session()
+session = SessionLocal()
 
 twenty_four_hours_ago = datetime.now() - timedelta(hours=24)
 
@@ -86,7 +86,7 @@ def cnbc_news():
                 "key_points": key_points_result,
                 "article_body": article_body_result,
             }
-            existing_news = session.query(StockNews).filter_by(title=headline).first()
+            existing_news = session.query(NewsItem).filter_by(title=headline).first()
             if existing_news:
                 continue
 
@@ -195,7 +195,7 @@ def cnbc_news():
 
             updated_time = datetime.now() - timedelta(hours=ago_news)
 
-            news_entry = StockNews(
+            news_entry = NewsItem(
                 title=title,
                 published_date=published_date,
                 summary=summary,
