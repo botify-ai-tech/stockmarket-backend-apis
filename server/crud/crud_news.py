@@ -27,7 +27,9 @@ class CRUDNEWS(CRUDBase[NewsItem, CreateNews, UpdateNews]):
     def update(self, db: Session, *, db_obj: NewsItem, obj_in: UpdateNews) -> NewsItem:
         return super().update(db, db_obj=db_obj, obj_in=obj_in)
 
-    def get_new_search_query(self, db: Session, search: str, sector: str) -> NewsItem:
+    def get_new_search_query(
+        self, db: Session, search: str, sector: str, skip: int = 0, n: int = 10
+    ) -> NewsItem:
         return (
             db.query(NewsItem)
             .filter(
@@ -35,16 +37,46 @@ class CRUDNEWS(CRUDBase[NewsItem, CreateNews, UpdateNews]):
                     NewsItem.created_at >= last_24_hours,
                     or_(
                         NewsItem.company_name.ilike(f"%{search}%"),
-                        NewsItem.sectors.any(sector)  
+                        NewsItem.sectors.any(sector),
                     ),
                 )
             )
+            .offset(skip)
+            .limit(n)
             .all()
         )
 
-    def get_new_without_search_query(self, db: Session) -> NewsItem:
-        return db.query(NewsItem).filter(NewsItem.created_at >= last_24_hours).all()
-    
+    def get_total_new_search_query(
+        self, db: Session, search: str, sector: str
+    ) -> NewsItem:
+        return (
+            db.query(NewsItem)
+            .filter(
+                and_(
+                    NewsItem.created_at >= last_24_hours,
+                    or_(
+                        NewsItem.company_name.ilike(f"%{search}%"),
+                        NewsItem.sectors.any(sector),
+                    ),
+                )
+            )
+            .count()
+        )
+
+    def get_new_without_search_query(
+        self, db: Session, skip: int = 0, n: int = 10
+    ) -> NewsItem:
+        return (
+            db.query(NewsItem)
+            .filter(NewsItem.created_at >= last_24_hours)
+            .offset(skip)
+            .limit(n)
+            .all()
+        )
+
+    def get_total_news_without_search_query(self, db: Session) -> NewsItem:
+        return db.query(NewsItem).filter(NewsItem.created_at >= last_24_hours).count()
+
     def saved_news(self, db: Session, news_ids: list[int]) -> list[NewsItem]:
         return db.query(NewsItem).filter(NewsItem.id.in_(news_ids)).all()
 
@@ -53,7 +85,6 @@ class CRUDNEWS(CRUDBase[NewsItem, CreateNews, UpdateNews]):
 
     def remove(self, db: Session) -> Optional[NewsItem]:
         return super().remove_all(db)
-
 
 
 news = CRUDNEWS(NewsItem)

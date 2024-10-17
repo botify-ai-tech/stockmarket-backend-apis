@@ -1,3 +1,4 @@
+import logging
 import os
 import time
 import random
@@ -15,7 +16,7 @@ load_dotenv()
 
 
 def ratio(share):
-    print("RATIO")
+    logging.info("RATIO")
 
     remote_url = os.getenv("LAMBDA_CHROME_URL")
 
@@ -124,6 +125,6 @@ def ratio(share):
             data["Ratios"][category].append(ratio_data)
 
     driver.quit()
-    print("collecting ratio data")
+    logging.info("collecting ratio data")
 
     return data

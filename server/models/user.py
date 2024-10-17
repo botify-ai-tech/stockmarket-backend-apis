@@ -9,6 +9,7 @@ from server.db.base_class import Base
 
 class User(Base):
     id = Column(String, default=lambda: str(uuid.uuid4()), primary_key=True)
+    username = Column(String(length=20))
     avatar = Column(String, default="")
     email = Column(String, unique=True, nullable=True)
     is_verified = Column(Boolean, default=False)

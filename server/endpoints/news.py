@@ -1,5 +1,6 @@
 import re
 from datetime import datetime, timedelta
+from typing import Optional
 
 
 from fastapi.responses import JSONResponse
@@ -48,15 +49,17 @@ def jsonify(data):
 
 
 @news_router.post("/publice-news")
-def globle_news(search: str = None, sector: str = None, db: Session = Depends(get_db)):
+def globle_news(search: str = None, sector: str = None, skip: Optional[int] = 0,db: Session = Depends(get_db)):
 
     try:
         if not search:
-            existing_news = crud.news.get_new_without_search_query(db)
+            existing_news = crud.news.get_new_without_search_query(db, skip)
+            total_news = crud.news.get_total_news_without_search_query(db)
         else:
-            search = re.sub(r"\s+", " ", search).strip()
-            sectors = re.sub(r"\s+", " ", sector).strip()
-            existing_news = crud.news.get_new_search_query(db, search, sectors)
+            search = re.sub(r"\s+", " ", search).strip() if search else ""
+            sectors = re.sub(r"\s+", " ", sector).strip() if sector else ""
+            existing_news = crud.news.get_new_search_query(db, search, sectors, skip)
+            total_news = crud.news.get_total_new_search_query(db, search, sectors)
 
         all_news_data = [jsonify(results) for results in existing_news]
 
@@ -64,7 +67,7 @@ def globle_news(search: str = None, sector: str = None, db: Session = Depends(ge
             status_code=200,
             content={
                 "success": True,
-                "data": all_news_data,
+                "data": ({"news": all_news_data, "total_news": total_news}),
                 "error": None,
                 "message": "News fetched successfully.",
             },

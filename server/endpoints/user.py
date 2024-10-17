@@ -1,16 +1,13 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 import random
-import string
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import JSONResponse
-from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
 from server import crud, schemas
 from server.utils.auth import (
     authenticate_user,
-    # create_access_token,
     get_current_user,
     get_password_hash,
     get_validate_refresh_token,
@@ -31,7 +28,7 @@ user_router = APIRouter(prefix="/user", tags=["User"])
     "/login",
 )
 async def login_for_access_token(
-    data: schemas.UserCreateInput, db: Session = Depends(get_db)
+    data: schemas.LoginInput, db: Session = Depends(get_db)
 ):
     try:
         user = authenticate_user(db, data.email, data.password)
@@ -48,6 +45,7 @@ async def login_for_access_token(
         return schemas.RespUser(
             id=user.id,
             email=user.email,
+            username=user.username,
             avatar=user.avatar,
             is_verified=user.is_verified,
             providers=user.providers,
@@ -75,6 +73,7 @@ async def login_for_access_token(
 async def get_profile(current_user=Depends(get_current_user)):
     return schemas.UserProfile(
         id=current_user.id,
+        username=current_user.username,
         email=current_user.email,
         avatar=current_user.avatar,
         role=current_user.role,
@@ -84,6 +83,7 @@ async def get_profile(current_user=Depends(get_current_user)):
 @user_router.post("/signup")
 async def sign_up(data: schemas.UserCreateInput, db: Session = Depends(get_db)):
     try:
+        username = data.username
         email = data.email.lower().strip()
         user = crud.user.get_by_email(db, email=email)
 
@@ -99,11 +99,11 @@ async def sign_up(data: schemas.UserCreateInput, db: Session = Depends(get_db)):
             user = crud.user.create(
                 db,
                 obj_in=schemas.UserBase(
-                    email=data.email, hashed_password=hashed_password
+                    username=username, email=data.email, hashed_password=hashed_password
                 ),
             )
-
-        otp_sent = await validate_email_send_otp(db, email, user.id)
+        otp = str(random.randint(99999, 999999))
+        otp_sent = await validate_email_send_otp(db, email, user.id, key=otp)
         if otp_sent:
             return JSONResponse(
                 status_code=200,
@@ -150,26 +150,13 @@ async def verify_otp(data: schemas.VerifyOTP, db: Session = Depends(get_db)):
                     db_obj=user_obj,
                     obj_in=schemas.UserUpdate(is_verified=True, is_active=True),
                 )
-                # crud.email_otp.remove(db, id=email_otp_obj.id)
-                # access_token_expires = timedelta(minutes=TOKEN_EXPIRE_DELTA)
-                access_token = jwt_access_token(
-                    data={"sub": user_obj.email, "id": user_obj.id}
-                )
-
-                refresh_token = jwt_refresh_token(
-                    data={"sub": user_obj.email, "id": user_obj.id}
-                )
 
                 return JSONResponse(
                     status_code=200,
                     content={
                         "success": True,
-                        "message": "OTP verified successfully, thanks for signup.",
-                        "data": {
-                            "access_token": access_token,
-                            "refresh_token": refresh_token,
-                            "token_type": "bearer",
-                        },
+                        "message": "OTP verified successfully, Please login.",
+                        "data": None,
                     },
                 )
             else:
@@ -276,7 +263,7 @@ async def change_password(
         db.close()
 
 
-@user_router.post("/forgot-password-send-otp")
+@user_router.post("/forgot-password")
 async def forgot_password_send_otp(
     data: schemas.EmailSchema, db: Session = Depends(get_db)
 ):
@@ -285,14 +272,14 @@ async def forgot_password_send_otp(
         user_obj = crud.user.get_by_email(db, email=email)
         if not user_obj:
             raise HTTPException(400, "User not found.")
-
-        otp_sent = await validate_email_send_otp(db, email, user_obj.id)
+        
+        otp_sent = await validate_email_send_otp(db, email, user_obj.id, key=None)
         if otp_sent:
             return JSONResponse(
                 status_code=200,
                 content={
                     "success": True,
-                    "message": "OTP sent to your email, please verify your email to continue.",
+                    "message": "Verification link sent to your email, please verify your email to continue.",
                 },
             )
 
@@ -307,13 +294,12 @@ async def forgot_password_send_otp(
         db.close()
 
 
-@user_router.post("/verify-forgot-password-otp")
+@user_router.get("/verify-forgot-password-link")
 async def verify_forgot_password_otp(
-    data: schemas.VerifyOTP, db: Session = Depends(get_db)
+    email: str, otp: str, db: Session = Depends(get_db)
 ):
     try:
-        email = data.email.lower().strip()
-        otp_sent = data.otp.lower().strip()
+        otp_sent = otp
 
         email_otp_obj = crud.email_otp.get_by_email(db, email=email)
 
@@ -363,7 +349,7 @@ async def reset_forgot_password(
         if user:
 
             hashed_password = get_password_hash(new_password)
-            user_obj = crud.user.update(
+            crud.user.update(
                 db,
                 db_obj=user,
                 obj_in=schemas.UserUpdate(hashed_password=hashed_password),

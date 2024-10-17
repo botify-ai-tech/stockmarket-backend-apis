@@ -18,5 +18,6 @@ class Settings(BaseSettings):
     PINECONE_API_KEY: str = os.environ.get("PINECONE_API_KEY")
     GEMINI_AI_KEY: str = os.environ.get("GEMINI_AI_KEY")
     OPENAI_API_KEY: str = os.environ.get("OPENAI_API_KEY")
+    CLIENT_URL: str = os.environ.get("CLIENT_URL")
 
 settings = Settings()

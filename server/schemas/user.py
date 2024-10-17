@@ -6,6 +6,7 @@ from pydantic import BaseModel, EmailStr
 
 class UserBase(BaseModel):
     avatar: Optional[str] = None
+    username: Optional[str] = None
     email: Optional[EmailStr] = None
     is_verified: Optional[bool] = False
     role: Optional[str] = "member"
@@ -33,6 +34,7 @@ class Token(BaseModel):
 class RespUser(BaseModel):
     id: Optional[str] = None
     email: Optional[EmailStr] = None
+    username: Optional[str] = None
     avatar: Optional[str] = None
     is_verified: Optional[bool] = None
     providers: Optional[str] = None
@@ -48,6 +50,11 @@ class User(BaseModel):
 
 
 class UserCreateInput(BaseModel):
+    username: str
+    email: EmailStr
+    password: str
+
+class LoginInput(BaseModel):
     email: EmailStr
     password: str
 

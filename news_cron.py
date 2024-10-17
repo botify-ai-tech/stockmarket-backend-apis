@@ -110,7 +110,6 @@ def globle_news():
                 pattern = r"""\{(?:[^{}]|(?R))*\}"""
 
                 matches = re.findall(pattern, ai_data, re.DOTALL)[0]
-                print(matches)
                 data = json.loads(matches)
 
                 title = data["article"]["title"] if data["article"]["title"] else ""
