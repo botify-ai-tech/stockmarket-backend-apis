@@ -130,7 +130,7 @@ async def get_profile(current_user=Depends(get_current_user)):
             content={
                 "success": True,
                 "error": None,
-                "data": profile,
+                "data": profile.dict(),
                 "message": "User profile fetched successfully.",
             },
         )

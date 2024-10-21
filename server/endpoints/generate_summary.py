@@ -1,6 +1,15 @@
 import json
 import re
-from fastapi import APIRouter, File, HTTPException, UploadFile, Depends, BackgroundTasks
+from typing import Optional
+from fastapi import (
+    APIRouter,
+    File,
+    Form,
+    HTTPException,
+    UploadFile,
+    Depends,
+    BackgroundTasks,
+)
 from fastapi.responses import JSONResponse
 
 from server import crud, schemas
@@ -30,18 +39,21 @@ def regex(data):
 
 @summary_router.post("/generate-summary")
 async def generate_summary(
-    file: UploadFile = File(...),
+    url: Optional[str] = Form(None),
+    file: Optional[UploadFile] = File(None),
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user),
     background_tasks: BackgroundTasks = BackgroundTasks(),
 ):
 
     try:
-        if not file.file:
-            raise HTTPException(status_code=400, detail="No file uploaded")
+        if file and url:
+            raise HTTPException(status_code=400, detail="Please sent any one 'file' or 'url'.")
 
         user_id = current_user.id
-        analysis = await generate_financial_summary(file, user_id, background_tasks)
+        analysis = await generate_financial_summary(
+            file, url, user_id, background_tasks
+        )
         if not analysis:
             raise HTTPException(status_code=400, detail="Error in generating summary")
 
@@ -64,7 +76,8 @@ async def generate_summary(
                 obj_in=schemas.CreateSummary(
                     user_id=current_user.id,
                     summary=data,
-                    filename=file.filename,
+                    filename=file.filename if file else None,
+                    url=url if url else None,
                 ),
             )
 
@@ -77,8 +90,16 @@ async def generate_summary(
                     "message": "Summary generated successfully.",
                 },
             )
-    except HTTPException:
-        raise
+    except HTTPException as e:
+        return JSONResponse(
+            status_code=e.status_code,
+            content={
+                "success": False,
+                "data": None,
+                "error": str(e.detail),
+                "message": str(e.detail),
+            },
+        )
     except Exception as e:
         return JSONResponse(
             status_code=500,

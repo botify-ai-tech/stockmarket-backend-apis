@@ -79,9 +79,11 @@ class EmailSchema(BaseModel):
 
 class UserProfile(BaseModel):
     id: Optional[str] = None
+    username: Optional[str] = None
     email: Optional[EmailStr] = None
     avatar: Optional[str] = None
     role: Optional[str] = None
+    device: Optional[str] = None
 
 
 class ChangePassword(BaseModel):

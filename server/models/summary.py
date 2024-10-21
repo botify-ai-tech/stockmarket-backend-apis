@@ -12,6 +12,7 @@ class Summary(Base):
     user_id = Column(String, ForeignKey("users.id", ondelete="CASCADE"), index=True)
     summary = Column(JSON)
     filename = Column(String)
+    url = Column(String)
 
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

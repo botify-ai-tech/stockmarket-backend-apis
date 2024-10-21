@@ -70,14 +70,14 @@ def money_con_ration(db):
 
     failed_shares = []
 
-    def scrape_share(share):
+    def scrape_share(shar):
         driver = webdriver.Remote(command_executor=remote_url, options=chrome_options)
 
         # driver = webdriver.Chrome()
         driver.get("https://www.screener.in/")
 
         driver.refresh()
-        share = str(share.replace("_", " "))
+        share = str(shar.replace("_", " "))
         logging.info(share)
         try:
             # login
@@ -981,7 +981,6 @@ def money_con_ration(db):
             investment_recommendation = stock_analysis["investment_recommendation"]
 
             time.sleep(3)
-            breakpoint()
             share_details = crud.ratio.get_by_nifty_share(db, share)
             if share_details:
                 crud.ratio.update(

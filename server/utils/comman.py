@@ -1,6 +1,7 @@
 import asyncio
 import io
 import os
+import requests
 import pymupdf
 import logging
 import openai
@@ -215,16 +216,25 @@ async def generate_overall_summary(chunk_summaries, max_tokens_per_chunk=2000):
     return final_concise_overall_summary, final_detailed_overall_summary
 
 
-async def generate_financial_summary(file, user_id, background_tasks, chunk_size=50, overlap=2):
+async def generate_financial_summary(file, url, user_id, background_tasks, chunk_size=50, overlap=2):
     try:
-        input_binary = await file.read()
-        with io.BytesIO(input_binary) as pdf_file:
-            doc = fitz.open(stream=pdf_file, filetype="pdf")
+        if file:
+            input_binary = await file.read()
+            with io.BytesIO(input_binary) as pdf_file:
+                doc = fitz.open(stream=pdf_file, filetype="pdf")
+        else:
+            response = requests.get(url)
+            if response.status_code == 200:
+                input_binary = response.content
+                with io.BytesIO(input_binary) as pdf_file:
+                    doc = fitz.open(stream=pdf_file, filetype="pdf")
+            else:
+                print(f"Failed to retrieve PDF. Status code: {response.status_code}")
 
     except Exception as e:
         logging.critical(f"Unable to open the PDF file: {e}")
         return []
-    
+
     # backgound process
     background_tasks.add_task(background_pinecone_task, doc, user_id)
 
@@ -236,7 +246,10 @@ async def generate_financial_summary(file, user_id, background_tasks, chunk_size
         for i in range(0, total_pages, chunk_size - overlap)
     ]
     print("Generated page groups:", page_groups)
-    pdf_path = file.file
+    if file:
+        pdf_path = file.file
+    else:
+        pdf_path = url
     results = []
     # with ThreadPoolExecutor() as executor:
     #     future_to_page_group = {
