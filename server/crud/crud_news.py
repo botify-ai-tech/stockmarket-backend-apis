@@ -28,7 +28,7 @@ class CRUDNEWS(CRUDBase[NewsItem, CreateNews, UpdateNews]):
         return super().update(db, db_obj=db_obj, obj_in=obj_in)
 
     def get_new_search_query(
-        self, db: Session, search: str, sector: str, skip: int = 0, n: int = 10
+        self, db: Session, search: str, sector: str, skip: int = 0, limit: int = 10
     ) -> NewsItem:
         return (
             db.query(NewsItem)
@@ -42,7 +42,7 @@ class CRUDNEWS(CRUDBase[NewsItem, CreateNews, UpdateNews]):
                 )
             )
             .offset(skip)
-            .limit(n)
+            .limit(limit)
             .all()
         )
 
@@ -64,13 +64,13 @@ class CRUDNEWS(CRUDBase[NewsItem, CreateNews, UpdateNews]):
         )
 
     def get_new_without_search_query(
-        self, db: Session, skip: int = 0, n: int = 10
+        self, db: Session, skip: int = 0, limit: int = 10
     ) -> NewsItem:
         return (
             db.query(NewsItem)
             .filter(NewsItem.created_at >= last_24_hours)
             .offset(skip)
-            .limit(n)
+            .limit(limit)
             .all()
         )
 

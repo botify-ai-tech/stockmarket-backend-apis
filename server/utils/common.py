@@ -5,6 +5,7 @@ from fastapi import HTTPException
 
 from server import crud, schemas
 from server.config import settings
+from server.utils.auth import jwt_token
 from server.utils.mail import send_email
 
 
@@ -12,14 +13,13 @@ async def validate_email_send_otp(db, email, user_id, key=None):
     time_now = datetime.utcnow()
     link = None
     if not key:
-        key = str(random.randint(99999, 999999))
+        # key = str(random.randint(99999, 999999))
+        token = jwt_token(data={"id": user_id})
         link = (
                 str(settings.CLIENT_URL)
-                + "/v1/user/verify-forgot-password-otp?"
-                + "email="
-                + str(email)
-                + "&otp="
-                + str(key)
+                + "/v1/user/reset-forgot-password?"
+                + "token="
+                + str(token)
             )
     old_otp_obj = crud.email_otp.get_by_email(db, email=email)
     if old_otp_obj:

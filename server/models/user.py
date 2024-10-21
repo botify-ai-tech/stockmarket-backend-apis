@@ -17,6 +17,9 @@ class User(Base):
     disabled = Column(Boolean, default=False)
     providers = Column(String)
     hashed_password = Column(String)
+    firebase_id = Column(String)
+    is_social = Column(Boolean, default=False)
+    device = Column(String)
     role = Column(String, default=0)
 
     created_at = Column(DateTime, default=datetime.utcnow)

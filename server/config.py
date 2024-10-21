@@ -19,5 +19,8 @@ class Settings(BaseSettings):
     GEMINI_AI_KEY: str = os.environ.get("GEMINI_AI_KEY")
     OPENAI_API_KEY: str = os.environ.get("OPENAI_API_KEY")
     CLIENT_URL: str = os.environ.get("CLIENT_URL")
+    SECRET_KEY: str = os.environ.get("SECRET_KEY")
+    LAMBDA_CHROME_URL: str = os.environ.get("LAMBDA_CHROME_URL")
+
 
 settings = Settings()

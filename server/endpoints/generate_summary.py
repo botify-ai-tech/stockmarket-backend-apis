@@ -103,7 +103,7 @@ async def summary_chat(
         raise HTTPException(status_code=400, detail="Query text is required")
 
     pine_cone = PineconeExecute(user_id=user_id, texts=query_text)
-    query_embedding = pine_cone.embed_text_with_retries()
+    query_embedding = pine_cone.embed_text_with_retries(text=query_text)
     if not query_embedding:
         raise HTTPException(
             status_code=500, detail="Failed to generate query embedding"

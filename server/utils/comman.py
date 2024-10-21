@@ -217,7 +217,6 @@ async def generate_overall_summary(chunk_summaries, max_tokens_per_chunk=2000):
 
 async def generate_financial_summary(file, user_id, background_tasks, chunk_size=50, overlap=2):
     try:
-
         input_binary = await file.read()
         with io.BytesIO(input_binary) as pdf_file:
             doc = fitz.open(stream=pdf_file, filetype="pdf")

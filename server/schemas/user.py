@@ -9,9 +9,14 @@ class UserBase(BaseModel):
     username: Optional[str] = None
     email: Optional[EmailStr] = None
     is_verified: Optional[bool] = False
+    is_active: Optional[bool] = False
+    disabled: Optional[bool] = False
     role: Optional[str] = "member"
     providers: Optional[str] = None
     hashed_password: Optional[str] = None
+    is_social: Optional[bool] = False
+    firebase_id: Optional[str] = None
+    device: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -36,12 +41,14 @@ class RespUser(BaseModel):
     email: Optional[EmailStr] = None
     username: Optional[str] = None
     avatar: Optional[str] = None
+    device: Optional[str] = None
     is_verified: Optional[bool] = None
     providers: Optional[str] = None
     role: Optional[str] = None
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
+    created_at: Optional[str] = None
+    updated_at: Optional[str] = None
     token: Optional[Token]
+    
 
 
 class User(BaseModel):
@@ -53,6 +60,7 @@ class UserCreateInput(BaseModel):
     username: str
     email: EmailStr
     password: str
+    device: str
 
 class LoginInput(BaseModel):
     email: EmailStr
@@ -66,6 +74,7 @@ class VerifyOTP(BaseModel):
 
 class EmailSchema(BaseModel):
     email: EmailStr
+    type: str
 
 
 class UserProfile(BaseModel):
@@ -86,3 +95,10 @@ class ResetPassword(BaseModel):
 
 class RefreshToken(BaseModel):
     refresh_toekn: str
+
+class GoogleAuthSchema(BaseModel):
+    token: str
+    device: str
+
+class DeleteUser(BaseModel):
+    email: str

@@ -5,3 +5,4 @@ from .crud_news_save import news_save
 from .crud_summary import summary
 from .crud_chat import chat
 from .crud_ratio import ratio
+from .crud_contact import contact

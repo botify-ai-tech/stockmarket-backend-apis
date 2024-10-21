@@ -21,6 +21,9 @@ class CRUDRATIO(CRUDBase[Ratio, CreateRatio, UpdateRatio]):
 
     def remove(self, db: Session, *, id: str) -> Optional[Ratio]:
         return super().remove(db, id=id)
+    
+    def get_by_nifty_share(self, db: Session, nifty_sahre: str) -> Optional[Ratio]:
+        return db.query(Ratio).filter(Ratio.nifty_sahre == nifty_sahre).first() 
 
 
 ratio = CRUDRATIO(Ratio)

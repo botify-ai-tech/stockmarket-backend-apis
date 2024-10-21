@@ -1,8 +1,10 @@
 from datetime import datetime
+import json
 import random
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import JSONResponse
+import firebase_admin
 from sqlalchemy.orm import Session
 
 from server import crud, schemas
@@ -14,12 +16,16 @@ from server.utils.auth import (
     jwt_access_token,
     jwt_refresh_token,
     refresh_to_access_token,
+    verify_pass_toekn,
     verify_password,
 )
 from server.utils.common import validate_email_send_otp
-
+from firebase_admin import credentials, auth
 from server.endpoints.deps import get_db
 
+
+cred = credentials.Certificate("credentials.json")
+firebase_admin.initialize_app(cred)
 
 user_router = APIRouter(prefix="/user", tags=["User"])
 
@@ -39,10 +45,23 @@ async def login_for_access_token(
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
+        if user.providers == json.dumps(["google.com"]):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Please login with google.",
+            )
+
+        user_account = crud.user.verify_user(db, data.email)
+        if not user_account:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Your aacount has been deleted, Please sign up again.",
+            )
+
         access_token = jwt_access_token(data={"sub": user.email, "id": user.id})
 
         refresh_token = jwt_refresh_token(data={"sub": user.email, "id": user.id})
-        return schemas.RespUser(
+        response = schemas.RespUser(
             id=user.id,
             email=user.email,
             username=user.username,
@@ -50,6 +69,9 @@ async def login_for_access_token(
             is_verified=user.is_verified,
             providers=user.providers,
             role=user.role,
+            firebase_id=user.firebase_id,
+            is_social=user.is_social,
+            device=user.device,
             created_at=str(user.created_at),
             updated_at=str(user.updated_at),
             token=schemas.Token(
@@ -58,26 +80,80 @@ async def login_for_access_token(
                 token_type="bearer",
             ),
         )
-    except HTTPException:
-        raise
 
+        return JSONResponse(
+            status_code=200,
+            content={
+                "success": True,
+                "error": None,
+                "data": response.dict(),
+                "message": "You have successfully logged in.",
+            },
+        )
+    except HTTPException as e:
+        return JSONResponse(
+            status_code=e.status_code,
+            content={
+                "success": False,
+                "data": None,
+                "error": str(e.detail),
+                "message": str(e.detail),
+            },
+        )
     except Exception as e:
-        print(f"An error occurred: {str(e)}")
-        raise HTTPException(500, "Something went wrong at server.")
-
+        return JSONResponse(
+            status_code=500,
+            content={
+                "success": False,
+                "data": None,
+                "error": str(e),
+                "message": "Something went wrong!",
+            },
+        )
     finally:
         db.close()
 
 
 @user_router.post("/profile", response_model=schemas.UserProfile)
 async def get_profile(current_user=Depends(get_current_user)):
-    return schemas.UserProfile(
-        id=current_user.id,
-        username=current_user.username,
-        email=current_user.email,
-        avatar=current_user.avatar,
-        role=current_user.role,
-    )
+    try:
+        profile = schemas.UserProfile(
+            id=current_user.id,
+            username=current_user.username,
+            email=current_user.email,
+            avatar=current_user.avatar,
+            role=current_user.role,
+            device=current_user.device,
+        )
+        return JSONResponse(
+            status_code=200,
+            content={
+                "success": True,
+                "error": None,
+                "data": profile,
+                "message": "User profile fetched successfully.",
+            },
+        )
+    except HTTPException as e:
+        return JSONResponse(
+            status_code=e.status_code,
+            content={
+                "success": False,
+                "data": None,
+                "error": str(e.detail),
+                "message": str(e.detail),
+            },
+        )
+    except Exception as e:
+        return JSONResponse(
+            status_code=500,
+            content={
+                "success": False,
+                "data": None,
+                "error": str(e),
+                "message": "Something went wrong!",
+            },
+        )
 
 
 @user_router.post("/signup")
@@ -90,16 +166,15 @@ async def sign_up(data: schemas.UserCreateInput, db: Session = Depends(get_db)):
         if user:
             if user.is_verified:
                 raise HTTPException(
-                    400,
-                    "You already have an account with us. please continue with login.",
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="You already have an account with us. please continue with login.",
                 )
-
         else:
             hashed_password = get_password_hash(data.password)
             user = crud.user.create(
                 db,
                 obj_in=schemas.UserBase(
-                    username=username, email=data.email, hashed_password=hashed_password
+                    username=username, email=data.email, hashed_password=hashed_password, device=data.device
                 ),
             )
         otp = str(random.randint(99999, 999999))
@@ -109,16 +184,32 @@ async def sign_up(data: schemas.UserCreateInput, db: Session = Depends(get_db)):
                 status_code=200,
                 content={
                     "success": True,
+                    "error": None,
+                    "data": None,
                     "message": "OTP sent to your email, please verify your email to continue.",
                 },
             )
 
-    except HTTPException:
-        raise
-
+    except HTTPException as e:
+        return JSONResponse(
+            status_code=e.status_code,
+            content={
+                "success": False,
+                "data": None,
+                "error": str(e.detail),
+                "message": str(e.detail),
+            },
+        )
     except Exception as e:
-        print(f"An error occurred: {str(e)}")
-        raise HTTPException(500, "Something went wrong at server.")
+        return JSONResponse(
+            status_code=500,
+            content={
+                "success": False,
+                "data": None,
+                "error": str(e),
+                "message": "Something went wrong!",
+            },
+        )
 
     finally:
         db.close()
@@ -135,15 +226,21 @@ async def verify_otp(data: schemas.VerifyOTP, db: Session = Depends(get_db)):
 
         if user_obj:
             if user_obj.is_verified:
-                raise HTTPException(400, "Your email is already verified.")
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Your email is already verified.",
+                )
 
         if not email_otp_obj:
-            raise HTTPException(400, "First proceed via sending OTP request.")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="First proceed via sending OTP request.",
+            )
 
         otp = email_otp_obj.otp
         time_now = datetime.utcnow()
 
-        if (((time_now - email_otp_obj.updated_at).total_seconds()) / 60) < 10:
+        if (((time_now - email_otp_obj.updated_at).total_seconds()) / 60) < 2:
             if str(otp_sent) == str(otp):
                 user_obj = crud.user.update(
                     db,
@@ -155,21 +252,44 @@ async def verify_otp(data: schemas.VerifyOTP, db: Session = Depends(get_db)):
                     status_code=200,
                     content={
                         "success": True,
-                        "message": "OTP verified successfully, Please login.",
+                        "error": None,
                         "data": None,
+                        "message": "OTP verified successfully, Please login.",
                     },
                 )
             else:
-                raise HTTPException(400, "OTP mismatched, Please provide correct OTP.")
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="OTP mismatched, Please provide correct OTP.",
+                )
         else:
             crud.email_otp.remove(db, id=email_otp_obj.id)
-            raise HTTPException(400, "OTP is expired, please proceed new OTP.")
-    except HTTPException:
-        raise
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="OTP is expired, please proceed new OTP.",
+            )
+
+    except HTTPException as e:
+        return JSONResponse(
+            status_code=e.status_code,
+            content={
+                "success": False,
+                "data": None,
+                "error": str(e.detail),
+                "message": str(e.detail),
+            },
+        )
 
     except Exception as e:
-        print(f"An error occurred: {str(e)}")
-        raise HTTPException(500, "Something went wrong at server.")
+        return JSONResponse(
+            status_code=500,
+            content={
+                "success": False,
+                "data": None,
+                "error": str(e),
+                "message": "Something went wrong!",
+            },
+        )
 
     finally:
         db.close()
@@ -181,27 +301,53 @@ async def resend_otp(data: schemas.EmailSchema, db: Session = Depends(get_db)):
         email = data.email.lower().strip()
         user_obj = crud.user.get_by_email(db, email=email)
         if not user_obj:
-            raise HTTPException(400, "First proceed via sending OTP request.")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="First proceed via sending OTP request.",
+            )
 
         if user_obj and user_obj.is_verified:
-            raise HTTPException(400, "Your email is already verified.")
-
-        otp_sent = await validate_email_send_otp(db, email, user_obj.id)
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Your email is already verified.",
+            )
+        if data.type == "sign_up":
+            otp = str(random.randint(99999, 999999))
+            otp_sent = await validate_email_send_otp(db, email, user_obj.id, key=otp)
+        else:
+            otp_sent = await validate_email_send_otp(db, email, user_obj.id, key=None)
         if otp_sent:
             return JSONResponse(
                 status_code=200,
                 content={
                     "success": True,
+                    "error": None,
+                    "data": None,
                     "message": "OTP sent to your email, please verify your email to continue.",
                 },
             )
 
-    except HTTPException:
-        raise
+    except HTTPException as e:
+        return JSONResponse(
+            status_code=e.status_code,
+            content={
+                "success": False,
+                "data": None,
+                "error": str(e.detail),
+                "message": str(e.detail),
+            },
+        )
 
     except Exception as e:
-        print(f"An error occurred: {str(e)}")
-        raise HTTPException(500, "Something went wrong at server.")
+        return JSONResponse(
+            status_code=500,
+            content={
+                "success": False,
+                "data": None,
+                "error": str(e),
+                "message": "Something went wrong!",
+            },
+        )
 
     finally:
         db.close()
@@ -218,13 +364,21 @@ async def change_password(
         new_password = data.new_password
         user_obj = crud.user.get_by_email(db, email=current_user.email)
         if not user_obj:
-            raise HTTPException(400, "User not found.")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST, detail="User not found."
+            )
 
         if old_password == new_password:
-            raise HTTPException(400, "Old password and new password are same.")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Old password and new password are same.",
+            )
 
         if not verify_password(old_password, user_obj.hashed_password):
-            raise HTTPException(400, "Old password is incorrect.")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Old password is incorrect.",
+            )
 
         hashed_password = get_password_hash(new_password)
         user_obj = crud.user.update(
@@ -243,21 +397,36 @@ async def change_password(
             status_code=200,
             content={
                 "success": True,
-                "message": "Password changed successfully.",
+                "error": None,
                 "data": {
                     "access_token": access_token,
                     "refresh_token": refresh_token,
                     "token_type": "bearer",
                 },
+                "message": "Password changed successfully.",
             },
         )
 
-    except HTTPException:
-        raise
-
+    except HTTPException as e:
+        return JSONResponse(
+            status_code=e.status_code,
+            content={
+                "success": False,
+                "data": None,
+                "error": str(e.detail),
+                "message": str(e.detail),
+            },
+        )
     except Exception as e:
-        print(f"An error occurred: {str(e)}")
-        raise HTTPException(500, "Something went wrong at server.")
+        return JSONResponse(
+            status_code=500,
+            content={
+                "success": False,
+                "data": None,
+                "error": str(e),
+                "message": "Something went wrong!",
+            },
+        )
 
     finally:
         db.close()
@@ -271,67 +440,42 @@ async def forgot_password_send_otp(
         email = data.email.lower().strip()
         user_obj = crud.user.get_by_email(db, email=email)
         if not user_obj:
-            raise HTTPException(400, "User not found.")
-        
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST, detail="User not found."
+            )
+
         otp_sent = await validate_email_send_otp(db, email, user_obj.id, key=None)
         if otp_sent:
             return JSONResponse(
                 status_code=200,
                 content={
                     "success": True,
-                    "message": "Verification link sent to your email, please verify your email to continue.",
+                    "error": None,
+                    "data": None,
+                    "message": "Please check your email. You have received a link to reset your password.",
                 },
             )
 
-    except HTTPException:
-        raise
-
+    except HTTPException as e:
+        return JSONResponse(
+            status_code=e.status_code,
+            content={
+                "success": False,
+                "data": None,
+                "error": str(e.detail),
+                "message": str(e.detail),
+            },
+        )
     except Exception as e:
-        print(f"An error occurred: {str(e)}")
-        raise HTTPException(500, "Something went wrong at server.")
-
-    finally:
-        db.close()
-
-
-@user_router.get("/verify-forgot-password-link")
-async def verify_forgot_password_otp(
-    email: str, otp: str, db: Session = Depends(get_db)
-):
-    try:
-        otp_sent = otp
-
-        email_otp_obj = crud.email_otp.get_by_email(db, email=email)
-
-        if not email_otp_obj:
-            raise HTTPException(400, "OTP is not found. Please procced resend OTP.")
-
-        otp = email_otp_obj.otp
-        time_now = datetime.utcnow()
-
-        if (((time_now - email_otp_obj.updated_at).total_seconds()) / 60) < 10:
-            if str(otp_sent) == str(otp):
-
-                crud.email_otp.remove(db, id=email_otp_obj.id)
-                return JSONResponse(
-                    status_code=200,
-                    content={
-                        "success": True,
-                        "message": "OTP verified successfully, Please reset your password.",
-                    },
-                )
-            else:
-                raise HTTPException(400, "OTP not metched, Please enter valid OTP.")
-        else:
-            crud.email_otp.remove(db, id=email_otp_obj.id)
-            raise HTTPException(400, "OTP is expired, please proceed new OTP.")
-
-    except HTTPException:
-        raise
-
-    except Exception as e:
-        print(f"An error occurred: {str(e)}")
-        raise HTTPException(500, "Something went wrong at server.")
+        return JSONResponse(
+            status_code=500,
+            content={
+                "success": False,
+                "data": None,
+                "error": str(e),
+                "message": "Something went wrong!",
+            },
+        )
 
     finally:
         db.close()
@@ -339,14 +483,21 @@ async def verify_forgot_password_otp(
 
 @user_router.post("/reset-forgot-password")
 async def reset_forgot_password(
-    data: schemas.ResetPassword, db: Session = Depends(get_db)
+    token: str, data: schemas.ResetPassword, db: Session = Depends(get_db)
 ):
     try:
-        email = data.email.lower().strip()
-        new_password = data.new_password
-
-        user = crud.user.get_by_email(db, email=email)
+        verify_token = verify_pass_toekn(db=db, token=token)
+        id = verify_token.id
+        user = crud.user.get_by_id(db, id=id)
         if user:
+            email = user.email
+            if not email == data.email:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Please provide a valid email address. Your email is not registered on our website.",
+                )
+
+            new_password = data.new_password
 
             hashed_password = get_password_hash(new_password)
             crud.user.update(
@@ -359,16 +510,33 @@ async def reset_forgot_password(
                 status_code=200,
                 content={
                     "success": True,
-                    "message": "Password reset successfully, Please Login.",
+                    "error": None,
+                    "data": None,
+                    "message": "Your password has been successfully reset. Please log in with your new credentials.",
                 },
             )
 
-    except HTTPException:
-        raise
+    except HTTPException as e:
+        return JSONResponse(
+            status_code=e.status_code,
+            content={
+                "success": False,
+                "data": None,
+                "error": str(e.detail),
+                "message": str(e.detail),
+            },
+        )
 
     except Exception as e:
-        print(f"An error occurred: {str(e)}")
-        raise HTTPException(500, "Something went wrong at server.")
+        return JSONResponse(
+            status_code=500,
+            content={
+                "success": False,
+                "data": None,
+                "error": str(e),
+                "message": "Something went wrong!",
+            },
+        )
 
     finally:
         db.close()
@@ -391,12 +559,27 @@ async def update_profile(
             content={"success": True, "message": "Profile updated successfully."},
         )
 
-    except HTTPException:
-        raise
+    except HTTPException as e:
+        return JSONResponse(
+            status_code=e.status_code,
+            content={
+                "success": False,
+                "data": None,
+                "error": str(e.detail),
+                "message": str(e.detail),
+            },
+        )
 
     except Exception as e:
-        print(f"An error occurred: {str(e)}")
-        raise HTTPException(500, "Something went wrong at server.")
+        return JSONResponse(
+            status_code=500,
+            content={
+                "success": False,
+                "data": None,
+                "error": str(e),
+                "message": "Something went wrong!",
+            },
+        )
 
     finally:
         db.close()
@@ -414,13 +597,150 @@ async def refresh_toekn(
             status_code=200,
             content={
                 "success": True,
-                "message": "Access token generated successfully.",
+                "error": None,
                 "data": {
                     "access_token": access_token,
                     "token_type": "bearer",
                 },
+                "message": "Access token generated successfully.",
             },
         )
     except Exception as e:
-        print(f"An error occurred: {str(e)}")
-        raise HTTPException(500, "Something went wrong at server.")
+        return JSONResponse(
+            status_code=500,
+            content={
+                "success": False,
+                "data": None,
+                "error": str(e),
+                "message": "Something went wrong!",
+            },
+        )
+
+
+@user_router.post("/google")
+def google(
+    request_data: schemas.GoogleAuthSchema,
+    db: Session = Depends(get_db),
+):
+    google_user_info = auth.verify_id_token(request_data.token, clock_skew_seconds=10)
+
+    firebase_id = google_user_info["uid"]
+    email = google_user_info["email"]
+    user = crud.user.get_by_email(db, email=email)
+
+    if not user:
+        user = crud.user.create(
+            db,
+            obj_in=schemas.UserBase(
+                username=google_user_info["name"],
+                email=email,
+                is_verified=True,
+                is_active=True,
+                providers=json.dumps(["google.com"]),
+                firebase_id=firebase_id,
+                is_social=True,
+                device=request_data.device,
+            ),
+        )
+
+        access_token = jwt_access_token(data={"sub": user.email, "id": user.id})
+
+        refresh_token = jwt_refresh_token(data={"sub": user.email, "id": user.id})
+
+        response = schemas.RespUser(
+            id=user.id,
+            email=user.email,
+            username=user.username,
+            avatar=user.avatar,
+            is_verified=user.is_verified,
+            providers=user.providers,
+            role=user.role,
+            firebase_id=user.firebase_id,
+            is_social=user.is_social,
+            device=user.device,
+            created_at=str(user.created_at),
+            updated_at=str(user.updated_at),
+            token=schemas.Token(
+                access_token=access_token,
+                refresh_token=refresh_token,
+                token_type="bearer",
+            ),
+        )
+        return JSONResponse(
+            status_code=200,
+            content={
+                "success": True,
+                "error": None,
+                "data": response.dict(),
+                "message": "You have successfully Sign up.",
+            },
+        )
+
+    else:
+        if user.is_social:
+            user = crud.user.update(
+                db,
+                db_obj=user,
+                obj_in=schemas.UserUpdate(is_verified=True, is_active=True),
+            )
+
+            access_token = jwt_access_token(data={"sub": user.email, "id": user.id})
+
+            refresh_token = jwt_refresh_token(data={"sub": user.email, "id": user.id})
+
+            response = schemas.RespUser(
+                id=user.id,
+                email=user.email,
+                username=user.username,
+                avatar=user.avatar,
+                is_verified=user.is_verified,
+                providers=user.providers,
+                role=user.role,
+                firebase_id=user.firebase_id,
+                is_social=user.is_social,
+                device=user.device,
+                created_at=str(user.created_at),
+                updated_at=str(user.updated_at),
+                token=schemas.Token(
+                    access_token=access_token,
+                    refresh_token=refresh_token,
+                    token_type="bearer",
+                ),
+            )
+
+            return JSONResponse(
+                status_code=200,
+                content={
+                    "success": True,
+                    "error": None,
+                    "data": response.dict(),
+                    "message": "You have successfully logged in.",
+                },
+            )
+
+
+@user_router.delete("/delete-account")
+def delete_account(
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    user = crud.user.get_by_user(db, id=current_user.id)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No user found.",
+        )
+
+    crud.user.update(
+        db, db_obj=user, obj_in=schemas.UserUpdate(disabled=True, is_active=False)
+    )
+
+    return JSONResponse(
+        status_code=200,
+        content={
+            "success": True,
+            "error": None,
+            "data": None,
+            "message": "User deleted successfully.",
+        },
+    )

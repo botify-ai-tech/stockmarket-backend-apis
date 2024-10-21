@@ -83,7 +83,7 @@ class PineconeExecute:
                 status_code=400, detail=f"Error creating embeddings: {e}"
             )
 
-    def embed_text_with_retries(self):
+    def embed_text_with_retries(self, text):
         """
         Generate embeddings for a given text with retry logic.
 
@@ -99,7 +99,7 @@ class PineconeExecute:
         try:
             embedding = genai.embed_content(
                 model="models/embedding-001",
-                content=self.texts,
+                content=text,
                 task_type="retrieval_document",
                 title="Document Embedding",
             )

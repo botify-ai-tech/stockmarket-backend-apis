@@ -5,6 +5,7 @@ import time
 import random
 from bs4 import BeautifulSoup
 from fastapi.responses import JSONResponse
+from requests import request
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
@@ -14,6 +15,7 @@ import regex as re
 import google.generativeai as genai
 
 from server import crud, schemas
+from server.config import settings
 from server.utils.money_control.other_ratios import (
     additional_ratios,
     calculate_cash_flow_to_sales_ratio,
@@ -29,22 +31,25 @@ import logging
 
 from server.utils.prompt import ratio_prompt
 
+from selenium.webdriver import DesiredCapabilities
+
 load_dotenv()
 
-gemini_ai_key = os.getenv("GEMINI_AI_KEY")
+gemini_ai_key = settings.GEMINI_AI_KEY
 genai.configure(api_key=gemini_ai_key)
 
 logging.basicConfig(
-    filename="scraper.log",  # Log file name
     level=logging.INFO,  # Log level (INFO, DEBUG, WARNING, ERROR)
     format="%(asctime)s - %(levelname)s - %(message)s",  # Log format
 )
 
 
 def money_con_ration(db):
+
     logging.info("Starting scraping process.")
 
-    remote_url = os.getenv("LAMBDA_CHROME_URL")
+    remote_url = settings.LAMBDA_CHROME_URL
+    logging.info(f"Remote URL: {remote_url}")
 
     chrome_options = Options()
     chrome_options.browser_version = "latest"
@@ -54,10 +59,6 @@ def money_con_ration(db):
     chrome_options.set_capability("visual", True)
     chrome_options.set_capability("console", False)
     chrome_options.set_capability("network", False)
-
-    # Initialize the remote WebDriver
-    driver = webdriver.Remote(command_executor=remote_url, options=chrome_options)
-    driver.get("https://www.screener.in/")
 
     all_screener_data_list = []
     all_screener_data_dict = {}
@@ -70,25 +71,27 @@ def money_con_ration(db):
     failed_shares = []
 
     def scrape_share(share):
+        driver = webdriver.Remote(command_executor=remote_url, options=chrome_options)
+
+        # driver = webdriver.Chrome()
+        driver.get("https://www.screener.in/")
 
         driver.refresh()
+        share = str(share.replace("_", " "))
+        logging.info(share)
         try:
-            search_wait = WebDriverWait(driver, 10)
-            search_wait.until(
-                lambda driver: driver.find_element(
-                    By.XPATH,
-                    "//div[@class='home-search']//input[@class='u-full-width']",
-                )
-            )
-            search = driver.find_element(
-                By.XPATH, "//div[@class='home-search']//input[@class='u-full-width']"
-            )
-            search.send_keys(share)
-            # time.sleep(random.randint(1, 10))
-            logging.info("=============")
-            search.send_keys(Keys.ENTER)
-            # except:
-            #     pass
+            # login
+            driver.find_element(By.XPATH, "//a[@class='button account']").click()
+            email = driver.find_element(By.XPATH, "//input[@id='id_username']")
+            email.clear()
+            email.send_keys("dharmik301.rejoice@gmail.com")
+
+            password = driver.find_element(By.XPATH, "//input[@id='id_password']")
+            password.clear()
+            password.send_keys("Dharmik@301")
+
+            driver.find_element(By.XPATH, "//button[@class='button-primary']").click()
+            logging.info("Login")
 
             try:
                 search = driver.find_element(
@@ -102,11 +105,13 @@ def money_con_ration(db):
 
             # ------------------------------------------------------------ Share details ------------------------------------------------------------
             logging.info("Share details")
+            driver.refresh()
             time.sleep(random.randint(1, 10))
             # Share Name
             share_name = driver.find_element(
-                By.XPATH, "//div[@class='card card-large']//div//div//h1"
+                By.XPATH, "//div[@class='card card-large']//div[@class='flex-row flex-wrap flex-align-center flex-grow']//h1[@class='margin-0 show-from-tablet-landscape']"
             ).text
+            logging.info(share_name)
 
             # Share Price
             share_price = driver.find_element(
@@ -826,7 +831,7 @@ def money_con_ration(db):
                     By.XPATH,
                     "//div[@class='overview_section']//div[@class='clearfix']//div[@class='mob-hide']//div[@class='oview_table']//table//tbody//tr//td[@class='nsesc_ttm bsesc_ttm']",
                 ).text
-                logging.info("sector_pe", sector_pe)
+                logging.info(sector_pe)
 
                 all_screener_data_dict[share_name]["Money Control"][
                     "Sector PE"
@@ -954,7 +959,7 @@ def money_con_ration(db):
                     ],
                 }
             )
-            breakpoint()
+
             prompt = ratio_prompt(all_screener_data_list)
             model = genai.GenerativeModel("gemini-1.5-flash")
             analysis = model.generate_content(prompt)
@@ -964,38 +969,57 @@ def money_con_ration(db):
 
             matches = re.findall(pattern, ai_data, re.DOTALL)[0]
             data = json.loads(matches)
+            print(data)
 
             stock_analysis = data["stock_analysis"]
             stock_name = stock_analysis["stock_name"]
-            favourable_indicators = stock_analysis["evaluation"][
-                "favourable_indicators"
-            ]
-            unfavourable_indicators = stock_analysis["evaluation"][
-                "unfavourable_indicators"
-            ]
-            summary = stock_analysis["evaluation"]["overall_picture"]["summary"]
-            ai_pros = stock_analysis["evaluation"]["overall_picture"]["pros"]
-            ai_cons = stock_analysis["evaluation"]["overall_picture"]["cons"]
-            investment_recommendation = stock_analysis["evaluation"][
-                "investment_recommendation"
-            ]
+            favourable_indicators = stock_analysis["evaluation"]["favourable_indicators"] if stock_analysis["evaluation"]["favourable_indicators"] else []
+            unfavourable_indicators = stock_analysis["evaluation"]["unfavourable_indicators"] if stock_analysis["evaluation"]["unfavourable_indicators"] else []
+            summary = stock_analysis["overall_picture"]["summary"]
+            ai_pros = stock_analysis["overall_picture"]["pros"]
+            ai_cons = stock_analysis["overall_picture"]["cons"]
+            investment_recommendation = stock_analysis["investment_recommendation"]
 
-            crud.ratio.create(
-                db,
-                obj_in=schemas.CreateRatio(
-                    stock_name=stock_name,
-                    favourable_indicators=favourable_indicators,
-                    unfavourable_indicators=unfavourable_indicators,
-                    summary=summary,
-                    ai_pros=ai_pros,
-                    ai_cons=ai_cons,
-                    investment_recommendation=investment_recommendation,
-                ),
-            )
+            time.sleep(3)
+            breakpoint()
+            share_details = crud.ratio.get_by_nifty_share(db, share)
+            if share_details:
+                crud.ratio.update(
+                    db,
+                    db_obj=share_details,
+                    obj_in=schemas.UpdateRatio(
+                        nifty_sahre=share,
+                        stock_name=stock_name,
+                        favourable_indicators=favourable_indicators,
+                        unfavourable_indicators=unfavourable_indicators,
+                        summary=summary,
+                        pros=ai_pros,
+                        cons=ai_cons,
+                        investment_recommendation=investment_recommendation,
+                    ),
+                )
+                logging.info(
+                    f"Successfully scraped data for {share_name}, and update on DB."
+                )
+            else:
 
-            logging.info(
-                f"Successfully scraped data for {share_name}, and store in DB."
-            )
+                crud.ratio.create(
+                    db,
+                    obj_in=schemas.CreateRatio(
+                        nifty_sahre=share,
+                        stock_name=stock_name,
+                        favourable_indicators=favourable_indicators,
+                        unfavourable_indicators=unfavourable_indicators,
+                        summary=summary,
+                        pros=ai_pros,
+                        cons=ai_cons,
+                        investment_recommendation=investment_recommendation,
+                    ),
+                )
+
+                logging.info(
+                    f"Successfully scraped data for {share_name}, and store in DB."
+                )
 
             try:
                 driver.quit()
@@ -1005,7 +1029,7 @@ def money_con_ration(db):
             logging.error(f"Error scraping {share}: {e}")
             failed_shares.append(share)
 
-    for share in lines:
+    for share in lines[14:]:
         scrape_share(share)
 
     if failed_shares:
@@ -1014,9 +1038,6 @@ def money_con_ration(db):
             scrape_share(share)
 
     if failed_shares:
-        logging.info(f"Failed to scrape the following shares after retrying: {failed_shares}")
-
-    try:
-        driver.quit()
-    except:
-        pass
+        logging.info(
+            f"Failed to scrape the following shares after retrying: {failed_shares}"
+        )

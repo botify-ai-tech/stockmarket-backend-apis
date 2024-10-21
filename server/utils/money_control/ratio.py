@@ -12,13 +12,15 @@ from selenium.webdriver.chrome.options import Options
 
 from dotenv import load_dotenv
 
+from server.config import settings
+
 load_dotenv()
 
 
 def ratio(share):
     logging.info("RATIO")
 
-    remote_url = os.getenv("LAMBDA_CHROME_URL")
+    remote_url = settings.LAMBDA_CHROME_URL
 
     chrome_options = Options()
 
