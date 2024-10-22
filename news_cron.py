@@ -251,6 +251,7 @@ def globle_news():
             other_news_link=link,
             similar=similar_news,
             created_at=updated_time,
+            image=None
         )
 
         session.add(news_entry)

@@ -28,6 +28,7 @@ class CreateNews(BaseModel):
     similar: Optional[str]
     created_at: Optional[str]
     is_save: Optional[str]
+    image: Optional[str]
 
 class UpdateNews():
     pass

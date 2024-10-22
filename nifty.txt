@@ -13,18 +13,18 @@ Action Construction Equipment Ltd
 Adani Energy Solutions Ltd
 Adani Enterprises Ltd
 Adani Green Energy Ltd
-Adani Ports and Special Economic Zone Ltd
+Adani Ports & Special Economic Zone Ltd
 Adani Power Ltd
 Adani Total Gas Ltd
 Adani Wilmar Ltd
 Aditya Birla Capital Ltd
-Aditya Birla Fashion and Retail Ltd
+Aditya Birla Fashion & Retail Ltd
 Aditya Birla Real Estate Ltd
 Aditya Birla Sun Life AMC Ltd
 Aegis Logistics Ltd
-Affle (India) Ltd
-Ajanta Pharmaceuticals Ltd
-Akums Drugs and Pharmaceuticals Ltd
+Affle India Ltd
+Ajanta Pharma Ltd
+Akums Drugs & Pharmaceuticals Ltd
 Alembic Pharmaceuticals Ltd
 Alkem Laboratories Ltd
 Alkyl Amines Chemicals Ltd
@@ -89,7 +89,7 @@ Britannia Industries Ltd
 C.E. Info Systems Ltd
 CCL Products (I) Ltd
 CESC Ltd
-CG Power and Industrial Solutions Ltd
+CG Power & Industrial Solutions Ltd
 CIE Automotive India Ltd
 CRISIL Ltd
 Campus Activewear Ltd
@@ -110,10 +110,10 @@ Chambal Fertilizers & Chemicals Ltd
 Chemplast Sanmar Ltd
 Chennai Petroleum Corporation Ltd
 Cholamandalam Financial Holdings Ltd
-Cholamandalam Investment and Finance Company Ltd
+Cholamandalam Investment & Finance Company Ltd
 Cipla Ltd
 City Union Bank Ltd
-Clean Science and Technology Ltd
+Clean Science & Technology Ltd
 Coal India Ltd
 Cochin Shipyard Ltd
 Coforge Ltd
@@ -156,7 +156,7 @@ Escorts Kubota Ltd
 Exide Industries Ltd
 FSN E-Commerce Ventures Ltd
 Federal Bank Ltd
-Fertilisers and Chemicals Travancore Ltd
+Fertilisers & Chemicals Travancore Ltd
 Fine Organic Industries Ltd
 Finolex Cables Ltd
 Finolex Industries Ltd
@@ -190,7 +190,7 @@ Gujarat Ambuja Exports Ltd
 Gujarat Fluorochemicals Ltd
 Gujarat Gas Ltd
 Gujarat Mineral Development Corporation Ltd
-Gujarat Narmada Valley Fertilizers and Chemicals Ltd
+Gujarat Narmada Valley Fertilizers & Chemicals Ltd
 Gujarat Pipavav Port Ltd
 Gujarat State Fertilizers & Chemicals Ltd
 Gujarat State Petronet Ltd
@@ -237,7 +237,7 @@ Indian Energy Exchange Ltd
 Indian Hotels Co. Ltd
 Indian Oil Corporation Ltd
 Indian Overseas Ban
-Indian Railway Catering And Tourism Corporation Ltd
+Indian Railway Catering & Tourism Corporation Ltd
 Indian Railway Finance Corporation Ltd
 Indian Renewable Energy Development Agency Ltd
 Indraprastha Gas Ltd
@@ -298,7 +298,7 @@ Laurus Labs Ltd
 Lemon Tree Hotels Ltd
 Life Insurance Corporation of Indi
 Linde India Ltd
-Lloyds Metals And Energy Ltd
+Lloyds Metals & Energy Ltd
 Lupin Ltd
 MMTC Ltd
 MRF Ltd
@@ -394,7 +394,7 @@ Redington Ltd
 Reliance Industries Ltd
 Route Mobile Ltd
 SBFC Finance Ltd
-SBI Cards and Payment Services Ltd
+SBI Cards & Payment Services Ltd
 SBI Life Insurance Company Ltd
 SJVN Ltd
 SKF India Ltd
@@ -410,17 +410,17 @@ Shipping Corporation of India Ltd
 Shree Cement Ltd
 Shree Renuka Sugars Ltd
 Shriram Finance Ltd
-Shyam Metalics and Energy Ltd
+Shyam Metalics & Energy Ltd
 Siemens Ltd
 Signatureglobal (India) Ltd
 Sobha Ltd
 Solar Industries India Ltd
 Sona BLW Precision Forgings Ltd
 Sonata Software Ltd
-Star Health and Allied Insurance Company Ltd
+Star Health & Allied Insurance Company Ltd
 State Bank of Indi
 Steel Authority of India Ltd
-Sterling and Wilson Renewable Energy Ltd
+Sterling & Wilson Renewable Energy Ltd
 Sumitomo Chemical India Ltd
 Sun Pharma Advanced Research Company Ltd
 Sun Pharmaceutical Industries Ltd

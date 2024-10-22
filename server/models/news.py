@@ -30,6 +30,7 @@ class NewsItem(Base):
     feed = Column(String)
     other_news_link = Column(String)
     similar = Column(JSON)
+    image = Column(String)
 
     created_at = Column(DateTime)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

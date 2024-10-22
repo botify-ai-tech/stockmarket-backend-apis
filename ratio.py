@@ -1028,7 +1028,7 @@ def money_con_ration(db):
             logging.error(f"Error scraping {share}: {e}")
             failed_shares.append(share)
 
-    for share in lines[14:]:
+    for share in lines[20:]:
         scrape_share(share)
 
     if failed_shares:

@@ -45,6 +45,7 @@ def jsonify(data):
         "investor_sentiment": data.investor_sentiment,
         "market_volatility": data.market_volatility,
         "detailed_explanation": data.detailed_explanation,
+        "image": data.image,
     }
 
 
