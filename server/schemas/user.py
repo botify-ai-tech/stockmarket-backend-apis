@@ -84,6 +84,7 @@ class UserProfile(BaseModel):
     avatar: Optional[str] = None
     role: Optional[str] = None
     device: Optional[str] = None
+    is_social: Optional[bool] = False
 
 
 class ChangePassword(BaseModel):

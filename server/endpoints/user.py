@@ -124,6 +124,7 @@ async def get_profile(current_user=Depends(get_current_user)):
             avatar=current_user.avatar,
             role=current_user.role,
             device=current_user.device,
+            is_social=current_user.is_social,
         )
         return JSONResponse(
             status_code=200,

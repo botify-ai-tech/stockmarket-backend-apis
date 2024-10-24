@@ -11,8 +11,8 @@ contact_router = APIRouter()
 
 def jsonify(contact):
     return {
-        "user_id": contact.user_id,
-        "user_name": contact.name,
+        "first_name": contact.first_name,
+        "last_name": contact.last_name,
         "user_email": contact.email,
         "user_phone_number": contact.phone_number,
         "message": contact.message,
@@ -25,47 +25,28 @@ def jsonify(contact):
 )
 def contact_us(
     request_data: schemas.ContactBase,
-    current_user=Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
 
     try:
-        user_info = crud.user.get_by_user(db, id=current_user.id)
+        crud.contact.create(
+            db,
+            obj_in=schemas.CreateContact(
+                first_name=request_data.first_name,
+                last_name=request_data.last_name,
+                email=request_data.email,
+                phone_number=request_data.phone_number,
+                message=request_data.message,
+            ),
+        )
 
-        if user_info:
-            crud.contact.create(
-                db,
-                obj_in=schemas.CreateContact(
-                    user_id=current_user.id,
-                    name=request_data.name,
-                    email=user_info.email,
-                    phone_number=request_data.phone_number,
-                    message=request_data.message,
-                ),
-            )
-
-            return JSONResponse(
-                status_code=200,
-                content={
-                    "success": True,
-                    "error": None,
-                    "data": None,
-                    "message": "Your request has been sent to customer care. They will contact you within the next 2 hours.",
-                },
-            )
-        else:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST, detail="User doesn't exist"
-            )
-
-    except HTTPException as e:
         return JSONResponse(
-            status_code=e.status_code,
+            status_code=200,
             content={
-                "success": False,
+                "success": True,
+                "error": None,
                 "data": None,
-                "error": str(e.detail),
-                "message": str(e.detail),
+                "message": "Your request has been sent to customer care. They will contact you within the next 2 hours.",
             },
         )
 
@@ -113,7 +94,10 @@ def get_user_by_contact(
                     user_contacts.append(jsonify(contact))
 
             if not user_contacts:
-                return HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No any active users are avilable.")
+                return HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="No any active users are avilable.",
+                )
 
             return JSONResponse(
                 status_code=status.HTTP_200_OK,
@@ -136,7 +120,6 @@ def get_user_by_contact(
                     "message": "No any user can contact with us.",
                 },
             )
-
 
     except HTTPException as e:
         return JSONResponse(
