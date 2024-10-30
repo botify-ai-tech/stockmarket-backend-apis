@@ -2,7 +2,7 @@ from fastapi import APIRouter
 
 from server.endpoints.ratio import ratio_router
 from server.endpoints.generate_summary import summary_router
-from server.endpoints.yt_to_text import yt_router
+# from server.endpoints.yt_to_text import yt_router
 from server.endpoints.news import news_router
 from  server.endpoints.user import user_router
 from server.endpoints.contact import contact_router
