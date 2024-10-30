@@ -1,8 +1,0 @@
-Ta-Lib:
-    - https://ta-lib.org/
-
-Get The appporpiate Build based on python version from the following url:
-    - https://github.com/cgohlke/talib-build/releases
-
-to install the wheel File:
-    - python -3.12 -m pip install TA_Lib-0.4.29-cp312-cp312-win_amd64.whl 
