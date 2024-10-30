@@ -13,4 +13,4 @@ api_router.include_router(news_router, include_in_schema=True, prefix="/news", t
 api_router.include_router(summary_router, include_in_schema=True, prefix="/summary", tags=["summary"])
 api_router.include_router(ratio_router, include_in_schema=True, prefix="/ratio", tags=["ratio"])
 api_router.include_router(contact_router, include_in_schema=True, prefix="/contact", tags=["contact"])
-api_router.include_router(yt_router, include_in_schema=True, prefix="/youtube")
+# api_router.include_router(yt_router, include_in_schema=True, prefix="/youtube")
