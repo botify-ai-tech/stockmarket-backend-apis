@@ -7,13 +7,10 @@ from pydantic import BaseModel
 class RatioBase(BaseModel):
     id: str = None
     nifty_sahre: str = None
-    stock_name: str = None
-    favourable_indicators: list= None
-    unfavourable_indicators: list= None
-    summary: str = None
-    pros: list[str] = None
-    cons: list[str] = None
-    investment_recommendation: dict = None
+    financial_ratio_analysis: list = None
+    key_highlights: list = None
+    stock_value: dict = None
+    conclusion: dict = None
 
 class CreateRatio(RatioBase):
     pass

@@ -109,7 +109,7 @@ class PineconeExecute:
                 status_code=500, detail=f"Failed to generate embedding: {str(e)}"
             )
 
-    def search_in_pinecone(self, query_embedding, top_k=5):
+    def search_in_pinecone(self, query_embedding, top_k=10):
         """
         Search the Pinecone index using a query embedding.
 

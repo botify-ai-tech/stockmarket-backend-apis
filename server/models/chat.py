@@ -10,8 +10,12 @@ from server.db.base_class import Base
 class Chat(Base):
     id = Column(String, default=lambda: str(uuid.uuid4()), primary_key=True)
     user_id = Column(String, ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    session_id = Column(String)
     question = Column(String)
     answer = Column(String)
+    content_topic = Column(String)
+    filename = Column(String)
+    url = Column(String)
 
     is_deleted = Column(Boolean, default=False)
 

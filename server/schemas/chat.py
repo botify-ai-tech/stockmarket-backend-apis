@@ -1,12 +1,17 @@
+from typing import Optional
 from pydantic import BaseModel
 
 
 class ChatBase(BaseModel):
     id: str = None
     user_id: str = None
-    question: str  = None
-    answer: str = None
-    is_deleted: bool = False
+    session_id: Optional[str] = None
+    question: Optional[str]  = None
+    answer: Optional[str] = None
+    filename: Optional[str] = None
+    url: Optional[str] = None
+    content_topic: Optional[str] = None
+    is_deleted: Optional[bool] = False
 
 
 class CreateChat(ChatBase):
@@ -19,3 +24,6 @@ class UpdateChat(ChatBase):
 
 class Query(BaseModel):
     question: str
+
+class ChatHistory(BaseModel):
+    session_id: Optional[str]

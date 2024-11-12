@@ -187,7 +187,6 @@ def get_all_save_news(
 def delete_old_news(db: Session = Depends(get_db)):
 
     old_news_items = crud.news.get_48_old_news(db)
-
     if not old_news_items:
         return JSONResponse(
             status_code=200,
@@ -214,7 +213,7 @@ def delete_old_news(db: Session = Depends(get_db)):
         )
 
     for news_item in news_to_delete:
-        crud.news.remove(news_item)
+        crud.news.remove(db, news_item.id)
 
     return JSONResponse(
         status_code=200,

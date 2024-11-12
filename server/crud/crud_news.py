@@ -8,11 +8,12 @@ from sqlalchemy.orm import Session
 from server.crud.base import CRUDBase
 from server.models.news import NewsItem
 from server.schemas.news import CreateNews, UpdateNews
+import pytz
 
 UpdateSchemaType = TypeVar("UpdateSchemaType", bound=BaseModel)
 
 last_24_hours = datetime.now() - timedelta(hours=24)
-cutoff_time = datetime.now() - timedelta(hours=48)
+cutoff_time = datetime.now(pytz.UTC) - timedelta(hours=48)
 
 
 class CRUDNEWS(CRUDBase[NewsItem, CreateNews, UpdateNews]):
@@ -81,10 +82,10 @@ class CRUDNEWS(CRUDBase[NewsItem, CreateNews, UpdateNews]):
         return db.query(NewsItem).filter(NewsItem.id.in_(news_ids)).all()
 
     def get_48_old_news(self, db: Session) -> NewsItem:
-        db.query(NewsItem).filter(NewsItem.created_at < cutoff_time).all()
+        return db.query(NewsItem).filter(NewsItem.created_at < cutoff_time).all()
 
-    def remove(self, db: Session) -> Optional[NewsItem]:
-        return super().remove_all(db)
+    def remove(self, db: Session, id: str) -> Optional[NewsItem]:
+        return super().remove(db, id=id)
 
 
 news = CRUDNEWS(NewsItem)

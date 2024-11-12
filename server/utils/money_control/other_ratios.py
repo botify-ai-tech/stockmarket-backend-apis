@@ -1,6 +1,5 @@
 import json
 
-
 def calculate_cash_flow_to_sales_ratio(json_data, share_name):
     # Load JSON data if it's a string, otherwise assume it's already a dictionary
     if isinstance(json_data, str):
@@ -20,46 +19,118 @@ def calculate_cash_flow_to_sales_ratio(json_data, share_name):
     sales_data = {}
     cash_from_investing_activity = {}
 
+    # Helper function to clean and convert values to float
+    def clean_and_convert(value):
+        try:
+            # Remove commas and convert to float
+            return float(value.replace(",", ""))
+        except (ValueError, AttributeError):
+            # Handle cases where the value is empty or not convertible
+            return None
+
     # Extract cash flow and sales data
     for entry in cash_flows:
         if entry.get("cash flows name") == "Cash from Operating Activity -":
             for year, value in entry.items():
-                # print(value)
                 if year.startswith("Mar"):
-                    cash_from_operations[year] = float(value.replace(",", ""))
+                    cleaned_value = clean_and_convert(value)
+                    if cleaned_value is not None:
+                        cash_from_operations[year] = cleaned_value
 
     for entry in profit_loss:
         if entry.get("profit loss name") == "Sales -":
             for year, value in entry.items():
                 if year.startswith("Mar"):
-                    sales_data[year] = float(value.replace(",", ""))
+                    cleaned_value = clean_and_convert(value)
+                    if cleaned_value is not None:
+                        sales_data[year] = cleaned_value
 
     for entry in cash_flows:
         if entry.get("cash flows name") == "Cash from Investing Activity -":
             for year, value in entry.items():
-                # print(value)
                 if year.startswith("Mar"):
-                    cash_from_investing_activity[year] = float(value.replace(",", ""))
+                    cleaned_value = clean_and_convert(value)
+                    if cleaned_value is not None:
+                        cash_from_investing_activity[year] = cleaned_value
 
     # Calculate the ratio for each year where data is available
     ratios_sales = {"Ratio": "Operating Cash Flow to Sales Ratio"}
     ratios_fcf = {"Ratio": "Free Cash Flow (FCF)"}
 
     for year in sorted(cash_from_operations.keys(), reverse=True)[:5]:
-        if year in sales_data:
+        if year in sales_data and year in cash_from_investing_activity:
             # Calculate Operating Cash Flow to Sales Ratio
             operating_cash_flow_to_sales = cash_from_operations[year] / sales_data[year]
             ratios_sales[year] = f"{operating_cash_flow_to_sales:.4f}"
 
             # Calculate Free Cash Flow (FCF)
-            free_cash_flow = (
-                cash_from_operations[year] - cash_from_investing_activity[year]
-            )
+            free_cash_flow = cash_from_operations[year] - cash_from_investing_activity[year]
             ratios_fcf[year] = f"{free_cash_flow:.4f}"
 
     cash_flow_ratios = [ratios_sales, ratios_fcf]
 
     return {"Cash Flow Ratios": cash_flow_ratios}
+
+
+# def calculate_cash_flow_to_sales_ratio(json_data, share_name):
+#     # Load JSON data if it's a string, otherwise assume it's already a dictionary
+#     if isinstance(json_data, str):
+#         data = json.loads(json_data)
+#     else:
+#         data = json_data
+
+#     # Access the first item of the list if the data is encapsulated in a list
+#     screener_data = data.get(share_name).get("Screener")
+
+#     # Directly access 'Cash Flows' and 'Profit & Loss'
+#     cash_flows = screener_data["Cash Flows"]
+#     profit_loss = screener_data["Profit & Loss"]
+
+#     # Initialize dictionaries for cash flow and sales
+#     cash_from_operations = {}
+#     sales_data = {}
+#     cash_from_investing_activity = {}
+
+#     # Extract cash flow and sales data
+#     for entry in cash_flows:
+#         if entry.get("cash flows name") == "Cash from Operating Activity -":
+#             for year, value in entry.items():
+#                 # print(value)
+#                 if year.startswith("Mar"):
+#                     cash_from_operations[year] = float(value.replace(",", ""))
+
+#     for entry in profit_loss:
+#         if entry.get("profit loss name") == "Sales -":
+#             for year, value in entry.items():
+#                 if year.startswith("Mar"):
+#                     sales_data[year] = float(value.replace(",", ""))
+
+#     for entry in cash_flows:
+#         if entry.get("cash flows name") == "Cash from Investing Activity -":
+#             for year, value in entry.items():
+#                 # print(value)
+#                 if year.startswith("Mar"):
+#                     cash_from_investing_activity[year] = float(value.replace(",", ""))
+
+#     # Calculate the ratio for each year where data is available
+#     ratios_sales = {"Ratio": "Operating Cash Flow to Sales Ratio"}
+#     ratios_fcf = {"Ratio": "Free Cash Flow (FCF)"}
+
+#     for year in sorted(cash_from_operations.keys(), reverse=True)[:5]:
+#         if year in sales_data:
+#             # Calculate Operating Cash Flow to Sales Ratio
+#             operating_cash_flow_to_sales = cash_from_operations[year] / sales_data[year]
+#             ratios_sales[year] = f"{operating_cash_flow_to_sales:.4f}"
+
+#             # Calculate Free Cash Flow (FCF)
+#             free_cash_flow = (
+#                 cash_from_operations[year] - cash_from_investing_activity[year]
+#             )
+#             ratios_fcf[year] = f"{free_cash_flow:.4f}"
+
+#     cash_flow_ratios = [ratios_sales, ratios_fcf]
+
+#     return {"Cash Flow Ratios": cash_flow_ratios}
 
 
 def efficiency_ratios(json_data, share_name):
@@ -151,9 +222,9 @@ def efficiency_ratios(json_data, share_name):
     for year in sorted(working_capital.keys(), reverse=True)[:5]:
         if year in sales_data:
             working_capital_value = float(working_capital[year])
-        # Check if the working capital is zero and handle accordingly
-        if working_capital_value == 0.0:
-            working_capital_value = 1.0  #
+            # Check if the working capital is zero and handle accordingly
+            if working_capital_value == 0.0:
+                working_capital_value = 1.0
             working_capital_turnover = sales_data[year] / working_capital_value
             ratio_working_capital[year] = f"{working_capital_turnover:.4f}"
 
@@ -392,40 +463,34 @@ def other_ratios(json_data, share_name):
     advance_from_customers = {}
     other_liability_items = {}
 
-
     for entry in cash_flows:
         if entry.get("cash flows name") == "Cash from Operating Activity -":
             for year, value in entry.items():
-                # print(value)
-                if year.startswith("Mar"):
+                if year.startswith("Mar") and value:
                     cash_from_operations[year] = float(value.replace(",", ""))
 
     for entry in cash_flows:
         if entry.get("cash flows name") == "Cash from Investing Activity -":
             for year, value in entry.items():
-                # print(value)
-                if year.startswith("Mar"):
+                if year.startswith("Mar") and value:
                     cash_from_investing_activity[year] = float(value.replace(",", ""))
 
     for entry in balance_sheet:
         if entry.get("balance sheet name") == "Trade Payables":
             for year, value in entry.items():
-                if year.startswith("Mar"):
+                if year.startswith("Mar") and value:
                     trade_payables[year] = float(value.replace(",", ""))
 
     for entry in balance_sheet:
         if entry.get("balance sheet name") == "Advance from Customers":
             for year, value in entry.items():
                 if year.startswith("Mar"):
-                    if value == "":
-                        advance_from_customers[year] = 0.0
-                    else:
-                        advance_from_customers[year] = float(value.replace(",", ""))
+                    advance_from_customers[year] = float(value.replace(",", "")) if value else 0.0
 
     for entry in balance_sheet:
         if entry.get("balance sheet name") == "Other liability items":
             for year, value in entry.items():
-                if year.startswith("Mar"):
+                if year.startswith("Mar") and value:
                     other_liability_items[year] = float(value.replace(",", ""))
 
     fcf = {}
@@ -444,8 +509,11 @@ def other_ratios(json_data, share_name):
             fcf[year] = free_cash_flow
 
     for year in sorted(fcf.keys(), reverse=True)[:5]:
-        fcf_yield = market_cap / fcf[year]
-        price_to_free_cash_flow[year] = f"{fcf_yield:.4f}"
+        if fcf[year] != 0:
+            fcf_yield = market_cap / fcf[year]
+            price_to_free_cash_flow[year] = f"{fcf_yield:.4f}"
+        else:
+            price_to_free_cash_flow[year] = "N/A"  # Handle division by zero
 
     for year in sorted(advance_from_customers.keys(), reverse=True)[:5]:
         if year in trade_payables and year in other_liability_items:
@@ -459,12 +527,16 @@ def other_ratios(json_data, share_name):
     for year in sorted(cash_from_operations.keys(), reverse=True)[:5]:
         if year in current_liabilities_ration:
             current_liability_value = float(current_liabilities_ration[year])
-            operating_cash_flow_ = cash_from_operations[year] / current_liability_value
-            operating_cash_flow_ratio[year] = f"{operating_cash_flow_:.4f}"
+            if current_liability_value != 0:
+                operating_cash_flow_ = cash_from_operations[year] / current_liability_value
+                operating_cash_flow_ratio[year] = f"{operating_cash_flow_:.4f}"
+            else:
+                operating_cash_flow_ratio[year] = "N/A"  # Handle division by zero
 
     other_ratio = [price_to_free_cash_flow, operating_cash_flow_ratio]
 
     return {"Other Ratios": other_ratio}
+
 
 
 # def economic_value(screener_data, current_liabilities_ration, market_cap):

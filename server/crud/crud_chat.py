@@ -19,11 +19,14 @@ class CRUDCHAT(CRUDBase[Chat, CreateChat, UpdateChat]):
     def update(self, db: Session, *, db_obj: Chat, obj_in: UpdateChat) -> Chat:
         return super().update(db, db_obj=db_obj, obj_in=obj_in)
 
-    def remove(self, db: Session, *, id: str) -> Optional[Chat]:
+    def remove(self, db: Session, id: str) -> Optional[Chat]:
         return super().remove(db, id=id)
     
     def get_chat_history(self, db:Session, id: str) -> Chat:
         return db.query(Chat).filter(Chat.user_id == id).all()
+    
+    def get_chat_history_by_session_id(self, db:Session, id: str, session_id: str) -> Chat:
+        return db.query(Chat).filter(Chat.user_id == id, Chat.session_id == session_id).all()
 
 
 chat = CRUDCHAT(Chat)
