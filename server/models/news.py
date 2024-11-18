@@ -15,6 +15,7 @@ class NewsItem(Base):
     summary = Column(String)
     classification = Column(String)
     type_of_impact = Column(String)
+    small_description = Column(String)
     description = Column(String)
     sectors = Column(ARRAY(String))
     category = Column(String)

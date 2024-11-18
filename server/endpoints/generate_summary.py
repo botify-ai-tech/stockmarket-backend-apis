@@ -209,18 +209,18 @@ async def general_chat(
                 detailed = overall_summary.get("detailed_analysis")
                 detailed_analysis = regex(detailed)
 
-                data = {
-                    "concise_analysis": concise_analysis,
-                    "detailed_analysis": detailed_analysis,
-                }
+                # data = {
+                #     "concise_analysis": concise_analysis,
+                #     "detailed_analysis": detailed_analysis,
+                # }
 
-                answer = json.dumps(data)
+                # answer = json.dumps(detailed_analysis)
 
                 chat_ = crud.chat.create(
                     db,
                     obj_in=schemas.CreateChat(
                         user_id=current_user.id,
-                        answer=answer,
+                        answer=detailed_analysis,
                         filename=file.filename if file else None,
                         url=url if url else None,
                         session_id=session_id,

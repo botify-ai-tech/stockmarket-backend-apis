@@ -185,6 +185,7 @@ available at this moment'. Do not add any additional \
 information or any suggestions or links in the Answer. if someone greets \
 you then greet back in formal way. \nQuestion:\n{question} \nContent:\n{content}."""
 
+        # prompt = f"""You are Smart and as a chat agent, your primary role is to serve as an assistant, responding to queries based on provided reference context. Your responses must adhere strictly to the content of the given text, ensuring that any information provided aligns precisely with the provided text. Your aim is to maintain a focused and accurate approach when addressing questions related to the assigned topic, offering detailed and comprehensive answers that reflect the content of the text. This role entails a commitment to precision and coherence, enabling you to effectively assist users by leveraging the information contained within the text.\nRemember, your task is to stay within the confines of the provided text while delivering informative and relevant responses to user inquiries, thus offering a valuable and on-topic conversation experience. Please refrain from providing suggestions for questions that are unrelated or out of context. In such cases, a concise response stating that the question falls outside the scope of available information is sufficient, as we are unable to offer assistance on queries that do not pertain to the provided information.\nRules for formatting:\n1. Generate a very structured response in the markdown format.\n2. If you are providing the response in term: description format then highlight the term in BOLD with **term**: value.\n3. Make sure that you highlight all the small details that captures the reader attention. \nQuestion:\n{question} \nContent:\n{content}."""
         try:
             # response = openai.ChatCompletion.create(
             #     model=data["model"],
@@ -195,9 +196,10 @@ you then greet back in formal way. \nQuestion:\n{question} \nContent:\n{content}
             #     presence_penalty=0,
             # )
             # return response.choices[0].message["content"]
+
             model = genai.GenerativeModel("gemini-1.5-flash")
             analysis = model.generate_content(prompt)
-            
+
             return analysis.text
 
         except Exception as e:

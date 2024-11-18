@@ -30,6 +30,7 @@ def jsonify(data):
         "published_date": data.published_date,
         "company_name": data.company_name,
         "stock_name": data.stock_name,
+        "small_description": data.small_description,
         "description": data.description,
         "time_to_out_news": data.time_to_out_news,
         "feed": data.feed,
@@ -46,6 +47,8 @@ def jsonify(data):
         "market_volatility": data.market_volatility,
         "detailed_explanation": data.detailed_explanation,
         "image": data.image,
+        "created_at": str(data.created_at),
+        "updated_at": str(data.updated_at)
     }
 
 
@@ -62,7 +65,9 @@ def globle_news(search: str = None, sector: str = None, skip: Optional[int] = 0,
             existing_news = crud.news.get_new_search_query(db, search, sectors, skip, limit)
             total_news = crud.news.get_total_new_search_query(db, search, sectors)
 
-        all_news_data = [jsonify(results) for results in existing_news]
+
+        all_news_data_ = [jsonify(results) for results in existing_news]
+        all_news_data = sorted(all_news_data_, key=lambda x:x["created_at"], reverse=True)
 
         return JSONResponse(
             status_code=200,
@@ -150,10 +155,10 @@ def get_all_save_news(
 
     if not news_ids:
         return JSONResponse(
-            status_code=404,
+            status_code=200,
             content={
                 "success": False,
-                "data": None,
+                "data": [],
                 "error": "No saved news found.",
                 "message": "User has not saved any news.",
             },
@@ -163,10 +168,10 @@ def get_all_save_news(
 
     if not saved_news:
         return JSONResponse(
-            status_code=404,
+            status_code=200,
             content={
                 "success": False,
-                "data": None,
+                "data": [],
                 "error": "No saved news found for this user.",
                 "message": "No saved news found.",
             },

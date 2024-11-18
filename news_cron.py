@@ -126,6 +126,7 @@ def globle_news():
                     if data["classification"]["primary_class"]
                     else ""
                 )
+                small_description = data["small_description"]["description"] if data["small_description"]["description"] else ""
                 type_of_impact = (
                     data["impact_analysis"]["type_of_impact"]
                     if data["impact_analysis"]["type_of_impact"]
@@ -235,6 +236,7 @@ def globle_news():
             summary=summary,
             classification=classification,
             type_of_impact=type_of_impact,
+            small_description=small_description,
             description=impact_description,
             sectors=sectors_impacted,
             category=category_impacted,
