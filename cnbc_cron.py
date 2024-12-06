@@ -1,5 +1,6 @@
 import json
 import os
+import random
 import time
 import regex as re
 from fastapi import HTTPException
@@ -32,32 +33,6 @@ twenty_four_hours_ago = datetime.now() - timedelta(hours=24)
 
 
 def cnbc_news():
-    # try:
-
-    # driver = webdriver.Chrome()
-    # driver.get("https://www.cnbc.com/world/?region=world")
-
-    # # sign in button
-    # driver.find_element(By.XPATH, "//div[@class='SignInMenu-signInMenu']").click()
-
-    # email = driver.find_element(
-    #     By.XPATH,
-    #     "//input[@class='MuiInputBase-input MuiOutlinedInput-input MuiInputBase-inputMarginDense MuiOutlinedInput-inputMarginDense']",
-    # )
-    # email.clear()
-    # email.send_keys("dharmik301.rejoice@gmail.com")
-
-    # password = driver.find_element(
-    #     By.XPATH,
-    #     "//input[@class='MuiInputBase-input MuiOutlinedInput-input MuiInputBase-inputAdornedEnd MuiOutlinedInput-inputAdornedEnd MuiInputBase-inputMarginDense MuiOutlinedInput-inputMarginDense']",
-    # )
-    # password.clear()
-    # password.send_keys("Dharmik301@")
-
-    # driver.find_element(
-    #     By.XPATH,
-    #     "//button[@class='AuthForms-submitButton AuthForms-signInSubmitButton']",
-    # ).click()
 
     response = requests.get("https://www.cnbc.com/world/?region=world")
     html_content = response.content
@@ -67,6 +42,8 @@ def cnbc_news():
     latest_news_section = soup.find(
         "div", class_="LatestNews-isHomePage LatestNews-isIntlHomepage"
     )
+    time.sleep(random.randint(1, 10))
+
 
     if not latest_news_section:
         raise HTTPException(
@@ -76,37 +53,13 @@ def cnbc_news():
 
     start_news = 0
     for news_item in latest_news_section.select(".LatestNews-item"):
+        time.sleep(random.randint(1, 10))
+
         timestamp = news_item.select_one(".LatestNews-timestamp").text.strip()
         news_link = news_item.select_one(".LatestNews-headline")["href"]
         headline = news_item.select_one(".LatestNews-headline").text.strip()
 
         article_response = requests.get(news_link)
-        # article_response = driver.get(news_link)
-        # sign in button
-        # time.sleep(5)
-        # driver.refresh()
-        # driver.find_element(By.XPATH, "//div[@class='SignInMenu-signInMenu']").click()
-
-        # time.sleep(1)
-        # email = driver.find_element(
-        #     By.XPATH,
-        #     "//input[@class='MuiInputBase-input MuiOutlinedInput-input MuiInputBase-inputMarginDense MuiOutlinedInput-inputMarginDense']",
-        # )
-        # email.clear()
-        # email.send_keys("dharmik301.rejoice@gmail.com")
-
-        # time.sleep(1)
-        # password = driver.find_element(
-        #     By.XPATH,
-        #     "//input[@class='MuiInputBase-input MuiOutlinedInput-input MuiInputBase-inputAdornedEnd MuiOutlinedInput-inputAdornedEnd MuiInputBase-inputMarginDense MuiOutlinedInput-inputMarginDense']",
-        # )
-        # password.clear()
-        # password.send_keys("Dharmik301@")
-        # time.sleep(3)
-        # driver.find_element(
-        #     By.XPATH,
-        #     "//button[@class='AuthForms-submitButton AuthForms-signInSubmitButton']",
-        # ).click()
 
         article_html = article_response.content
         article_soup = BeautifulSoup(article_html, "html.parser")
@@ -164,7 +117,8 @@ def cnbc_news():
 
         while retries > 0 and not success:
             try:
-                time.sleep(4)
+                time.sleep(random.randint(1, 20))
+
 
                 prompt = gemini_prompt(news_item)
                 model = genai.GenerativeModel("gemini-1.5-flash")

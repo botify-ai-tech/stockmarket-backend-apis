@@ -1,10 +1,11 @@
 from typing import Optional, TypeVar
 
 from pydantic import BaseModel
+from operator import or_
 from sqlalchemy.orm import Session
 
 from server.crud.base import CRUDBase
-from server.models.ratio import Ratio
+from server.models.ratio import Ratio, Company, Assessment
 from server.schemas.ratio import CreateRatio, UpdateRatio
 
 UpdateSchemaType = TypeVar("UpdateSchemaType", bound=BaseModel)
@@ -21,9 +22,41 @@ class CRUDRATIO(CRUDBase[Ratio, CreateRatio, UpdateRatio]):
 
     def remove(self, db: Session, *, id: str) -> Optional[Ratio]:
         return super().remove(db, id=id)
-    
-    def get_by_nifty_share(self, db: Session, nifty_sahre: str) -> Optional[Ratio]:
-        return db.query(Ratio).filter(Ratio.nifty_sahre == nifty_sahre).first() 
+
+    def get_ratio_analysis(self, db: Session, symbol: str) -> Optional[Ratio]:
+        return db.query(Ratio).filter(Ratio.share_symbol == symbol).first()
+
+    def get_by_symbol(self, db: Session, share_symbol: str) -> Optional[Assessment]:
+        return (
+            db.query(Assessment).filter(Assessment.share_symbol == share_symbol).all()
+        )
+
+    def get_by_company_details(
+        self, db: Session, share_symbol: str
+    ) -> Optional[Company]:
+        return db.query(Company).filter(Company.share_symbol == share_symbol).first()
+
+    def get_all_companies(
+        self, db: Session, skip: int = 1, limit: int = 10, search: str = None
+    ) -> Optional[Company]:
+        offset = (skip - 1) * limit
+        if search:
+            return (
+                db.query(Company)
+                .filter(
+                    or_(
+                        or_(
+                            Company.share_name.ilike(f"%{search}%"),
+                            Company.sectore.ilike(f"%{search}%"),
+                        ),
+                        Company.industry.ilike(f"%{search}%"),
+                    ),
+                    )
+                .offset(offset)
+                .limit(limit)
+                .all()
+            )
+        return db.query(Company).offset(offset).limit(limit).all()
 
 
 ratio = CRUDRATIO(Ratio)

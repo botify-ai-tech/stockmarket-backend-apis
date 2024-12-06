@@ -6,8 +6,9 @@ from sqlalchemy import pool
 from server.models.news import NewsItem
 from server.models.user import User, EmailOtp
 from server.models.chat import Chat
-from server.models.ratio import Ratio
+from server.models.ratio import Ratio, Assessment
 from server.models.contact import Contact
+from server.models.ratio import Company
 # from server.db.base import Base
 from server.db.base_class import Base
 from alembic import context

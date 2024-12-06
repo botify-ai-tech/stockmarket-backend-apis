@@ -8,13 +8,10 @@ from fastapi import APIRouter, HTTPException, Depends
 
 from server.db.base import SessionLocal
 from server.schemas.news import News
-from server.models.news import NewsItem
-from sqlalchemy import or_
 from sqlalchemy.orm import Session
 from server.endpoints.deps import get_db
 from server import crud, schemas
 from server.utils.auth import get_current_user
-
 
 session = SessionLocal()
 
@@ -48,26 +45,30 @@ def jsonify(data):
         "detailed_explanation": data.detailed_explanation,
         "image": data.image,
         "created_at": str(data.created_at),
-        "updated_at": str(data.updated_at)
+        "updated_at": str(data.updated_at),
     }
 
 
 @news_router.post("/publice-news")
-def globle_news(search: str = None, sector: str = None, skip: Optional[int] = 0, limit: Optional[int] = 10, db: Session = Depends(get_db)):
-
+def globle_news(
+    search: str = None,
+    skip: Optional[int] = 0,
+    limit: Optional[int] = 10,
+    db: Session = Depends(get_db),
+):
     try:
-        if not search:
+        if search:
+            search = re.sub(r"\s+", " ", search).strip() if search else ""
+            existing_news = crud.news.get_new_search_query(db, search, skip, limit)
+            total_news = crud.news.get_total_new_search_query(db, search)
+        else:
             existing_news = crud.news.get_new_without_search_query(db, skip, limit)
             total_news = crud.news.get_total_news_without_search_query(db)
-        else:
-            search = re.sub(r"\s+", " ", search).strip() if search else ""
-            sectors = re.sub(r"\s+", " ", sector).strip() if sector else ""
-            existing_news = crud.news.get_new_search_query(db, search, sectors, skip, limit)
-            total_news = crud.news.get_total_new_search_query(db, search, sectors)
-
 
         all_news_data_ = [jsonify(results) for results in existing_news]
-        all_news_data = sorted(all_news_data_, key=lambda x:x["created_at"], reverse=True)
+        all_news_data = sorted(
+            all_news_data_, key=lambda x: x["created_at"], reverse=True
+        )
 
         return JSONResponse(
             status_code=200,
@@ -148,16 +149,19 @@ def globle_news(
 
 @news_router.post("/get-all-save-news")
 def get_all_save_news(
-    db: Session = Depends(get_db), current_user=Depends(get_current_user)
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+    skip: int = 1,
+    limit: int = 10,
 ):
-    news_saves = crud.news_save.get_news_id(db, current_user.id)
+    news_saves = crud.news_save.get_news_id(db, current_user.id, skip, limit)
     news_ids = [news_save.news_id for news_save in news_saves]
 
     if not news_ids:
         return JSONResponse(
             status_code=200,
             content={
-                "success": False,
+                "success": True,
                 "data": [],
                 "error": "No saved news found.",
                 "message": "User has not saved any news.",
@@ -170,7 +174,7 @@ def get_all_save_news(
         return JSONResponse(
             status_code=200,
             content={
-                "success": False,
+                "success": True,
                 "data": [],
                 "error": "No saved news found for this user.",
                 "message": "No saved news found.",

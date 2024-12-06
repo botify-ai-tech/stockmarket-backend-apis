@@ -29,7 +29,7 @@ class CRUDNEWS(CRUDBase[NewsItem, CreateNews, UpdateNews]):
         return super().update(db, db_obj=db_obj, obj_in=obj_in)
 
     def get_new_search_query(
-        self, db: Session, search: str, sector: str, skip: int = 0, limit: int = 10
+        self, db: Session, search: str, skip: int = 0, limit: int = 10
     ) -> NewsItem:
         return (
             db.query(NewsItem)
@@ -38,7 +38,7 @@ class CRUDNEWS(CRUDBase[NewsItem, CreateNews, UpdateNews]):
                     NewsItem.created_at >= last_24_hours,
                     or_(
                         NewsItem.company_name.ilike(f"%{search}%"),
-                        NewsItem.sectors.any(sector),
+                        NewsItem.sectors.any(search),
                     ),
                 )
             )
@@ -48,7 +48,7 @@ class CRUDNEWS(CRUDBase[NewsItem, CreateNews, UpdateNews]):
         )
 
     def get_total_new_search_query(
-        self, db: Session, search: str, sector: str
+        self, db: Session, search: str, 
     ) -> NewsItem:
         return (
             db.query(NewsItem)
@@ -57,7 +57,7 @@ class CRUDNEWS(CRUDBase[NewsItem, CreateNews, UpdateNews]):
                     NewsItem.created_at >= last_24_hours,
                     or_(
                         NewsItem.company_name.ilike(f"%{search}%"),
-                        NewsItem.sectors.any(sector),
+                        NewsItem.sectors.any(search),
                     ),
                 )
             )

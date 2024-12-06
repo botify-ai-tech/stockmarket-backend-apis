@@ -1,5 +1,6 @@
 import json
 import os
+import random
 import regex as re
 import time
 from dotenv import load_dotenv
@@ -47,6 +48,7 @@ def globle_news():
     # news_items = []
     start_news = 0
     for item in html_contents:
+        time.sleep(random.randint(1, 20))
 
         title = item.find("h2", class_="title").get_text(strip=True)
         description = item.find("div", class_="desc").get_text(strip=True)
@@ -99,7 +101,7 @@ def globle_news():
 
         while retries > 0 and not success:
             try:
-                time.sleep(4)
+                time.sleep(random.randint(1, 10))
 
                 prompt = gemini_prompt(news_item)
                 model = genai.GenerativeModel("gemini-1.5-flash")
@@ -273,21 +275,6 @@ def globle_news():
             "message": "News fetched successfully.",
         },
     )
-
-
-# except HTTPException:
-#     raise
-# except Exception as e:
-#     return JSONResponse(
-#         status_code=500,
-#         content={
-#             "success": False,
-#             "data": None,
-#             "error": str(e),
-#             "message": "Something went wrong!",
-#         },
-#     )
-
 
 if __name__ == "__main__":
     globle_news()
