@@ -198,22 +198,10 @@ async def general_chat(
                 raise HTTPException(
                     status_code=400, detail="Error in generating summary"
                 )
+            if analysis:
 
-            overall_summary = analysis[-1]
-            if overall_summary:
-
-                concise = overall_summary.get("concise_analysis")
-                concise_analysis = regex(concise)
-
-                detailed = overall_summary.get("detailed_analysis")
+                detailed = analysis[0].get("detailed_analysis")
                 detailed_analysis = regex(detailed)
-
-                # data = {
-                #     "concise_analysis": concise_analysis,
-                #     "detailed_analysis": detailed_analysis,
-                # }
-
-                # answer = json.dumps(detailed_analysis)
 
                 chat_ = crud.chat.create(
                     db,
