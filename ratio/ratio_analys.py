@@ -49,22 +49,25 @@ def ratio_analys():
         "max_output_tokens": 8192,
         "response_mime_type": "text/plain",
     }
-    for share in shares[:1]:
+    for share in shares[100:]:
         share = share.strip("\n")
 
         logging.info(share)
 
+        if session.query(Ratio).filter(Ratio.share_symbol == share).first():
+            print("skip data")
+            continue
+
         ratios = (
             session.query(CalculateRatio)
-            .filter(func.trim(CalculateRatio.share_symbol) == share)
+            .filter(CalculateRatio.share_symbol == share)
             .first()
         )
 
         if not ratios:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="no company details found",
-            )
+            with open("not_calculate_ratio.txt", "a") as f:
+                f.write(share + "\n")
+            continue
 
         liquidity_ratio = ratios.liquidity_ratio
         solvency_ratio = ratios.solvency_ratio
@@ -99,6 +102,7 @@ def ratio_analys():
             "gemini-1.5-flash", generation_config=generation_config
         )
         efficiency_analysis = model.generate_content(prompt)
+        breakpoint()
         efficiency_ratio_analysis = filter_data(efficiency_analysis.text)
         logging.info("efficiency ratio analysis")
 
@@ -147,22 +151,36 @@ def ratio_analys():
         valuation_ratios_analysis = filter_data(valuation_analysis.text)
         logging.info("valuation ratio analysis")
 
-        ratio_entry = Ratio(
-            company_id=ratios.company_id,
-            share_symbol=share,
-            liquidity_ratio=liquidity_ratio_analysis,
-            solvency_ratio=solvency_ratio_analysis,
-            efficiency_ratio=efficiency_ratio_analysis,
-            growth_ratio=growth_ratio_analysis,
-            coverage_ratio=coverage_ratio_analysis,
-            financial_ratio=financial_ratio_analysis,
-            profitability_ratio=profitability_ratio_analysis,
-            valuation_ratios=valuation_ratios_analysis,
-        )
+        exist_data = session.query(Ratio).filter(Ratio.share_symbol == share).first()
+        if exist_data:
+            exist_data.liquidity_ratio = liquidity_ratio_analysis
+            exist_data.solvency_ratio = solvency_ratio_analysis
+            exist_data.efficiency_ratio = efficiency_ratio_analysis
+            exist_data.growth_ratio = growth_ratio_analysis
+            exist_data.coverage_ratio = coverage_ratio_analysis
+            exist_data.financial_ratio = financial_ratio_analysis
+            exist_data.profitability_ratio = profitability_ratio_analysis
+            exist_data.valuation_ratios = valuation_ratios_analysis
 
-        session.add(ratio_entry)
-        session.commit()
-        logging.info(" Data Stored in DB")
+            session.commit()
+            logging.info("Updated Data in DB")
+        else:
+            ratio_entry = Ratio(
+                company_id=ratios.company_id,
+                share_symbol=share,
+                liquidity_ratio=liquidity_ratio_analysis,
+                solvency_ratio=solvency_ratio_analysis,
+                efficiency_ratio=efficiency_ratio_analysis,
+                growth_ratio=growth_ratio_analysis,
+                coverage_ratio=coverage_ratio_analysis,
+                financial_ratio=financial_ratio_analysis,
+                profitability_ratio=profitability_ratio_analysis,
+                valuation_ratios=valuation_ratios_analysis,
+            )
+
+            session.add(ratio_entry)
+            session.commit()
+            logging.info(" Data Stored in DB")
 
 
 if __name__ == "__main__":

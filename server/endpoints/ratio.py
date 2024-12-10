@@ -26,6 +26,16 @@ def get_company_symbol(
 ):
     try:
         ratio_details = crud.ratio.get_ratio_analysis(db, symbol)
+        if not ratio_details:
+            return JSONResponse(
+                status_code=200,
+                content={
+                    "success": True,
+                    "error": None,
+                    "data": None,
+                    "message": "No ratio details found. ",
+                },
+            )
 
         response = {
             "share_symbol": ratio_details.share_symbol,
@@ -87,7 +97,7 @@ def assessment(
                     "success": True,
                     "error": None,
                     "data": [],
-                    "message": "No any assessment details found..",
+                    "message": "No any assessment details found.",
                 },
             )
 
@@ -177,6 +187,16 @@ def stock_list(
 ):
     try:
         company = crud.ratio.get_by_company_details(db, symbol)
+        if not company:
+            return JSONResponse(
+            status_code=200,
+            content={
+                "success": True,
+                "error": None,
+                "data": None,
+                "message": "No Company data found.",
+            },
+        )
 
         company_details = {
             "share_name": company.share_name,
@@ -242,6 +262,16 @@ def companies(
 ):
     try:
         companies = crud.ratio.get_all_companies(db, skip, limit, search)
+        if not companies:
+            return JSONResponse(
+            status_code=200,
+            content={
+                "success": True,
+                "error": None,
+                "data": all_companies,
+                "message": "No companies found.",
+            },
+        )
         all_companies = []
         for company in companies:
             company_details = {

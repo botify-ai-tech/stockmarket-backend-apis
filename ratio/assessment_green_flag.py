@@ -21,16 +21,18 @@ from server.utils.prompt import (
 
 load_dotenv()
 
-gemini_ai_key = settings.GEMINI_AI_KEY
+gemini_ai_key = settings.DHARMIK_GEMINI_AI_KEY
 genai.configure(api_key=gemini_ai_key)
 
 import json
+
 session = SessionLocal()
 
 logging.basicConfig(
     level=logging.INFO,  # Log level (INFO, DEBUG, WARNING, ERROR)
     format="%(asctime)s - %(levelname)s - %(message)s",  # Log format
 )
+
 
 def filter_data(data):
     new_data = data.replace("```json\n", "").replace("```", "")
@@ -48,15 +50,12 @@ def assessment_green_flag():
         "max_output_tokens": 8192,
         "response_mime_type": "text/plain",
     }
-    for share in shares[:10]:
+    for share in shares[11:]:
         share = share.strip("\n")
         logging.info(share)
         company = session.query(Company).filter(Company.share_symbol == share).first()
         if not company:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="no company details found",
-            )
+            continue
 
         company_details = {
             "share_name": company.share_name,
@@ -66,7 +65,7 @@ def assessment_green_flag():
             "high_low": company.high_low,
             "pe_ratio": company.pe_ratio,
             "book_value": company.book_value,
-            "dividend_yield": company.dividend_yield,
+            "dividend_yield": company.dividend_yield, 
             "roce": company.roce,
             "roe": company.roe,
             "face_value": company.face_value,
@@ -191,24 +190,45 @@ def assessment_green_flag():
         summary_details = model.generate_content(prompt)
         logging.info("risk assessment analysis")
 
-        assessment_entry = Assessment(
-            company_id=company.id,
-            share_symbol=share,
-            management_assessment=management_assessment_analysis,
-            liquidity_assessment=liquidity_assessment_analysis,
-            debt_assessment=debt_assessment_analysis,
-            equity_assessment=equity_assessment_analysis,
-            revenue_assessment=revenue_assessment_analysis,
-            cost_assessment=cost_assessment_analysis,
-            operational_assessment=operational_assessment_analysis,
-            risk_assessment=risk_assessment_analysis,
-            flag="green",
-            summary=summary_details.text,
+        exist_data = (
+            session.query(Assessment)
+            .filter(Assessment.flag == "green", Assessment.share_symbol == share)
+            .first()
         )
+        if exist_data:
+            exist_data.management_assessment = management_assessment_analysis
+            exist_data.liquidity_assessment = liquidity_assessment_analysis
+            exist_data.debt_assessment = debt_assessment_analysis
+            exist_data.equity_assessment = equity_assessment_analysis
+            exist_data.revenue_assessment = revenue_assessment_analysis
+            exist_data.cost_assessment = cost_assessment_analysis
+            exist_data.operational_assessment = operational_assessment_analysis
+            exist_data.risk_assessment = risk_assessment_analysis
+            exist_data.summary = summary_details.text
 
-        session.add(assessment_entry)
-        session.commit()
-        logging.info(" Data Stored in DB")
+            session.commit()
+            logging.info("Updated Data in DB")
+
+        else:
+
+            assessment_entry = Assessment(
+                company_id=company.id,
+                share_symbol=share,
+                management_assessment=management_assessment_analysis,
+                liquidity_assessment=liquidity_assessment_analysis,
+                debt_assessment=debt_assessment_analysis,
+                equity_assessment=equity_assessment_analysis,
+                revenue_assessment=revenue_assessment_analysis,
+                cost_assessment=cost_assessment_analysis,
+                operational_assessment=operational_assessment_analysis,
+                risk_assessment=risk_assessment_analysis,
+                flag="green",
+                summary=summary_details.text,
+            )
+
+            session.add(assessment_entry)
+            session.commit()
+            logging.info(" Data Stored in DB")
 
 
 if __name__ == "__main__":

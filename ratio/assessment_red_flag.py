@@ -27,10 +27,10 @@ from server.utils.prompt import (
 
 load_dotenv()
 
-gemini_ai_key = settings.GEMINI_AI_KEY
+gemini_ai_key = settings.HARSH_GEMINI_AI_KEY
 genai.configure(api_key=gemini_ai_key)
 
-
+print(gemini_ai_key)
 session = SessionLocal()
 
 logging.basicConfig(
@@ -38,9 +38,11 @@ logging.basicConfig(
     format="%(asctime)s - %(levelname)s - %(message)s",  # Log format
 )
 
+
 def filter_data(data):
     new_data = data.replace("```json\n", "").replace("```", "")
     return json.loads(new_data)
+
 
 def assessment_red_flag():
     with open("ratio\\nsc.txt", "r", encoding="utf-8") as f:
@@ -53,15 +55,12 @@ def assessment_red_flag():
         "max_output_tokens": 8192,
         "response_mime_type": "text/plain",
     }
-    for share in shares[1:10]:
+    for share in shares[11:]:
         share = share.strip("\n")
         logging.info(share)
         company = session.query(Company).filter(Company.share_symbol == share).first()
         if not company:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="no company details found",
-            )
+            continue
 
         company_details = {
             "share_name": company.share_name,
@@ -246,29 +245,54 @@ def assessment_red_flag():
         summary_details = model.generate_content(prompt)
         logging.info("Summary generated")
 
-        assessment_entry = Assessment(
-            company_id=company.id,
-            share_symbol=share,
-            liquidity_assessment=liquidity_assessment_analysis,
-            debt_assessment=debt_assessment_analysis,
-            equity_assessment=equity_assessment_analysis,
-            management_assessment=management_assessment_analysis,
-            revenue_assessment=revenue_assessment_analysis,
-            cost_assessment=cost_assessment_analysis,
-            capital_assessment=capital_assessment_analysis,
-            dividend_assessment=dividend_assessment_analysis,
-            earnings_assessment=earnings_assessment_analysis,
-            receivables_assessment=receivables_assessment_analysis,
-            valuation_assessment=valuation_assessment_analysis,
-            miscellaneous_assessment=miscellaneous_assessment_analysis,
-            other_assessment=other_assessment_analysis,
-            flag="red",
-            summary=summary_details.text,
+        exist_data = (
+            session.query(Assessment)
+            .filter(Assessment.flag == "red", Assessment.share_symbol == share)
+            .first()
         )
-        logging.info(" Data Stored in DB")
+        if exist_data:
+            exist_data.liquidity_assessment = liquidity_assessment_analysis
+            exist_data.debt_assessment = debt_assessment_analysis
+            exist_data.equity_assessment = equity_assessment_analysis
+            exist_data.management_assessment = management_assessment_analysis
+            exist_data.revenue_assessment = revenue_assessment_analysis
+            exist_data.cost_assessment = cost_assessment_analysis
+            exist_data.capital_assessment = capital_assessment_analysis
+            exist_data.dividend_assessment = dividend_assessment_analysis
+            exist_data.earnings_assessment = earnings_assessment_analysis
+            exist_data.receivables_assessment = receivables_assessment_analysis
+            exist_data.valuation_assessment = valuation_assessment_analysis
+            exist_data.miscellaneous_assessment = miscellaneous_assessment_analysis
+            exist_data.other_assessment = other_assessment_analysis
 
-        session.add(assessment_entry)
-        session.commit()
+            session.commit()
+            logging.info("Update Data in DB")
+
+        else:
+
+            assessment_entry = Assessment(
+                company_id=company.id,
+                share_symbol=share,
+                liquidity_assessment=liquidity_assessment_analysis,
+                debt_assessment=debt_assessment_analysis,
+                equity_assessment=equity_assessment_analysis,
+                management_assessment=management_assessment_analysis,
+                revenue_assessment=revenue_assessment_analysis,
+                cost_assessment=cost_assessment_analysis,
+                capital_assessment=capital_assessment_analysis,
+                dividend_assessment=dividend_assessment_analysis,
+                earnings_assessment=earnings_assessment_analysis,
+                receivables_assessment=receivables_assessment_analysis,
+                valuation_assessment=valuation_assessment_analysis,
+                miscellaneous_assessment=miscellaneous_assessment_analysis,
+                other_assessment=other_assessment_analysis,
+                flag="red",
+                summary=summary_details.text,
+            )
+
+            session.add(assessment_entry)
+            session.commit()
+            logging.info(" Data Stored in DB")
 
 
 if __name__ == "__main__":

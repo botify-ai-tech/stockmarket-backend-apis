@@ -41,6 +41,8 @@ logging.basicConfig(
 session = SessionLocal()
 
 
+
+
 def ration():
 
     all_screener_data_list = []
@@ -70,7 +72,7 @@ def ration():
     with open("ratio\\nsc.txt", "r", encoding="utf-8") as f:
         shares = f.readlines()
 
-    for share in shares[214:]:
+    for share in shares[220:]:
         share = share.strip("\n")
         existing_data = session.query(Company).filter(Company.share_symbol == share).first()
         if existing_data:
@@ -467,29 +469,59 @@ def ration():
                 continue
             profit_loss.append(row_data)
 
-        profit_loss_other_table = []
-        for profit_loss_table_other_index in driver.find_elements(
-            By.XPATH,
-            "//section[@id='profit-loss']//div[4]//table[@class='ranges-table']//tbody//tr",
-        ):
-            profit_loss_other_table.append(profit_loss_table_other_index.text)
+        # driver.refresh()
+        # profit_loss_other_table = []
+        # for profit_loss_table_other_index in driver.find_elements(By.XPATH,"//section[@id='profit-loss']//div[3]//table[@class='ranges-table']//tbody//tr",):
+        #     profit_loss_other_table.append(profit_loss_table_other_index.text)
 
-        structured_data = {}
+        # structured_data = {}
+        # breakpoint()
+        # # Helper function to extract the periods and values
+        # def extract_period_values(values):
+        #     return {period.split(": ")[0]: period.split(": ")[1] for period in values}
 
-        # Helper function to extract the periods and values
-        def extract_period_values(values):
-            return {period.split(": ")[0]: period.split(": ")[1] for period in values}
+        # # Iterate over the data_list and structure the data
+        # time.sleep(random.randint(1, 15))
+        # i = 0
+        # while i < len(profit_loss_other_table):
+        #     key = profit_loss_other_table[i]
+        #     values = []
+        #     i += 1
+        #     while i < len(profit_loss_other_table) and ":" in profit_loss_other_table[i]:
+        #         values.append(profit_loss_other_table[i])
+        #         i += 1
+        #     structured_data[key] = extract_period_values(values)
 
-        # Iterate over the data_list and structure the data
-        i = 0
-        while i < len(profit_loss_other_table):
-            key = profit_loss_other_table[i]
-            values = []
-            i += 1
-            while i < len(profit_loss_other_table) and ":" in profit_loss_other_table[i]:
-                values.append(profit_loss_other_table[i])
-                i += 1
-            structured_data[key] = extract_period_values(values)
+        try:
+            pl_other_table_html = driver.find_element(By.XPATH,"//section[@id='profit-loss']//div[4]").get_attribute("outerHTML")
+        except:
+            pl_other_table_html = driver.find_element(By.XPATH,"//section[@id='profit-loss']//div[3]").get_attribute("outerHTML")
+
+        soup = BeautifulSoup(pl_other_table_html, 'html.parser')
+
+        # Extract data from each table
+        tables = soup.find_all('table', class_='ranges-table')
+        data = {}
+
+        # Iterate through each table to extract information
+        for table in tables:
+            # Extract the title of the table (Compounded Sales Growth, etc.)
+            title = table.find('th').get_text().strip()
+
+            # Extract all rows from the table
+            rows = table.find_all('tr')[1:]  # Skip the header row
+
+            # Extract the data for each row
+            table_data = {}
+            for row in rows:
+                columns = row.find_all('td')
+                if len(columns) == 2:
+                    time_period = columns[0].get_text().strip()
+                    value = columns[1].get_text().strip()
+                    table_data[time_period] = value
+            
+            # Add the extracted data for the table to the final dictionary
+            data[title] = table_data
 
         profit_loss_headers = profit_loss[0]
 
@@ -498,7 +530,7 @@ def ration():
             dict(zip(profit_loss_headers, row)) for row in profit_loss[1:]
         ]
 
-        profit_loss_json_data.append(structured_data)
+        profit_loss_json_data.append(data)
 
         all_screener_data_dict[share_name]["Screener"][
             "Profit & Loss"
@@ -627,85 +659,86 @@ def ration():
         shareholding_pattern_dict = {}
         shareholding_pattern_dict["Quarterly"] = {}
         shareholding_pattern_dict["Yearly"] = {}
+        try:
+            for shareholding_pattern_table_index in driver.find_elements(
+                By.XPATH,
+                "//section[@id='shareholding']//div[@id='quarterly-shp']//div[@class='responsive-holder fill-card-width']//table//thead//tr",
+            ):
+                row_data = [
+                    th.text if th.text != "" else "shareholding pattern name"
+                    for th in shareholding_pattern_table_index.find_elements(By.TAG_NAME, "th")
+                ]
 
-        for shareholding_pattern_table_index in driver.find_elements(
-            By.XPATH,
-            "//section[@id='shareholding']//div[@id='quarterly-shp']//div[@class='responsive-holder fill-card-width']//table//thead//tr",
-        ):
-            row_data = [
-                th.text if th.text != "" else "shareholding pattern name"
-                for th in shareholding_pattern_table_index.find_elements(By.TAG_NAME, "th")
+                if row_data == []:
+                    continue
+                shareholding_pattern_quarterly.append(row_data)
+
+            for shareholding_pattern_table_value in driver.find_elements(
+                By.XPATH,
+                "//section[@id='shareholding']//div[@id='quarterly-shp']//div[@class='responsive-holder fill-card-width']//table//tbody//tr",
+            ):
+                row_data = [
+                    td.text
+                    for td in shareholding_pattern_table_value.find_elements(By.TAG_NAME, "td")
+                ]
+
+                if not row_data or row_data == [""]:
+                    continue
+                shareholding_pattern_quarterly.append(row_data)
+
+            shareholding_pattern_headers_q = shareholding_pattern_quarterly[0]
+
+            shareholding_pattern_dict["Quarterly"] = [
+                dict(zip(shareholding_pattern_headers_q, row))
+                for row in shareholding_pattern_quarterly[1:]
             ]
 
-            if row_data == []:
-                continue
-            shareholding_pattern_quarterly.append(row_data)
+            # ===================== Yearly =====================
+            # click on yearly button
+            driver.find_element(
+                By.XPATH,
+                "//section[@id='shareholding']//div[@class='options small margin-0']//button[2]",
+            ).click()
 
-        for shareholding_pattern_table_value in driver.find_elements(
-            By.XPATH,
-            "//section[@id='shareholding']//div[@id='quarterly-shp']//div[@class='responsive-holder fill-card-width']//table//tbody//tr",
-        ):
-            row_data = [
-                td.text
-                for td in shareholding_pattern_table_value.find_elements(By.TAG_NAME, "td")
+            shareholding_pattern_yearly = []
+            for shareholding_pattern_table_index_y in driver.find_elements(
+                By.XPATH,
+                "//section[@id='shareholding']//div[@id='yearly-shp']//div[@class='responsive-holder fill-card-width']//table//thead//tr",
+            ):
+                row_data = [
+                    th.text if th.text != "" else "shareholding pattern name"
+                    for th in shareholding_pattern_table_index_y.find_elements(
+                        By.TAG_NAME, "th"
+                    )
+                ]
+
+                if row_data == []:
+                    continue
+                shareholding_pattern_yearly.append(row_data)
+
+            for shareholding_pattern_table_value_y in driver.find_elements(
+                By.XPATH,
+                "//section[@id='shareholding']//div[@id='yearly-shp']//div[@class='responsive-holder fill-card-width']//table//tbody//tr",
+            ):
+                row_data = [
+                    td.text
+                    for td in shareholding_pattern_table_value_y.find_elements(
+                        By.TAG_NAME, "td"
+                    )
+                ]
+
+                if not row_data or row_data == [""]:
+                    continue
+                shareholding_pattern_yearly.append(row_data)
+
+            shareholding_pattern_headers_y = shareholding_pattern_yearly[0]
+
+            shareholding_pattern_dict["Yearly"] = [
+                dict(zip(shareholding_pattern_headers_y, row))
+                for row in shareholding_pattern_yearly[1:]
             ]
-
-            if not row_data or row_data == [""]:
-                continue
-            shareholding_pattern_quarterly.append(row_data)
-
-        shareholding_pattern_headers_q = shareholding_pattern_quarterly[0]
-
-        shareholding_pattern_dict["Quarterly"] = [
-            dict(zip(shareholding_pattern_headers_q, row))
-            for row in shareholding_pattern_quarterly[1:]
-        ]
-
-        # ===================== Yearly =====================
-        # click on yearly button
-        driver.find_element(
-            By.XPATH,
-            "//section[@id='shareholding']//div[@class='options small margin-0']//button[2]",
-        ).click()
-
-        shareholding_pattern_yearly = []
-        for shareholding_pattern_table_index_y in driver.find_elements(
-            By.XPATH,
-            "//section[@id='shareholding']//div[@id='yearly-shp']//div[@class='responsive-holder fill-card-width']//table//thead//tr",
-        ):
-            row_data = [
-                th.text if th.text != "" else "shareholding pattern name"
-                for th in shareholding_pattern_table_index_y.find_elements(
-                    By.TAG_NAME, "th"
-                )
-            ]
-
-            if row_data == []:
-                continue
-            shareholding_pattern_yearly.append(row_data)
-
-        for shareholding_pattern_table_value_y in driver.find_elements(
-            By.XPATH,
-            "//section[@id='shareholding']//div[@id='yearly-shp']//div[@class='responsive-holder fill-card-width']//table//tbody//tr",
-        ):
-            row_data = [
-                td.text
-                for td in shareholding_pattern_table_value_y.find_elements(
-                    By.TAG_NAME, "td"
-                )
-            ]
-
-            if not row_data or row_data == [""]:
-                continue
-            shareholding_pattern_yearly.append(row_data)
-
-        shareholding_pattern_headers_y = shareholding_pattern_yearly[0]
-
-        shareholding_pattern_dict["Yearly"] = [
-            dict(zip(shareholding_pattern_headers_y, row))
-            for row in shareholding_pattern_yearly[1:]
-        ]
-
+        except:
+            pass
         all_screener_data_dict[share_name]["Screener"][
             "Shareholding Pattern"
         ] = shareholding_pattern_dict
@@ -851,7 +884,7 @@ def ration():
         ]
         sales_growth = all_screener_data_dict[share_name]["Ticker"][0][
             "Company Essentials"
-        ][0]["Sales Growth"]
+        ][0].get("Sales Growth")
         profit_growth = all_screener_data_dict[share_name]["Ticker"][0][
             "Company Essentials"
         ][0]["Profit Growth"]
@@ -998,7 +1031,7 @@ def ration():
 
         claculate_ratio = CalculateRatio(
             company_id=company_entry.id,
-            share_symbol=nse,
+            share_symbol=share,
             liquidity_ratio=liquidity_ratios_data,
             solvency_ratio=solvency_ratios_data,
             efficiency_ratio=efficiency_ratios_data,

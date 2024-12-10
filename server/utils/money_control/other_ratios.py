@@ -896,9 +896,9 @@ def financial_ratios(all_screener_data_dict, share_name):
         if item["cash flows name"] == "Cash from Operating Activity -"), None
     )
     fixed_purchased = next(
-        item
+        (item
         for item in cash_flows
-        if item["cash flows name"] == "Fixed assets purchased"
+        if item["cash flows name"] == "Fixed assets purchased"), None
     )
     fixed_sold = next(
         (item for item in cash_flows if item["cash flows name"] == "Fixed assets sold"), None
@@ -1072,7 +1072,7 @@ def financial_ratios(all_screener_data_dict, share_name):
         if not fixed_purchased.get(year):
             net_capex[year] = 0.0
             continue
-        fixed_purchased_ = float(fixed_purchased[year].replace(",", ""))
+        fixed_purchased_ = 0.0 if fixed_purchased is None else float(fixed_purchased[year].replace(",", ""))
         fixed_sold_ = 0.0 if fixed_sold is None else float(fixed_sold[year].replace(",", ""))
         ratio = round(fixed_purchased_ - fixed_sold_, 2)
         net_capex[year] = ratio
@@ -1193,9 +1193,9 @@ def profitability_ratios(all_screener_data_dict, share_name):
         if item["cash flows name"] == "Cash from Operating Activity -"), None
     )
     fixed_purchased = next(
-        item
+        (item
         for item in cash_flows
-        if item["cash flows name"] == "Fixed assets purchased"
+        if item["cash flows name"] == "Fixed assets purchased"), None
     )
     fixed_sold = next(
         (item for item in cash_flows if item["cash flows name"] == "Fixed assets sold"), None
@@ -1413,7 +1413,7 @@ def profitability_ratios(all_screener_data_dict, share_name):
         if not fixed_purchased.get(year):
             net_capex[year] = 0.0
             continue
-        fixed_purchased_ = float(fixed_purchased[year].replace(",", ""))
+        fixed_purchased_ = 0.0 if fixed_purchased is None else float(fixed_purchased[year].replace(",", ""))
         fixed_sold_ = 0.0 if fixed_sold is None else float(fixed_sold[year].replace(",", ""))
         ratio = round(fixed_purchased_ - fixed_sold_, 2)
         net_capex[year] = ratio

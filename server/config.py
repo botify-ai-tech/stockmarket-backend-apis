@@ -17,6 +17,8 @@ class Settings(BaseSettings):
     MAIL_SERVER: str = os.environ.get("MAIL_SERVER")
     PINECONE_API_KEY: str = os.environ.get("PINECONE_API_KEY")
     GEMINI_AI_KEY: str = os.environ.get("GEMINI_AI_KEY")
+    DHARMIK_GEMINI_AI_KEY: str = os.environ.get("DHARMIK_GEMINI_AI_KEY")
+    HARSH_GEMINI_AI_KEY: str = os.environ.get("HARSH_GEMINI_AI_KEY")
     OPENAI_API_KEY: str = os.environ.get("OPENAI_API_KEY")
     CLIENT_URL: str = os.environ.get("CLIENT_URL")
     SECRET_KEY: str = os.environ.get("SECRET_KEY")

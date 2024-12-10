@@ -4,7 +4,6 @@ import time
 import random
 import requests
 from bs4 import BeautifulSoup
-
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
@@ -23,7 +22,6 @@ def ratio(share):
     remote_url = settings.LAMBDA_CHROME_URL
 
     chrome_options = Options()
-
     chrome_options.browser_version = "latest"
     chrome_options.platform_name = "Windows 10"
     chrome_options.set_capability("build", "scraping-lambdatest")
@@ -35,7 +33,9 @@ def ratio(share):
     # Initialize the remote WebDriver
     driver = webdriver.Remote(command_executor=remote_url, options=chrome_options)
 
-    driver.get("https://www.google.com/")
+    # driver = webdriver.Chrome()
+    driver.maximize_window()
+    driver.get("https://www.screener.in/")
     # time.sleep(random.randint(100, 120))
     search = driver.find_element(By.XPATH, "//textarea[@class='gLFyf']")
     search.send_keys(f"{share} money control")
@@ -126,6 +126,11 @@ def ratio(share):
             }
             data["Ratios"][category].append(ratio_data)
 
+    try:
+        os.system(f'taskkill /F /PID {driver.service.process.pid}')
+        print("force quit in ratio")
+    except:
+        pass
     driver.quit()
     logging.info("collecting ratio data")
 
