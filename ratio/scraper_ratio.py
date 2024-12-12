@@ -48,31 +48,10 @@ def ration():
     all_screener_data_list = []
     all_screener_data_dict = {}
 
-    # driver = webdriver.Chrome()
-
-    # # driver = webdriver.Chrome()
-    # driver.maximize_window()
-    # driver.get("https://www.screener.in/")
-
-    # # login
-    # driver.refresh()
-    # time.sleep(random.randint(1, 10))
-    # driver.find_element(By.XPATH, "//a[@class='button account']").click()
-    # email = driver.find_element(By.XPATH, "//input[@id='id_username']")
-    # email.clear()
-    # email.send_keys("dharmik301.rejoice@gmail.com")
-
-    # password = driver.find_element(By.XPATH, "//input[@id='id_password']")
-    # password.clear()
-    # password.send_keys("Dharmik@301")
-
-    # driver.find_element(By.XPATH, "//button[@class='button-primary']").click()
-    # logging.info("Login")
-
     with open("ratio\\nsc.txt", "r", encoding="utf-8") as f:
         shares = f.readlines()
 
-    for share in shares[220:]:
+    for share in shares[740:]:
         share = share.strip("\n")
         existing_data = session.query(Company).filter(Company.share_symbol == share).first()
         if existing_data:
@@ -288,27 +267,30 @@ def ration():
 
         chat_time_list = []
         chat_median_pe = []
+        try:
+            for chat_time in driver.find_elements(
+                By.XPATH, "//section[@id='chart']//div[@class='options']//button"
+            ):
+                chat_time.click()
+                time.sleep(0.5)
+                chat_time.click()
+                time.sleep(0.5)
+                chat_time.click()
+                chat_time_list.append(chat_time.text)
+                # time.sleep(random.randint(1, 10))
+                median_pe = driver.find_element(
+                    By.XPATH, "//section[@id='chart']//div[@class='flex']//label[2]"
+                ).text
+                chat_median_pe.append(median_pe.split("=")[1])
 
-        for chat_time in driver.find_elements(
-            By.XPATH, "//section[@id='chart']//div[@class='options']//button"
-        ):
-            chat_time.click()
-            time.sleep(0.5)
-            chat_time.click()
-            time.sleep(0.5)
-            chat_time.click()
-            chat_time_list.append(chat_time.text)
-            # time.sleep(random.randint(1, 10))
-            median_pe = driver.find_element(
-                By.XPATH, "//section[@id='chart']//div[@class='flex']//label[2]"
-            ).text
-            chat_median_pe.append(median_pe.split("=")[1])
+            chart_median = []
+            for chat_time_list, chat_median_pe in zip(chat_time_list, chat_median_pe):
+                chart_median.append({"time": chat_time_list, "Median PE": chat_median_pe})
 
-        chart_median = []
-        for chat_time_list, chat_median_pe in zip(chat_time_list, chat_median_pe):
-            chart_median.append({"time": chat_time_list, "Median PE": chat_median_pe})
+            all_screener_data_dict[share_name]["Screener"]["Chart"] = chart_median
+        except:
+            all_screener_data_dict[share_name]["Screener"]["Chart"] = []
 
-        all_screener_data_dict[share_name]["Screener"]["Chart"] = chart_median
 
         # ------------------------------------------------------------ Analysis ------------------------------------------------------------
         logging.info("Analysis")
@@ -868,8 +850,10 @@ def ration():
             "Stock P/E"
         ]
         # about_doc  = all_screener_data_dict[share_name]["Screener"]["company_information_docs"]["about"][0]
+        average_pe = all_screener_data_dict[share_name]["Screener"]["Average P/E"]
 
         enterprise_value = all_screener_data_dict[share_name]["Ticker"][0]["Company Essentials"][0].get("Enterprise Value", None)
+        p_b = all_screener_data_dict[share_name]["Ticker"][0]["Company Essentials"][0].get("P/B", None)
         book_value = all_screener_data_dict[share_name]["Screener"]["share_info"][4][
             "Book Value"
         ]
@@ -987,11 +971,13 @@ def ration():
             market_cap=market_cap,
             high_low=high_low,
             pe_ratio=pe_ratio,
+            pb_ratio=p_b,
             enterprise_value=enterprise_value,
             book_value=book_value,
             dividend_yield=dividend_yield,
             promoter_holding=promoter_holding,
             eps=eps,
+            average_pe=average_pe,
             sectore=sectore,
             industry=industry,
             sales_growth=sales_growth,

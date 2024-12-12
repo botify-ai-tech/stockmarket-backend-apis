@@ -199,7 +199,6 @@ async def general_chat(
                     status_code=400, detail="Error in generating summary"
                 )
             if analysis:
-
                 detailed = analysis[0].get("detailed_analysis")
                 detailed_analysis = regex(detailed)
 
@@ -207,7 +206,7 @@ async def general_chat(
                     db,
                     obj_in=schemas.CreateChat(
                         user_id=current_user.id,
-                        answer=detailed_analysis,
+                        answer=detailed,
                         filename=file.filename if file else None,
                         url=url if url else None,
                         session_id=session_id,

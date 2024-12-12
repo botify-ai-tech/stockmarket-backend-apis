@@ -1,4 +1,5 @@
 import os
+from typing import Optional
 from fastapi.responses import JSONResponse
 from requests import Session
 
@@ -189,14 +190,14 @@ def stock_list(
         company = crud.ratio.get_by_company_details(db, symbol)
         if not company:
             return JSONResponse(
-            status_code=200,
-            content={
-                "success": True,
-                "error": None,
-                "data": None,
-                "message": "No Company data found.",
-            },
-        )
+                status_code=200,
+                content={
+                    "success": True,
+                    "error": None,
+                    "data": None,
+                    "message": "No Company data found.",
+                },
+            )
 
         company_details = {
             "share_name": company.share_name,
@@ -216,6 +217,12 @@ def stock_list(
             "roe": company.roe,
             "eps": company.eps,
             "debt": company.debt,
+            "pb_ratio": company.pb_ratio,
+            "peers_pe": company.average_pe,
+            "sectore_pe": company.sectore_pe,
+            "industry_pe": company.industry_pe,
+            "share_percentage": company.share_price_percentage,
+            "peers_pe": company.average_pe
         }
 
         return JSONResponse(
@@ -256,22 +263,23 @@ def stock_list(
 def companies(
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user),
-    skip: int = 1,
-    limit: int = 10,
+    skip: Optional[int] = 0,
+    limit: Optional[int] = 10,
     search: str = None,
 ):
     try:
         companies = crud.ratio.get_all_companies(db, skip, limit, search)
+        total_count = crud.ratio.get_total_companies(db, search)
         if not companies:
             return JSONResponse(
-            status_code=200,
-            content={
-                "success": True,
-                "error": None,
-                "data": all_companies,
-                "message": "No companies found.",
-            },
-        )
+                status_code=200,
+                content={
+                    "success": True,
+                    "error": None,
+                    "data": all_companies,
+                    "message": "No companies found.",
+                },
+            )
         all_companies = []
         for company in companies:
             company_details = {
@@ -281,6 +289,7 @@ def companies(
                 "high_low": company.high_low,
                 "bse": company.bse,
                 "nse": company.nse,
+                "share_percentage": company.share_price_percentage,
             }
             all_companies.append(company_details)
 
@@ -289,7 +298,7 @@ def companies(
             content={
                 "success": True,
                 "error": None,
-                "data": all_companies,
+                "data": {"companies": all_companies, "total_companies": total_count},
                 "message": "companies details fetch successfully.",
             },
         )

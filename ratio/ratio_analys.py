@@ -1,4 +1,5 @@
 import json
+import time
 from server.db.base import SessionLocal
 from server.models.ratio import CalculateRatio, Company, Ratio
 import google.generativeai as genai
@@ -49,14 +50,14 @@ def ratio_analys():
         "max_output_tokens": 8192,
         "response_mime_type": "text/plain",
     }
-    for share in shares[100:]:
+    for share in shares[15:]:
         share = share.strip("\n")
 
         logging.info(share)
 
-        if session.query(Ratio).filter(Ratio.share_symbol == share).first():
-            print("skip data")
-            continue
+        # if session.query(Ratio).filter(Ratio.share_symbol == share).first():
+        #     print("skip data")
+        #     continue
 
         ratios = (
             session.query(CalculateRatio)
@@ -79,6 +80,7 @@ def ratio_analys():
         valuation_ratios = ratios.valuation_ratios
 
         # liquidity_ratio
+        time.sleep(4)
         prompt = liquidity_ratios_prompt(liquidity_ratio)
         model = genai.GenerativeModel(
             "gemini-1.5-flash", generation_config=generation_config
@@ -88,6 +90,7 @@ def ratio_analys():
         logging.info("liquidity ratio analysis")
 
         # solvency_ratio
+        time.sleep(4)
         prompt = solvency_ratio_prompt(solvency_ratio)
         model = genai.GenerativeModel(
             "gemini-1.5-flash", generation_config=generation_config
@@ -97,16 +100,17 @@ def ratio_analys():
         logging.info("solvency ratio analysis")
 
         # efficiency_ratio
+        time.sleep(4)
         prompt = efficiency_ratio_prompt(efficiency_ratio)
         model = genai.GenerativeModel(
             "gemini-1.5-flash", generation_config=generation_config
         )
         efficiency_analysis = model.generate_content(prompt)
-        breakpoint()
         efficiency_ratio_analysis = filter_data(efficiency_analysis.text)
         logging.info("efficiency ratio analysis")
 
         # growth_ratio
+        time.sleep(4)
         prompt = growth_ratio_prompt(growth_ratio)
         model = genai.GenerativeModel(
             "gemini-1.5-flash", generation_config=generation_config
@@ -116,6 +120,7 @@ def ratio_analys():
         logging.info("growth ratio analysis")
 
         # coverage_ratio
+        time.sleep(4)
         prompt = coverage_ratio_prompt(coverage_ratio)
         model = genai.GenerativeModel(
             "gemini-1.5-flash", generation_config=generation_config
@@ -125,6 +130,7 @@ def ratio_analys():
         logging.info("coverage ratio analysis")
 
         # financial_ratio
+        time.sleep(4)
         prompt = financial_ratio_prompt(financial_ratio)
         model = genai.GenerativeModel(
             "gemini-1.5-flash", generation_config=generation_config
@@ -134,6 +140,7 @@ def ratio_analys():
         logging.info("financial ratio analysis")
 
         # profitability_ratio
+        time.sleep(4)
         prompt = profitability_ratio_prompt(profitability_ratio)
         model = genai.GenerativeModel(
             "gemini-1.5-flash", generation_config=generation_config
@@ -143,6 +150,7 @@ def ratio_analys():
         logging.info("profitability ratio analysis")
 
         # valuation_ratios
+        time.sleep(4)
         prompt = valuation_ratios_prompt(valuation_ratios)
         model = genai.GenerativeModel(
             "gemini-1.5-flash", generation_config=generation_config

@@ -37,9 +37,8 @@ class CRUDRATIO(CRUDBase[Ratio, CreateRatio, UpdateRatio]):
         return db.query(Company).filter(Company.share_symbol == share_symbol).first()
 
     def get_all_companies(
-        self, db: Session, skip: int = 1, limit: int = 10, search: str = None
+        self, db: Session, skip: int = 0, limit: int = 10, search: str = None
     ) -> Optional[Company]:
-        offset = (skip - 1) * limit
         if search:
             return (
                 db.query(Company)
@@ -52,11 +51,32 @@ class CRUDRATIO(CRUDBase[Ratio, CreateRatio, UpdateRatio]):
                         Company.industry.ilike(f"%{search}%"),
                     ),
                     )
-                .offset(offset)
+                .offset(skip)
                 .limit(limit)
                 .all()
             )
-        return db.query(Company).offset(offset).limit(limit).all()
+        return db.query(Company).offset(skip).limit(limit).all()
+    
+
+    def get_total_companies(
+        self, db: Session, search: str = None
+    ) -> Optional[Company]:
+        if search:
+            return (
+                db.query(Company)
+                .filter(
+                    or_(
+                        or_(
+                            Company.share_name.ilike(f"%{search}%"),
+                            Company.sectore.ilike(f"%{search}%"),
+                        ),
+                        Company.industry.ilike(f"%{search}%"),
+                    ),
+                    )
+                .count()
+            )
+        return db.query(Company).count()
+
 
 
 ratio = CRUDRATIO(Ratio)

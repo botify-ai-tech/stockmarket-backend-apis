@@ -6,16 +6,16 @@ def liquidity_ratios(all_screener_data_dict, share_name):
     cash_flow = all_screener_data_dict[share_name]["Screener"]["Cash Flows"]
 
     current_assets = next(
-        item for item in inventory_ if item["balance sheet name"] == "Other Assets -"
+        (item for item in inventory_ if item["balance sheet name"] == "Other Assets -"), None
     )
     inventory = next(
         (item for item in inventory_ if item["balance sheet name"] == "Inventories"), None
     ) 
     prepaid_expenses = next(
-        item for item in inventory_ if item["balance sheet name"] == "Other asset items"
+        (item for item in inventory_ if item["balance sheet name"] == "Other asset items"), None
     )
     cash_and_equivalents = next(
-        item for item in inventory_ if item["balance sheet name"] == "Cash Equivalents"
+        (item for item in inventory_ if item["balance sheet name"] == "Cash Equivalents"), None
     )
     cash_flow_operations = next((
         item
@@ -72,7 +72,7 @@ def liquidity_ratios(all_screener_data_dict, share_name):
         if not current_assets.get(year):
             current_ratio[year] = 0.0
             continue
-        assets = float(current_assets[year].replace(",", ""))
+        assets = 0.0 if current_assets is None else float(current_assets[year].replace(",", ""))
         liabilities = current_liabilities[year]
         if liabilities != 0:
             ratio = round(assets / liabilities, 2)
@@ -88,9 +88,12 @@ def liquidity_ratios(all_screener_data_dict, share_name):
         if not current_assets.get(year):
             quick_ratio[year] = 0.0
             continue
+        if not prepaid_expenses.get(year):
+            quick_ratio[year] = 0.0
+            continue
         assets = 0.0 if current_assets is None else float(str(current_assets[year]).replace(",", ""))
         inv = 0.0 if inventory is None else float(inventory[year].replace(",", ""))
-        pre_exp = float(prepaid_expenses[year].replace(",", ""))
+        pre_exp = 0.0 if prepaid_expenses is None else  float(prepaid_expenses[year].replace(",", ""))
         liabilities = current_liabilities[year]
         if liabilities != 0:
             ratio = round((assets - inv - pre_exp) / liabilities, 2)
@@ -106,7 +109,7 @@ def liquidity_ratios(all_screener_data_dict, share_name):
         if not cash_and_equivalents.get(year):
             cash_ratio[year] = 0.0
             continue
-        cash = float(cash_and_equivalents[year].replace(",", ""))
+        cash = 0.0 if cash_and_equivalents is None else float(cash_and_equivalents[year].replace(",", ""))
         liabilities = current_liabilities[year]
         if liabilities != 0:
             ratio = round(cash / liabilities, 2)

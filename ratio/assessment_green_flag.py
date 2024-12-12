@@ -50,7 +50,7 @@ def assessment_green_flag():
         "max_output_tokens": 8192,
         "response_mime_type": "text/plain",
     }
-    for share in shares[11:]:
+    for share in shares[210:]:
         share = share.strip("\n")
         logging.info(share)
         company = session.query(Company).filter(Company.share_symbol == share).first()
@@ -65,7 +65,7 @@ def assessment_green_flag():
             "high_low": company.high_low,
             "pe_ratio": company.pe_ratio,
             "book_value": company.book_value,
-            "dividend_yield": company.dividend_yield, 
+            "dividend_yield": company.dividend_yield,
             "roce": company.roce,
             "roe": company.roe,
             "face_value": company.face_value,

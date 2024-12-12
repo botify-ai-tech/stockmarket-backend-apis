@@ -55,7 +55,7 @@ def assessment_red_flag():
         "max_output_tokens": 8192,
         "response_mime_type": "text/plain",
     }
-    for share in shares[11:]:
+    for share in shares[158:]:
         share = share.strip("\n")
         logging.info(share)
         company = session.query(Company).filter(Company.share_symbol == share).first()
