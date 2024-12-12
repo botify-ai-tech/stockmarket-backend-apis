@@ -276,7 +276,7 @@ def companies(
                 content={
                     "success": True,
                     "error": None,
-                    "data": all_companies,
+                    "data": None,
                     "message": "No companies found.",
                 },
             )
