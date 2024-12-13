@@ -48,7 +48,7 @@ class CRUDRATIO(CRUDBase[Ratio, CreateRatio, UpdateRatio]):
                             Company.share_name.ilike(f"%{search}%"),
                             Company.sectore.ilike(f"%{search}%"),
                         ),
-                        Company.industry.ilike(f"%{search}%"),
+                        Company.share_symbol.ilike(f"%{search}%"),
                     ),
                     )
                 .offset(skip)
@@ -70,7 +70,7 @@ class CRUDRATIO(CRUDBase[Ratio, CreateRatio, UpdateRatio]):
                             Company.share_name.ilike(f"%{search}%"),
                             Company.sectore.ilike(f"%{search}%"),
                         ),
-                        Company.industry.ilike(f"%{search}%"),
+                        Company.share_symbol.ilike(f"%{search}%"),
                     ),
                     )
                 .count()
