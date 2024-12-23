@@ -27,4 +27,4 @@ langchain==0.3.3
 pinecone-client==5.0.1
 firebase-admin==6.5.0
 bcrypt==4.2.0
-
+lxml
