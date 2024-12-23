@@ -1,0 +1,14 @@
+version: "3.8"
+
+services:
+  app:
+    build:
+      context: .
+      # dockerfile: Dockerfile
+    container_name: fastapi-app
+    # command: fastapi dev /app/app.pyD
+    command: uvicorn server.main:app --host 0.0.0.0 --port 8000 --reload 
+    env_file:
+      - .env
+    ports:
+      - "9000:8000"

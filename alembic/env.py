@@ -9,6 +9,7 @@ from server.models.chat import Chat
 from server.models.ratio import Ratio, Assessment
 from server.models.contact import Contact
 from server.models.ratio import Company
+from server.models.watchlist import Watchlist
 # from server.db.base import Base
 from server.db.base_class import Base
 from alembic import context

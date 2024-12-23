@@ -283,6 +283,7 @@ def companies(
         all_companies = []
         for company in companies:
             company_details = {
+                "id" : company.id,
                 "share_name": company.share_name,
                 "share_symbol": company.share_symbol,
                 "share_price": company.share_price,

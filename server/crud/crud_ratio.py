@@ -35,6 +35,11 @@ class CRUDRATIO(CRUDBase[Ratio, CreateRatio, UpdateRatio]):
         self, db: Session, share_symbol: str
     ) -> Optional[Company]:
         return db.query(Company).filter(Company.share_symbol == share_symbol).first()
+    
+    def get_by_company_id(
+        self, db: Session, id: str
+    ) -> Optional[Company]:
+        return db.query(Company).filter(Company.id == id).first()
 
     def get_all_companies(
         self, db: Session, skip: int = 0, limit: int = 10, search: str = None

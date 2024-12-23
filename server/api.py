@@ -6,6 +6,8 @@ from server.endpoints.generate_summary import summary_router
 from server.endpoints.news import news_router
 from  server.endpoints.user import user_router
 from server.endpoints.contact import contact_router
+from server.endpoints.watchlist import watchlist_router
+from server.endpoints.data import data_router
 
 api_router = APIRouter()
 api_router.include_router(user_router, include_in_schema=True)
@@ -13,4 +15,6 @@ api_router.include_router(news_router, include_in_schema=True, prefix="/news", t
 api_router.include_router(summary_router, include_in_schema=True, prefix="/summary", tags=["summary"])
 api_router.include_router(ratio_router, include_in_schema=True, prefix="/ratio", tags=["ratio"])
 api_router.include_router(contact_router, include_in_schema=True, prefix="/contact", tags=["contact"])
+api_router.include_router(watchlist_router, include_in_schema=True, prefix="/watchlist", tags=["watchlist"])
+api_router.include_router(data_router, include_in_schema=True, prefix="/data", tags=["data"])
 # api_router.include_router(yt_router, include_in_schema=True, prefix="/youtube")

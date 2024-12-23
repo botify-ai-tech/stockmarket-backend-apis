@@ -6,3 +6,4 @@ from .crud_summary import summary
 from .crud_chat import chat
 from .crud_ratio import ratio
 from .crud_contact import contact
+from .crud_watchlist import watchlist

@@ -6,3 +6,4 @@ from .summary import *
 from .chat import *
 from .ratio import *
 from .contact import *
+from .watchlist import *
