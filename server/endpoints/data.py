@@ -125,3 +125,50 @@ async def nifty_50_all_stocks() -> JSONResponse:
                 "message": "Something went wrong!",
             },
         )
+
+
+@data_router.get("/ipo")
+def get_ipo_list():
+    try:
+
+        url = "https://www.chittorgarh.com/ipo/ipo_dashboard.asp"
+        headers = {
+            "Content-Type": "application/json",
+        }
+        res = requests.get(url, headers=headers)
+        tables = pd.read_html(res.text)
+
+        ipo_df = tables[0]
+        columns = ipo_df.columns
+        columns = [column.replace(" ", "") for column in columns]
+        ipo_df.columns = columns
+        data = json.loads(ipo_df.to_json(orient="records"))
+        return JSONResponse(
+            status_code=200,
+            content={
+                "success": True,
+                "error": None,
+                "data": data,
+                "message": "Success",
+            },
+        )
+    except HTTPException as e:
+        return JSONResponse(
+            status_code=e.status_code,
+            content={
+                "success": False,
+                "data": None,
+                "error": str(e.detail),
+                "message": str(e.detail),
+            },
+        )
+    except Exception as e:
+        return JSONResponse(
+            status_code=500,
+            content={
+                "success": False,
+                "data": None,
+                "error": str(e),
+                "message": "Something went wrong!",
+            },
+        )
