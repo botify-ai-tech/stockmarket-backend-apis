@@ -29,7 +29,7 @@ class NIFTY50:
             )
 
 
-def get_nifty_50_data():
+async def get_nifty_50_data():
     PRICE_SYMBOL_LIST = [
         [
             "RELIANCE",
@@ -107,7 +107,7 @@ def get_nifty_50_data():
             # 'Cookie': '_cfuvid=m8wzti1dk4baeQ1hBlAdqdKzAuhHCbM2oAIxDFR96PM-1735030165293-0.0.1.1-604800000'
         }
 
-        response = requests.request("POST", url, headers=headers, data=payload)
+        response = await requests.request("POST", url, headers=headers, data=payload)
         if response.status_code != 200:
             continue
         data = response.json()
