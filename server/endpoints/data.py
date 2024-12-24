@@ -12,7 +12,7 @@ import requests
 import pandas as pd
 import json
 
-from server.utils.nifty50_stocks import NIFTY50
+from server.utils.nifty50_stocks import NIFTY50, get_nifty_50_data
 
 data_router = APIRouter()
 
@@ -89,12 +89,12 @@ async def top_gainer_and_loser(
 async def nifty_50_all_stocks() -> JSONResponse:
 
     try:
-        res = NIFTY50()
-        data = res.fetch_data()
-        if data.status_code != 200:
-            raise HTTPException(detail="Error fetching details", status_code=400)
-        data = data.json()
-
+        # res = NIFTY50()
+        # data = res.fetch_data()
+        # if data.status_code != 200:
+        #     raise HTTPException(detail="Error fetching details", status_code=400)
+        # data = data.json()
+        data = get_nifty_50_data()
         return JSONResponse(
             status_code=200,
             content={
