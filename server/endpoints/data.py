@@ -86,9 +86,7 @@ async def top_gainer_and_loser(
 
 
 @data_router.get("/nifty-50")
-async def nifty_50_all_stocks(
-    current_user: schemas.User = Depends(get_current_user),
-) -> JSONResponse:
+async def nifty_50_all_stocks() -> JSONResponse:
 
     try:
         res = NIFTY50()
