@@ -2,7 +2,7 @@ import requests
 
 
 class NIFTY50:
-    def __init__(self, timeout=5) -> None:
+    def __init__(self, timeout=120) -> None:
         self.__url = "https://www.nseindia.com/api/equity-stockIndices?index=NIFTY%2050"
         self.__session = requests.sessions.Session()
         self.__session.headers = {
