@@ -130,7 +130,7 @@ async def nifty_50_all_stocks() -> JSONResponse:
 @data_router.get("/ipo")
 def get_ipo_list(request: Request):
     try:
-        filter = request.query_params.get("s", "Current")
+        filter = request.query_params.get("s", -9999)
         data = []
         if filter in ["Current", "Upcoming", "Closed"]:
             url = "https://www.chittorgarh.com/ipo/ipo_dashboard.asp"
@@ -146,6 +146,21 @@ def get_ipo_list(request: Request):
             ipo_df.columns = columns
             ipo_df = ipo_df[ipo_df["Status"] == filter]
             data = json.loads(ipo_df.to_json(orient="records"))
+        elif filter == -9999:
+            url = "https://www.chittorgarh.com/ipo/ipo_dashboard.asp"
+            headers = {
+                "Content-Type": "application/json",
+            }
+            res = requests.get(url, headers=headers)
+            tables = pd.read_html(res.text)
+
+            ipo_df = tables[0]
+            columns = ipo_df.columns
+            columns = [column.replace(" ", "") for column in columns]
+            ipo_df.columns = columns
+            data = json.loads(ipo_df.to_json(orient="records"))
+
+
         return JSONResponse(
             status_code=200,
             content={
