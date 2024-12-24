@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import JSONResponse
 from server import crud
 from sqlalchemy.orm import Session
@@ -128,21 +128,24 @@ async def nifty_50_all_stocks() -> JSONResponse:
 
 
 @data_router.get("/ipo")
-def get_ipo_list():
+def get_ipo_list(request: Request):
     try:
+        filter = request.query_params.get("s", "Current")
+        data = []
+        if filter in ["Current", "Upcoming", "Closed"]:
+            url = "https://www.chittorgarh.com/ipo/ipo_dashboard.asp"
+            headers = {
+                "Content-Type": "application/json",
+            }
+            res = requests.get(url, headers=headers)
+            tables = pd.read_html(res.text)
 
-        url = "https://www.chittorgarh.com/ipo/ipo_dashboard.asp"
-        headers = {
-            "Content-Type": "application/json",
-        }
-        res = requests.get(url, headers=headers)
-        tables = pd.read_html(res.text)
-
-        ipo_df = tables[0]
-        columns = ipo_df.columns
-        columns = [column.replace(" ", "") for column in columns]
-        ipo_df.columns = columns
-        data = json.loads(ipo_df.to_json(orient="records"))
+            ipo_df = tables[0]
+            columns = ipo_df.columns
+            columns = [column.replace(" ", "") for column in columns]
+            ipo_df.columns = columns
+            ipo_df = ipo_df[ipo_df["Status"] == filter]
+            data = json.loads(ipo_df.to_json(orient="records"))
         return JSONResponse(
             status_code=200,
             content={
@@ -150,6 +153,7 @@ def get_ipo_list():
                 "error": None,
                 "data": data,
                 "message": "Success",
+                "status": filter,
             },
         )
     except HTTPException as e:
