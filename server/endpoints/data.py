@@ -1,3 +1,4 @@
+from bs4 import BeautifulSoup
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import JSONResponse
 from server import crud
@@ -165,44 +166,100 @@ async def nifty_50_all_stocks() -> JSONResponse:
 @data_router.get("/ipo")
 def get_ipo_list(request: Request):
     try:
-        filter = request.query_params.get("s", -9999)
-        data = []
-        if filter in ["Current", "Upcoming", "Closed"]:
-            url = "https://www.chittorgarh.com/ipo/ipo_dashboard.asp"
-            headers = {
-                "Content-Type": "application/json",
-            }
-            res = requests.get(url, headers=headers)
-            tables = pd.read_html(res.text)
+        # filter = request.query_params.get("s", -9999)
+        # data = []
+        # if filter in ["Current", "Upcoming", "Closed"]:
+        #     url = "https://www.chittorgarh.com/ipo/ipo_dashboard.asp"
+        #     headers = {
+        #         "Content-Type": "application/json",
+        #     }
+        #     res = requests.get(url, headers=headers)
+        #     tables = pd.read_html(res.text)
 
-            ipo_df = tables[0]
-            columns = ipo_df.columns
-            columns = [column.replace(" ", "") for column in columns]
-            ipo_df.columns = columns
-            ipo_df = ipo_df[ipo_df["Status"] == filter]
-            data = json.loads(ipo_df.to_json(orient="records"))
-        elif filter == -9999:
-            url = "https://www.chittorgarh.com/ipo/ipo_dashboard.asp"
-            headers = {
-                "Content-Type": "application/json",
-            }
-            res = requests.get(url, headers=headers)
-            tables = pd.read_html(res.text)
+        #     ipo_df = tables[0]
+        #     columns = ipo_df.columns
+        #     columns = [column.replace(" ", "") for column in columns]
+        #     ipo_df.columns = columns
+        #     ipo_df = ipo_df[ipo_df["Status"] == filter]
+        #     data = json.loads(ipo_df.to_json(orient="records"))
+        # elif filter == -9999:
+        #     url = "https://www.chittorgarh.com/ipo/ipo_dashboard.asp"
+        #     headers = {
+        #         "Content-Type": "application/json",
+        #     }
+        #     res = requests.get(url, headers=headers)
+        #     tables = pd.read_html(res.text)
 
-            ipo_df = tables[0]
-            columns = ipo_df.columns
-            columns = [column.replace(" ", "") for column in columns]
-            ipo_df.columns = columns
-            data = json.loads(ipo_df.to_json(orient="records"))
+        #     ipo_df = tables[0]
+        #     columns = ipo_df.columns
+        #     columns = [column.replace(" ", "") for column in columns]
+        #     ipo_df.columns = columns
+        #     data = json.loads(ipo_df.to_json(orient="records"))
+
+        res = requests.get("https://ticker.finology.in/IPO")
+        soup = BeautifulSoup(res.content, "html.parser")
+        upcoming = soup.find_all("div", {"class": "swiper-wrapper"})[0]
+        ongoing = soup.find_all("div", {"class": "swiper-wrapper"})[1]
+        new_listed = soup.find_all("div", {"class": "swiper-wrapper"})[2]
+
+        upcoming_data = []
+        companies_soup = upcoming.find_all("div", {"class": "swiper-slide"})
+        for company_soup in companies_soup:
+            rows = company_soup.find_all("div", {"class": "row"})
+            data = {}
+            for i in range(len(rows)):
+                if i == 0:
+                    data["company_name"] = rows[i].find("a").text
+                else:
+                    kvs_soup = rows[i].find_all(
+                        "div", {"class": "col-6 col-md-4 mt-4 compess"}
+                    )
+                    for kv_soup in kvs_soup:
+                        key = kv_soup.find("small").text.replace(" ", "_").lower()
+                        value = kv_soup.find("p").text.replace("&nbsp", " ")
+                        data[key] = value
+            upcoming_data.append(data)
+
+        ongoing_data = []
+        companies_soup = ongoing.find_all("div", {"class": "swiper-slide"})
+        for company_soup in companies_soup:
+            rows = company_soup.find_all("div", {"class": "row"})[0]
+            data = {}
+            data["company_name"] = rows.find("a").text
+
+            kvs_soup = rows.find_all("div", {"class": "col-6 col-md-4 mt-4 compess"})
+            for kv_soup in kvs_soup:
+                key = kv_soup.find("small").text.replace(" ", "_").lower()
+                value = kv_soup.find("p").text.replace("&nbsp", " ")
+                data[key] = value
+            ongoing_data.append(data)
+
+        new_listed_data = []
+        companies_soup = new_listed.find_all("div", {"class": "swiper-slide"})
+        for company_soup in companies_soup:
+            rows = company_soup.find_all("div", {"class": "row"})[0]
+            data = {}
+            data["company_name"] = rows.find("a").text
+
+            kvs_soup = rows.find_all("div", {"class": "col-6 col-md-4 mt-4 compess"})
+            for kv_soup in kvs_soup:
+                key = kv_soup.find("small").text.replace(" ", "_").lower()
+                value = kv_soup.find("p").text.replace("&nbsp", " ")
+                data[key] = value
+            new_listed_data.append(data)
 
         return JSONResponse(
             status_code=200,
             content={
                 "success": True,
                 "error": None,
-                "data": data,
+                "data": {
+                    "upcoming": upcoming_data,
+                    "ongoing": ongoing_data,
+                    "new_listed": new_listed_data,
+                },
                 "message": "Success",
-                "status": filter,
+                "status": True,
             },
         )
     except HTTPException as e:
