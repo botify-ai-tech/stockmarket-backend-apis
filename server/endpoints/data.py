@@ -22,33 +22,68 @@ async def top_gainer_and_loser(
     current_user: schemas.User = Depends(get_current_user),
 ) -> JSONResponse:
     try:
-        headers = {"user-agent": "PostmanRuntime/7.43.0"}
-        res = requests.get(
-            "https://www.bseindia.com/markets/equity/EQReports/mtw_gainer_loser.aspx",
+        headers = {
+            "accept": "application/json, text/plain, */*",
+            "accept-language": "en-US,en;q=0.9,fr;q=0.8,es;q=0.7,zh-CN;q=0.6,zh;q=0.5,hr;q=0.4,ru;q=0.3,uk;q=0.2,la;q=0.1,tr;q=0.1,ar;q=0.1,it;q=0.1,de;q=0.1,el;q=0.1,nl;q=0.1,ga;q=0.1",
+            "origin": "https://www.bseindia.com",
+            "priority": "u=1, i",
+            "referer": "https://www.bseindia.com/",
+            "sec-ch-ua": '"Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"',
+            "sec-ch-ua-mobile": "?0",
+            "sec-ch-ua-platform": '"Linux"',
+            "sec-fetch-dest": "empty",
+            "sec-fetch-mode": "cors",
+            "sec-fetch-site": "same-site",
+            "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+        }
+        gainer_res = requests.get(
+            "https://api.bseindia.com/BseIndiaAPI/api/HoTurnover/w?flag=G",
             headers=headers,
+            data={},
         )
-        if res.status_code != 200:
-            raise HTTPException(detail="Error fetching top gainer and losers")
-        drop_column = ["ScripCode", "Group"]
-        columns = pd.read_html(res.content)[1].iloc[0, :].to_list()
-        columns = [
-            column.replace(" ", "").replace("%Change", "ChangePer")
-            for column in columns
+        loser_res = requests.get(
+            "https://api.bseindia.com/BseIndiaAPI/api/HoTurnover/w?flag=L",
+            headers=headers,
+            data={},
+        )
+        gainer_df = pd.DataFrame(gainer_res.json()["Table"])[
+            ["ScripName", "Ltradert", "change_val", "change_percent"]
         ]
-        df = pd.read_html(res.content)[1].iloc[1:, :]
-        df.columns = columns
-        df = df.drop(drop_column, axis=1)
-        top_gainer = df.head(10).to_json(orient="records", index=False)
+        loser_df = pd.DataFrame(loser_res.json()["Table"])[
+            ["ScripName", "Ltradert", "change_val", "change_percent"]
+        ].sort_values(by="change_val", ascending=True)
 
-        columns = pd.read_html(res.content)[3].iloc[0, :].to_list()
-        columns = [
-            column.replace(" ", "").replace("%Change", "ChangePer")
-            for column in columns
-        ]
-        df2 = pd.read_html(res.content)[3].iloc[1:, :]
-        df2.columns = columns
-        df2 = df2.drop(drop_column, axis=1)
-        top_losers = df2.head(10).to_json(orient="records", index=False)
+        gainer_df = gainer_df.sort_values(by="change_percent", ascending=False)
+        loser_df = loser_df.sort_values(by="change_percent", ascending=True)
+
+        gainers = gainer_df.to_json(orient="records")
+        losers = loser_df.to_json(orient="records")
+        # res = requests.get(
+        #     "https://www.bseindia.com/markets/equity/EQReports/mtw_gainer_loser.aspx",
+        #     headers=headers,
+        # )
+        # if res.status_code != 200:
+        #     raise HTTPException(detail="Error fetching top gainer and losers")
+        # drop_column = ["ScripCode", "Group"]
+        # columns = pd.read_html(res.content)[1].iloc[0, :].to_list()
+        # columns = [
+        #     column.replace(" ", "").replace("%Change", "ChangePer")
+        #     for column in columns
+        # ]
+        # df = pd.read_html(res.content)[1].iloc[1:, :]
+        # df.columns = columns
+        # df = df.drop(drop_column, axis=1)
+        # top_gainer = df.head(10).to_json(orient="records", index=False)
+
+        # columns = pd.read_html(res.content)[3].iloc[0, :].to_list()
+        # columns = [
+        #     column.replace(" ", "").replace("%Change", "ChangePer")
+        #     for column in columns
+        # ]
+        # df2 = pd.read_html(res.content)[3].iloc[1:, :]
+        # df2.columns = columns
+        # df2 = df2.drop(drop_column, axis=1)
+        # top_losers = df2.head(10).to_json(orient="records", index=False)
 
         return JSONResponse(
             status_code=200,
@@ -56,8 +91,8 @@ async def top_gainer_and_loser(
                 "success": True,
                 "error": None,
                 "data": {
-                    "top_gainer": json.loads(top_gainer),
-                    "top_losers": json.loads(top_losers),
+                    "top_gainer": json.loads(gainers),
+                    "top_losers": json.loads(losers),
                 },
                 "message": "Success",
             },
@@ -159,7 +194,6 @@ def get_ipo_list(request: Request):
             columns = [column.replace(" ", "") for column in columns]
             ipo_df.columns = columns
             data = json.loads(ipo_df.to_json(orient="records"))
-
 
         return JSONResponse(
             status_code=200,
