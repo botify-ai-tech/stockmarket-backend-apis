@@ -29,16 +29,17 @@ def watchlist_serializer(data: list[Watchlist], db: Session):
     watchlists = []
     for i in data:
         companies = i.company_ids
-        for j in companies:
-            company_details = db.query(Company).filter(Company.id == j).first()
-            company_data = {
-                "id": company_details.id,
-                "company_name": company_details.share_name,
-                "company_symbol": company_details.share_symbol,
-                "price": company_details.share_price,
-                "price_per": company_details.share_price_percentage,
-            }
-            watchlists.append(company_data)
+        company_details = db.query(Company).filter(Company.id.in_(companies)).all()
+        for j in company_details:
+            if j:
+                company_data = {
+                    "id": j.id,
+                    "company_name": j.share_name,
+                    "company_symbol": j.share_symbol,
+                    "price": j.share_price,
+                    "price_per": j.share_price_percentage,
+                }
+                watchlists.append(company_data)
     return watchlists
 
 
