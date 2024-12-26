@@ -56,9 +56,10 @@ async def create_and_update_watchlist(
         updated_watchlist, flag = crud.watchlist.toggle_company_in_watchlist(
             db, watchlist, data.company_id
         )
-
-        # Serialize and return response
-        watchlist_data = watchlist_serializer(updated_watchlist, db)
+        watchlist_data = []
+        if updated_watchlist.company_ids:
+            # Serialize and return response
+            watchlist_data = watchlist_serializer(updated_watchlist, db)
 
         return JSONResponse(
             status_code=200,
@@ -105,7 +106,7 @@ async def create_and_update_watchlist(
     response_model=dict,
     summary="Get user watchlist",
 )
-async def create_and_update_watchlist(
+async def get_watchlist(
     db: Session = Depends(get_db),
     current_user: schemas.User = Depends(get_current_user),
 ) -> JSONResponse:
@@ -114,7 +115,7 @@ async def create_and_update_watchlist(
             db=db, user_id=current_user.id
         )
         watchlist_data = []
-        if watchlist:
+        if watchlist.company_ids:
             watchlist_data = watchlist_serializer(watchlist, db)
         return JSONResponse(
             status_code=200,
