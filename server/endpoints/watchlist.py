@@ -113,9 +113,9 @@ async def create_and_update_watchlist(
         watchlist = crud.watchlist.get_or_create_watchlist(
             db=db, user_id=current_user.id
         )
-
-        watchlist_data = watchlist_serializer(watchlist, db)
-
+        watchlist_data = []
+        if watchlist:
+            watchlist_data = watchlist_serializer(watchlist, db)
         return JSONResponse(
             status_code=200,
             content={
