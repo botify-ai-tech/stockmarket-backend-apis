@@ -268,8 +268,8 @@ def companies(
     search: str = None,
 ):
     try:
-        companies = crud.ratio.get_all_companies(db, skip, limit, search)
-        total_count = crud.ratio.get_total_companies(db, search)
+        companies, total_count = crud.ratio.get_all_companies(db, skip, limit, search)
+        # total_count = crud.ratio.get_total_companies(db, search)
         if not companies:
             return JSONResponse(
                 status_code=200,

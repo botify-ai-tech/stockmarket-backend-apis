@@ -5,6 +5,7 @@ from operator import or_
 from sqlalchemy.orm import Session
 
 from server.crud.base import CRUDBase
+from server.load_symbols import NIFTY50_STOCKS
 from server.models.ratio import Ratio, Company, Assessment
 from server.schemas.ratio import CreateRatio, UpdateRatio
 
@@ -45,9 +46,7 @@ class CRUDRATIO(CRUDBase[Ratio, CreateRatio, UpdateRatio]):
         self, db: Session, skip: int = 0, limit: int = 10, search: str = None
     ) -> Optional[Company]:
         if search:
-            return (
-                db.query(Company)
-                .filter(
+            query = db.query(Company).filter(
                     or_(
                         or_(
                             Company.share_name.ilike(f"%{search}%"),
@@ -56,11 +55,34 @@ class CRUDRATIO(CRUDBase[Ratio, CreateRatio, UpdateRatio]):
                         Company.share_symbol.ilike(f"%{search}%"),
                     ),
                     )
-                .offset(skip)
-                .limit(limit)
-                .all()
-            )
-        return db.query(Company).offset(skip).limit(limit).all()
+            
+            count = query.count()
+            if count > limit:
+                stocks = query.offset(skip).limit(limit).all()
+            else:
+                stocks = query.all()
+
+            return stocks, count
+            # return (
+            #     db.query(Company)
+            #     .filter(
+            #         or_(
+            #             or_(
+            #                 Company.share_name.ilike(f"%{search}%"),
+            #                 Company.sectore.ilike(f"%{search}%"),
+            #             ),
+            #             Company.share_symbol.ilike(f"%{search}%"),
+            #         ),
+            #         )
+            #     .offset(skip)
+            #     .limit(limit)
+            #     .all()
+            # )
+        query = db.query(Company).filter(Company.share_symbol.in_(NIFTY50_STOCKS))
+        stocks = query.offset(skip).limit(limit).all()
+        count = query.count()
+        return stocks, count
+        # return db.query(Company).filter(Company.share_symbol.in_(NIFTY50_STOCKS)).offset(skip).limit(limit).all()
     
 
     def get_total_companies(
