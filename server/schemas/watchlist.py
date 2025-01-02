@@ -35,6 +35,8 @@ def watchlist_serializer(data: list[Watchlist], db: Session):
                 company_data = {
                     "id": j.id,
                     "company_name": j.share_name,
+                    "nse" : j.nse,
+                    "bse" : j.bse,
                     "company_symbol": j.share_symbol,
                     "price": j.share_price,
                     "price_per": j.share_price_percentage,
