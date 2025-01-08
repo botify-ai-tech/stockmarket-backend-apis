@@ -151,7 +151,7 @@ def globle_news(
 def get_all_save_news(
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user),
-    skip: int = 1,
+    skip: int = 0,
     limit: int = 10,
 ):
     news_saves = crud.news_save.get_news_id(db, current_user.id, skip, limit)
