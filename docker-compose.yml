@@ -1,7 +1,7 @@
 version: "3.8"
 
 services:
-  app:
+  backend-app:
     build:
       context: .
     container_name: fastapi-app
@@ -11,9 +11,9 @@ services:
     ports:
       - "9000:8000"
     depends_on:
-      - cron  # Ensure the cron service is ready before starting the app
+      - backend-cron  # Ensure the cron service is ready before starting the app
 
-  cron:
+  backend-cron:
     build:
       context: .
     container_name: cron-python
