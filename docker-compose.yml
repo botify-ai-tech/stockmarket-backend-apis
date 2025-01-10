@@ -1,7 +1,7 @@
 version: "3.8"
 
 services:
-  backend-app:
+  app:
     build:
       context: .
     container_name: backend-app
@@ -11,9 +11,9 @@ services:
     ports:
       - "9000:8000"
     depends_on:
-      - backend-cron  # Ensure the cron service is ready before starting the app
+      - cron  # Ensure the cron service is ready before starting the app
 
-  backend-cron:
+  cron:
     build:
       context: .
     container_name: backend-cron-python
