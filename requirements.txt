@@ -2,7 +2,7 @@ fastapi==0.112.1
 uvicorn==0.30.6
 requests==2.32.3
 yt-dlp==2024.8.6
-openai-whisper @ git+https://github.com/openai/whisper.git@ba3f3cd54b0e5b8ce1ab3de13e32122d0d5f98ab
+# openai-whisper @ git+https://github.com/openai/whisper.git@ba3f3cd54b0e5b8ce1ab3de13e32122d0d5f98ab
 numpy==1.23.5
 pandas==2.2.2
 python-dotenv==1.0.1
@@ -28,3 +28,4 @@ pinecone-client==5.0.1
 firebase-admin==6.5.0
 bcrypt==4.2.0
 lxml
+regex
