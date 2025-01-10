@@ -9,7 +9,7 @@ services:
     env_file:
       - .env
     ports:
-      - "9000:8000"
+      - "7000:8000"
     depends_on:
       - cron  # Ensure the cron service is ready before starting the app
 
