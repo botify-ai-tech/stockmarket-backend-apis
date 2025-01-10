@@ -32,10 +32,10 @@ class CRUDNEWSSAVE(CRUDBase[NewsSave, CreateNewsSave, UpdateNewsSave]):
         self,
         db: Session,
         user_id: str,
-        skip: int = 1,
+        skip: int = 0,
         limit: int = 10,
     ) -> NewsSave:
-        offset = (skip - 1) * limit
+        offset = (skip) * limit
         return (
             db.query(NewsSave)
             .filter(NewsSave.user_id == user_id)
