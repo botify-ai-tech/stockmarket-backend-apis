@@ -79,7 +79,10 @@ class CRUDNEWS(CRUDBase[NewsItem, CreateNews, UpdateNews]):
         return db.query(NewsItem).filter(NewsItem.created_at >= last_24_hours).count()
 
     def saved_news(self, db: Session, news_ids: list[int]) -> list[NewsItem]:
-        return db.query(NewsItem).filter(NewsItem.id.in_(news_ids)).all()
+        query = db.query(NewsItem).filter(NewsItem.id.in_(news_ids))
+        data = query.all()
+        count = query.count()
+        return data, count
 
     def get_48_old_news(self, db: Session) -> NewsItem:
         return db.query(NewsItem).filter(NewsItem.created_at < cutoff_time).all()

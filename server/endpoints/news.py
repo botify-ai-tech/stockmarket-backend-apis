@@ -168,7 +168,7 @@ def get_all_save_news(
             },
         )
 
-    saved_news = crud.news.saved_news(db, news_ids=news_ids)
+    saved_news, count = crud.news.saved_news(db, news_ids=news_ids)
 
     if not saved_news:
         return JSONResponse(
@@ -186,6 +186,7 @@ def get_all_save_news(
         content={
             "success": True,
             "data": [jsonify(news) for news in saved_news],
+            "total_news" : count,
             "error": None,
             "message": "Saved news fetched successfully.",
         },
