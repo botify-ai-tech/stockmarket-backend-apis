@@ -4,7 +4,7 @@ services:
   backend-app:
     build:
       context: .
-    container_name: fastapi-app
+    container_name: backend-app
     command: uvicorn server.main:app --host 0.0.0.0 --port 8000 --reload
     env_file:
       - .env
@@ -16,7 +16,7 @@ services:
   backend-cron:
     build:
       context: .
-    container_name: cron-python
+    container_name: backend-cron-python
     command: sh -c "cron && tail -f /var/log/cnbc_cron.log /var/log/news_cron.log"
     env_file:
       - .env
