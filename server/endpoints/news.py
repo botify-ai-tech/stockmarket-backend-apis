@@ -154,7 +154,7 @@ def get_all_save_news(
     skip: int = 0,
     limit: int = 10,
 ):
-    news_saves = crud.news_save.get_news_id(db, current_user.id, skip, limit)
+    news_saves, count = crud.news_save.get_news_id(db, current_user.id, skip, limit)
     news_ids = [news_save.news_id for news_save in news_saves]
 
     if not news_ids:
@@ -168,7 +168,7 @@ def get_all_save_news(
             },
         )
 
-    saved_news, count = crud.news.saved_news(db, news_ids=news_ids)
+    saved_news = crud.news.saved_news(db, news_ids=news_ids)
 
     if not saved_news:
         return JSONResponse(

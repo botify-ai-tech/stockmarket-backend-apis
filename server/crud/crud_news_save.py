@@ -36,13 +36,10 @@ class CRUDNEWSSAVE(CRUDBase[NewsSave, CreateNewsSave, UpdateNewsSave]):
         limit: int = 10,
     ) -> NewsSave:
         offset = (skip) * limit
-        return (
-            db.query(NewsSave)
-            .filter(NewsSave.user_id == user_id)
-            .offset(offset)
-            .limit(limit)
-            .all()
-        )
+        query = db.query(NewsSave).filter(NewsSave.user_id == user_id)
+        count = query.count()
+        data = query.offset(offset).limit(limit).all()
+        return data, count
 
     def existing_save(self, db: Session, user_id: str, news_id: str) -> NewsSave:
         return (
