@@ -1,0 +1,10 @@
+version: "3.8"
+
+services:
+  cron:
+      build:
+        context: .
+      container_name: backend-cron-python
+      command: sh -c "cron && tail -f /var/log/cnbc_cron.log /var/log/news_cron.log"
+      env_file:
+        - .env
