@@ -74,13 +74,13 @@ The analysis should be presented in this clear structure:
             "type_of_impact": "individual_stock",
             "majority_market_impact": {
                 {
-                    "is_impacted": false,
+                    "is_impacted": "true or false",
                     "impact_description": "write description if the majority of the market is impacted, focusing on overall market trends important to investors"
                 }
             },
             "sectors_impacted": {
                 {
-                    "is_impacted": false,
+                    "is_impacted": "true or false",
                     "sector_list": [
                         "Write sector names here, like Tech, Healthcare, which would concern investors"
                     ]
@@ -88,7 +88,7 @@ The analysis should be presented in this clear structure:
             },
             "stocks_impacted": {
                 {
-                    "is_impacted": true,
+                    "is_impacted": "true or false",
                     "stock_list": [
                         "Provide the corresponding stock ticker symbol for the company, ensuring it is listed on any major stock exchange worldwide, including but not limited to the New York Stock Exchange (NYSE), NASDAQ, London Stock Exchange (LSE), National Stock Exchange (NSE), or Bombay Stock Exchange (BSE)."
                     ]
@@ -98,7 +98,7 @@ The analysis should be presented in this clear structure:
     },
     "category_impacted": {
         {
-            "is_impacted": false,
+            "is_impacted": "true or false",
             "category_list": [
                 "Write category names here, like Market Movement, Regulatory/Policy Updates, which would concern investors"
             ]
@@ -106,13 +106,13 @@ The analysis should be presented in this clear structure:
     },
     "Country": {
         {
-            "is_country": false,
+            "is_country": "true or false",
             "country_name": "Country Name"
         }
     },
     "company_name": {
         {
-            "is_company_name": false,
+            "is_company_name": "true or false",
             "company_name": "India"
         }
     },
