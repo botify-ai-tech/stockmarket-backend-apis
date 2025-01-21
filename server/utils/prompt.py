@@ -51,87 +51,87 @@ Your role is to analyze financial news articles and break down their potential i
 
 <output_format>
 The analysis should be presented in this clear structure:
-{
-    "article": {
-        {
+{{
+    "article": {{
+        {{
             "title": "",
             "published_date": "",
             "summary": ""
-        }
-    },
-    "classification": {
-        {
+        }}
+    }},
+    "classification": {{
+        {{
             "primary_class": "breaking_news"
-        }
-    },
-    "small_description": {
-        {
+        }}
+    }},
+    "small_description": {{
+        {{
             "description": "Write a brief description of the news article, focusing on the key points that would interest investors and financial professionals."
-        }
-    },
-    "impact_analysis": {
-        {
+        }}
+    }},
+    "impact_analysis": {{
+        {{
             "type_of_impact": "individual_stock",
-            "majority_market_impact": {
-                {
+            "majority_market_impact": {{
+                {{
                     "is_impacted": "true or false",
                     "impact_description": "write description if the majority of the market is impacted, focusing on overall market trends important to investors"
-                }
-            },
-            "sectors_impacted": {
-                {
+                }}
+            }},
+            "sectors_impacted": {{
+                {{
                     "is_impacted": "true or false",
                     "sector_list": [
                         "Write sector names here, like Tech, Healthcare, which would concern investors"
                     ]
-                }
-            },
-            "stocks_impacted": {
-                {
+                }}
+            }},
+            "stocks_impacted": {{
+                {{
                     "is_impacted": "true or false",
                     "stock_list": [
                         "Provide the corresponding stock ticker symbol for the company, ensuring it is listed on any major stock exchange worldwide, including but not limited to the New York Stock Exchange (NYSE), NASDAQ, London Stock Exchange (LSE), National Stock Exchange (NSE), or Bombay Stock Exchange (BSE)."
                     ]
-                }
-            }
-        }
-    },
-    "category_impacted": {
-        {
+                }}
+            }}
+        }}
+    }},
+    "category_impacted": {{
+        {{
             "is_impacted": "true or false",
             "category_list": [
                 "Write category names here, like Market Movement, Regulatory/Policy Updates, which would concern investors"
             ]
-        }
-    },
-    "Country": {
-        {
+        }}
+    }},
+    "Country": {{
+        {{
             "is_country": "true or false",
             "country_name": "Country Name"
-        }
-    },
-    "company_name": {
-        {
+        }}
+    }},
+    "company_name": {{
+        {{
             "is_company_name": "true or false",
             "company_name": "India"
-        }
-    },
-    "impact_explanation": {
-        {
+        }}
+    }},
+    "impact_explanation": {{
+        {{
             "scale_of_impact": "",
             "timeframe_of_impact": "",
-            "nature_of_impact": {
-                {
+            "nature_of_impact": {{
+                {{
                     "investor_sentiment": "",
                     "market_volatility": ""
-                }
-            },
+                }}
+            }},
             "Impact_detailed_explanation": [
                 "Write a detailed and numbered explanation of the impact here, analyzing the consequences for investors, such as how the news will influence stock prices, investor confidence, and overall market sentiment."
             ]
-        }
-    }
-}
+        }}
+    }}
+}}
 </output_format>
 
 <important_note>
