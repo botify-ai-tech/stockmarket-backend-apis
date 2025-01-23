@@ -17,7 +17,7 @@ async def validate_email_send_otp(db, email, user_id, key=None):
         token = jwt_token(data={"id": user_id})
         link = (
                 str(settings.CLIENT_URL)
-                + "/v1/user/reset-forgot-password?"
+                + "/reset-password?"
                 + "token="
                 + str(token)
             )
