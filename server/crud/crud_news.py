@@ -42,13 +42,16 @@ class CRUDNEWS(CRUDBase[NewsItem, CreateNews, UpdateNews]):
                     ),
                 )
             )
+            .order_by(NewsItem.created_at.desc())
             .offset(skip)
             .limit(limit)
             .all()
         )
 
     def get_total_new_search_query(
-        self, db: Session, search: str, 
+        self,
+        db: Session,
+        search: str,
     ) -> NewsItem:
         return (
             db.query(NewsItem)
@@ -70,6 +73,7 @@ class CRUDNEWS(CRUDBase[NewsItem, CreateNews, UpdateNews]):
         return (
             db.query(NewsItem)
             .filter(NewsItem.created_at >= last_24_hours)
+            .order_by(NewsItem.created_at.desc())
             .offset(skip)
             .limit(limit)
             .all()
