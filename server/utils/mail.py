@@ -77,7 +77,7 @@ def get_signup_link_template(link, username: str):
 
 
 async def send_email(email, otp=None, link=None, username=None):
-    subject, body = get_signup_link_template(link, username) if link else get_signup_otp_template(otp, username)
+    body, subject = get_signup_link_template(link, username) if link else get_signup_otp_template(otp, username)
     message = MessageSchema(
         subject=subject,
         recipients=[email],
