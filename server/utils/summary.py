@@ -59,8 +59,145 @@ async def gpt_summarize(text, retries=2):
             # GEMINI
             model = genai.GenerativeModel("gemini-1.5-flash")
             analysis = model.generate_content(
-                f"""As an expert financial analyst, you're tasked with the careful evaluation of a company's Annual or Quarterly report. This company is specifically listed on the Indian Stock Market. In your analysis, you should address a series of predefined questions that generally arise in the mind of an investor or trader studying such a report. \nYour job is to provide comprehensive and accurate answers to these questions. Ensure that your responses are, clear, and substantiated with relevant data and information directly from the report. It is crucial that you avoid speculations, inferences, or assumptions that are not backed by the information presented in the report. \nIn addition to addressing these individual questions, your analysis should culminate in an overall inference or conclusion about the company's status and prospects based on the data presented in the report. This inference should provide a clear, concise summary of the company's financial situation and its potential for future growth, as evident from the report. \nPlease strictly adhere to the facts and figures presented in the report and do not extrapolate or hypothesize ('hallucinate') beyond what is explicitly stated or implied by the data. Remember to maintain objectivity and accuracy throughout your analysis.\n\nOutput Format:\n{{\n "FinancialPerformance": {{\n"questions": [\n  {{\n "question": "Is the company's revenue growing consistently YoY and QoQ?",\n "answer": "Write the detailed answer of the question and Strictly Do not hallucinate at all. If you don't get the answer from the context then answer with Not found."\n  }},\n  {{\n "question": "How does the earnings per share (EPS) compare to previous quarters/years?",\n "answer": "Write the detailed answer of the question and Strictly Do not hallucinate at all. If you don't get the answer from the context then answer with Not found."\n  }},\n  {{\n "question": "Are the operating margins improving or declining, and why?",\n "answer": "Write the detailed answer of the question and Strictly Do not hallucinate at all. If you don't get the answer from the context then answer with Not found."\n  }},\n  {{\n "question": "What factors contributed to the company\u2019s net income growth or decline?",\n "answer": "Write the detailed answer of the question and Strictly Do not hallucinate at all. If you don't get the answer from the context then answer with Not found."\n  }}\n],\n"overall_inference": "Write overall Analysis using above questions and answers in 50 words. Bullet point wise. It should be in the form of markdown language."\n }},\n "KeyFinancialStatements": {{\n"IncomeStatement": {{\n  "questions": [\n {{\n"question": "What are the major drivers of revenue and profitability?",\n"answer": "Write the detailed answer of the question and Strictly Do not hallucinate at all. If you don't get the answer from the context then answer with Not found."\n }},\n {{\n"question": "Are there any significant one-time gains or losses impacting results?",\n"answer": "Write the detailed answer of the question and Strictly Do not hallucinate at all. If you don't get the answer from the context then answer with Not found."\n }}\n  ],\n  "overall_inference": "Write overall Analysis using above questions and answers in 50 words. Bullet point wise. It should be in the form of markdown language."\n}},\n"BalanceSheet": {{\n  "questions": [\n {{\n"question": "Has the company\u2019s cash position improved or worsened?",\n"answer": "Write the detailed answer of the question and Strictly Do not hallucinate at all. If you don't get the answer from the context then answer with Not found."\n }},\n {{\n"question": "Is there a significant increase in liabilities or reduction in assets?",\n"answer": "Write the detailed answer of the question and Strictly Do not hallucinate at all. If you don't get the answer from the context then answer with Not found."\n }},\n {{\n"question": "How has shareholder equity changed over time?",\n"answer": "Write the detailed answer of the question and Strictly Do not hallucinate at all. If you don't get the answer from the context then answer with Not found."\n }}\n  ],\n  "overall_inference": "Write overall Analysis using above questions and answers in 50 words. Bullet point wise. It should be in the form of markdown language."\n}},\n"CashFlowStatement": {{\n  "questions": [\n {{\n"question": "Is the company generating sufficient cash from operations?",\n"answer": "Write the detailed answer of the question and Strictly Do not hallucinate at all. If you don't get the answer from the context then answer with Not found."\n }},\n {{\n"question": "Are there any major investments or divestments in the investing activities?",\n"answer": "Write the detailed answer of the question and Strictly Do not hallucinate at all. If you don't get the answer from the context then answer with Not found."\n }},\n {{\n"question": "How much cash is being used for debt repayment, dividends, or share buybacks?",\n"answer": "Write the detailed answer of the question and Strictly Do not hallucinate at all. If you don't get the answer from the context then answer with Not found."\n }}\n  ],\n  "overall_inference": "Write overall Analysis using above questions and answers in 50 words. Bullet point wise. It should be in the form of markdown language."\n}}\n }}\n}}\nInput:{text}"""
+                f"""You are an expert financial analyst assigned to evaluate a company's Annual or Quarterly Report. This company is listed on the Indian Stock Market. Your role is to analyze the report by internally addressing 50 critical financial questions that are commonly reviewed by investors and traders. Your analysis must be objective, data-backed, and strictly fact-based. Do not speculate or make assumptions beyond the given data.
+                Strick Instruction:
+                    - Strictly adhere to the facts and figures presented in the report and do not extrapolate or hypothesize ('hallucinate') beyond what is explicitly stated or implied by the data.
+                    - If data is not provide, avoid mentioning of data is not there.
+                Your task is to extract key insights from the financial document and present them in the structured format below.
+
+                Output Format:
+                    - Strictly follow the output format JSON:
+                    {{
+                        "FinancialPerformance": {{
+                            "questions": [
+                            {{
+                                "question": "Is the company's revenue growing consistently YoY and QoQ?",
+                                "answer": "Write the detailed answer based on the report. If the answer is not found in the document, respond with 'Not found'."
+                            }},
+                            {{
+                                "question": "How does the earnings per share (EPS) compare to previous quarters/years?",
+                                "answer": "Write the detailed answer based on the report. If the answer is not found in the document, respond with 'Not found'."
+                            }},
+                            {{
+                                "question": "Are the operating margins improving or declining, and why?",
+                                "answer": "Write the detailed answer based on the report. If the answer is not found in the document, respond with 'Not found'."
+                            }},
+                            {{
+                                "question": "What factors contributed to the company’s net income growth or decline?",
+                                "answer": "Write the detailed answer based on the report. If the answer is not found in the document, respond with 'Not found'."
+                            }},
+                            {{
+                                "question": "What are the company’s key sources of revenue, and have there been any major changes?",
+                                "answer": "Write the detailed answer based on the report. If the answer is not found in the document, respond with 'Not found'."
+                            }}
+                            ],
+                            "overall_inference": "Summarize findings from the above questions in markdown format. Use bullet points."
+                        }},
+                        "KeyFinancialStatements": {{
+                            "IncomeStatement": {{
+                            "questions": [
+                                {{
+                                "question": "What are the major drivers of revenue and profitability?",
+                                "answer": "Write the detailed answer based on the report. If the answer is not found in the document, respond with 'Not found'."
+                                }},
+                                {{
+                                "question": "Are there any significant one-time gains or losses impacting results?",
+                                "answer": "Write the detailed answer based on the report. If the answer is not found in the document, respond with 'Not found'."
+                                }},
+                                {{
+                                "question": "Has the company’s cost of goods sold (COGS) increased or decreased, and what is driving the change?",
+                                "answer": "Write the detailed answer based on the report. If the answer is not found in the document, respond with 'Not found'."
+                                }}
+                            ],
+                            "overall_inference": "Summarize findings from the above questions in markdown format. Use bullet points."
+                            }},
+                            "BalanceSheet": {{
+                            "questions": [
+                                {{
+                                "question": "Has the company’s cash position improved or worsened?",
+                                "answer": "Write the detailed answer based on the report. If the answer is not found in the document, respond with 'Not found'."
+                                }},
+                                {{
+                                "question": "Is there a significant increase in liabilities or reduction in assets?",
+                                "answer": "Write the detailed answer based on the report. If the answer is not found in the document, respond with 'Not found'."
+                                }},
+                                {{
+                                "question": "How has shareholder equity changed over time?",
+                                "answer": "Write the detailed answer based on the report. If the answer is not found in the document, respond with 'Not found'."
+                                }},
+                                {{
+                                "question": "What is the company’s current debt-to-equity ratio, and how does it compare historically?",
+                                "answer": "Write the detailed answer based on the report. If the answer is not found in the document, respond with 'Not found'."
+                                }}
+                            ],
+                            "overall_inference": "Summarize findings from the above questions in markdown format. Use bullet points."
+                            }},
+                            "CashFlowStatement": {{
+                            "questions": [
+                                {{
+                                "question": "Is the company generating sufficient cash from operations?",
+                                "answer": "Write the detailed answer based on the report. If the answer is not found in the document, respond with 'Not found'."
+                                }},
+                                {{
+                                "question": "Are there any major investments or divestments in the investing activities?",
+                                "answer": "Write the detailed answer based on the report. If the answer is not found in the document, respond with 'Not found'."
+                                }},
+                                {{
+                                "question": "How much cash is being used for debt repayment, dividends, or share buybacks?",
+                                "answer": "Write the detailed answer based on the report. If the answer is not found in the document, respond with 'Not found'."
+                                }},
+                                {{
+                                "question": "Is the company free cash flow positive or negative?",
+                                "answer": "Write the detailed answer based on the report. If the answer is not found in the document, respond with 'Not found'."
+                                }}
+                            ],
+                            "overall_inference": "Summarize findings from the above questions in markdown format. Use bullet points."
+                            }}
+                        }},
+                        "MarketPerformance": {{
+                            "questions": [
+                            {{
+                                "question": "Has the company’s stock price shown significant fluctuations in the past quarter/year?",
+                                "answer": "Write the detailed answer based on the report. If the answer is not found in the document, respond with 'Not found'."
+                            }},
+                            {{
+                                "question": "What is the company’s current Price-to-Earnings (P/E) ratio, and how does it compare to industry averages?",
+                                "answer": "Write the detailed answer based on the report. If the answer is not found in the document, respond with 'Not found'."
+                            }},
+                            {{
+                                "question": "What is the current dividend yield, and has it changed significantly?",
+                                "answer": "Write the detailed answer based on the report. If the answer is not found in the document, respond with 'Not found'."
+                            }}
+                            ],
+                            "overall_inference": "Summarize findings from the above questions in markdown format. Use bullet points."
+                        }},
+                        "CompanyOutlook": {{
+                            "questions": [
+                            {{
+                                "question": "Has the company issued any forward guidance on revenue, profit, or expenses?",
+                                "answer": "Write the detailed answer based on the report. If the answer is not found in the document, respond with 'Not found'."
+                            }},
+                            {{
+                                "question": "What are the key risks mentioned in the report that could impact future performance?",
+                                "answer": "Write the detailed answer based on the report. If the answer is not found in the document, respond with 'Not found'."
+                            }},
+                            {{
+                                "question": "Is the company making significant capital expenditures for growth?",
+                                "answer": "Write the detailed answer based on the report. If the answer is not found in the document, respond with 'Not found'."
+                            }}
+                            ],
+                            "overall_inference": "Summarize findings from the above questions in markdown format. Use bullet points."
+                        }}
+                        }}
+
+                Input and the content: {text}
+                 
+                
+                """
             )
+            # analysis = model.generate_content(
+            #     f"""As an expert financial analyst, you're tasked with the careful evaluation of a company's Annual or Quarterly report. This company is specifically listed on the Indian Stock Market. In your analysis, you should address a series of predefined questions that generally arise in the mind of an investor or trader studying such a report. \nYour job is to provide comprehensive and accurate answers to these questions. Ensure that your responses are, clear, and substantiated with relevant data and information directly from the report. It is crucial that you avoid speculations, inferences, or assumptions that are not backed by the information presented in the report. \nIn addition to addressing these individual questions, your analysis should culminate in an overall inference or conclusion about the company's status and prospects based on the data presented in the report. This inference should provide a clear, concise summary of the company's financial situation and its potential for future growth, as evident from the report. \nPlease strictly adhere to the facts and figures presented in the report and do not extrapolate or hypothesize ('hallucinate') beyond what is explicitly stated or implied by the data. Remember to maintain objectivity and accuracy throughout your analysis.\n\nOutput Format:\n{{\n "FinancialPerformance": {{\n"questions": [\n  {{\n "question": "Is the company's revenue growing consistently YoY and QoQ?",\n "answer": "Write the detailed answer of the question and Strictly Do not hallucinate at all. If you don't get the answer from the context then answer with Not found."\n  }},\n  {{\n "question": "How does the earnings per share (EPS) compare to previous quarters/years?",\n "answer": "Write the detailed answer of the question and Strictly Do not hallucinate at all. If you don't get the answer from the context then answer with Not found."\n  }},\n  {{\n "question": "Are the operating margins improving or declining, and why?",\n "answer": "Write the detailed answer of the question and Strictly Do not hallucinate at all. If you don't get the answer from the context then answer with Not found."\n  }},\n  {{\n "question": "What factors contributed to the company\u2019s net income growth or decline?",\n "answer": "Write the detailed answer of the question and Strictly Do not hallucinate at all. If you don't get the answer from the context then answer with Not found."\n  }}\n],\n"overall_inference": "Write overall Analysis using above questions and answers in 50 words. Bullet point wise. It should be in the form of markdown language."\n }},\n "KeyFinancialStatements": {{\n"IncomeStatement": {{\n  "questions": [\n {{\n"question": "What are the major drivers of revenue and profitability?",\n"answer": "Write the detailed answer of the question and Strictly Do not hallucinate at all. If you don't get the answer from the context then answer with Not found."\n }},\n {{\n"question": "Are there any significant one-time gains or losses impacting results?",\n"answer": "Write the detailed answer of the question and Strictly Do not hallucinate at all. If you don't get the answer from the context then answer with Not found."\n }}\n  ],\n  "overall_inference": "Write overall Analysis using above questions and answers in 50 words. Bullet point wise. It should be in the form of markdown language."\n}},\n"BalanceSheet": {{\n  "questions": [\n {{\n"question": "Has the company\u2019s cash position improved or worsened?",\n"answer": "Write the detailed answer of the question and Strictly Do not hallucinate at all. If you don't get the answer from the context then answer with Not found."\n }},\n {{\n"question": "Is there a significant increase in liabilities or reduction in assets?",\n"answer": "Write the detailed answer of the question and Strictly Do not hallucinate at all. If you don't get the answer from the context then answer with Not found."\n }},\n {{\n"question": "How has shareholder equity changed over time?",\n"answer": "Write the detailed answer of the question and Strictly Do not hallucinate at all. If you don't get the answer from the context then answer with Not found."\n }}\n  ],\n  "overall_inference": "Write overall Analysis using above questions and answers in 50 words. Bullet point wise. It should be in the form of markdown language."\n}},\n"CashFlowStatement": {{\n  "questions": [\n {{\n"question": "Is the company generating sufficient cash from operations?",\n"answer": "Write the detailed answer of the question and Strictly Do not hallucinate at all. If you don't get the answer from the context then answer with Not found."\n }},\n {{\n"question": "Are there any major investments or divestments in the investing activities?",\n"answer": "Write the detailed answer of the question and Strictly Do not hallucinate at all. If you don't get the answer from the context then answer with Not found."\n }},\n {{\n"question": "How much cash is being used for debt repayment, dividends, or share buybacks?",\n"answer": "Write the detailed answer of the question and Strictly Do not hallucinate at all. If you don't get the answer from the context then answer with Not found."\n }}\n  ],\n  "overall_inference": "Write overall Analysis using above questions and answers in 50 words. Bullet point wise. It should be in the form of markdown language."\n}}\n }}\n}}\nInput:{text}"""
+            # )
             return analysis
         except Exception as e:
             logging.error(
