@@ -59,5 +59,5 @@ async def validate_email_send_otp(db, email, user_id, key=None, username=None):
 
     
 
-    await send_email(email, key, link)
+    await send_email(email, key, link, username=username)
     return True
