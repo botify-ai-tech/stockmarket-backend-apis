@@ -9,7 +9,7 @@ from server.utils.auth import jwt_token
 from server.utils.mail import send_email
 
 
-async def validate_email_send_otp(db, email, user_id, key=None):
+async def validate_email_send_otp(db, email, user_id, key=None, username=None):
     time_now = datetime.utcnow()
     link = None
     if not key:
@@ -32,7 +32,7 @@ async def validate_email_send_otp(db, email, user_id, key=None):
                 db_obj=old_otp_obj,
                 obj_in=schemas.EmailOtpUpdate(created_at=time_now, attempts=1),
             )
-            await send_email(email, key, link)
+            await send_email(email, key, link, username=username)
             return True
         if (attempts >= 10) and (
             (((old_otp_obj.updated_at - old_otp_obj.created_at).total_seconds()) / 60)

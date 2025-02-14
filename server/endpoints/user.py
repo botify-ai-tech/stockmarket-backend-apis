@@ -179,7 +179,7 @@ async def sign_up(data: schemas.UserCreateInput, db: Session = Depends(get_db)):
                 ),
             )
         otp = str(random.randint(99999, 999999))
-        otp_sent = await validate_email_send_otp(db, email, user.id, key=otp)
+        otp_sent = await validate_email_send_otp(db, email, user.id, key=otp, username=user.username)
         if otp_sent:
             return JSONResponse(
                 status_code=200,
@@ -314,9 +314,9 @@ async def resend_otp(data: schemas.EmailSchema, db: Session = Depends(get_db)):
             )
         if data.type == "sign_up":
             otp = str(random.randint(99999, 999999))
-            otp_sent = await validate_email_send_otp(db, email, user_obj.id, key=otp)
+            otp_sent = await validate_email_send_otp(db, email, user_obj.id, key=otp, username=user_obj.username)
         else:
-            otp_sent = await validate_email_send_otp(db, email, user_obj.id, key=None)
+            otp_sent = await validate_email_send_otp(db, email, user_obj.id, key=None, username=user_obj.username)
         if otp_sent:
             return JSONResponse(
                 status_code=200,
@@ -445,7 +445,7 @@ async def forgot_password_send_otp(
                 status_code=status.HTTP_400_BAD_REQUEST, detail="User not found."
             )
 
-        otp_sent = await validate_email_send_otp(db, email, user_obj.id, key=None)
+        otp_sent = await validate_email_send_otp(db, email, user_obj.id, key=None, username=user_obj.username)
         if otp_sent:
             return JSONResponse(
                 status_code=200,
