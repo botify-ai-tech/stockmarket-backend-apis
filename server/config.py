@@ -24,5 +24,15 @@ class Settings(BaseSettings):
     SECRET_KEY: str = os.environ.get("SECRET_KEY")
     LAMBDA_CHROME_URL: str = os.environ.get("LAMBDA_CHROME_URL")
 
+    GEMINI_API_KEY_ONE : str = os.environ.get("GEMINI_API_KEY_ONE")
+    GEMINI_API_KEY_TWO : str = os.environ.get("GEMINI_API_KEY_TWO")
+    GEMINI_API_KEY_THREE : str = os.environ.get("GEMINI_API_KEY_THREE")
+    GEMINI_API_KEY_FIVE : str = os.environ.get("GEMINI_API_KEY_FIVE")
+    # GEMINI_API_KEY_SIX : str = os.environ.get("GEMINI_API_KEY_SIX")
+    GEMINI_API_KEY_SEVEN : str = os.environ.get("GEMINI_API_KEY_SEVEN")
+    GEMINI_API_KEY_EIGHT : str = os.environ.get("GEMINI_API_KEY_EIGHT")
+    GEMINI_API_KEY_NINE : str = os.environ.get("GEMINI_API_KEY_NINE")
+    GEMINI_API_KEY_TEN : str = os.environ.get("GEMINI_API_KEY_TEN")
+
 
 settings = Settings()

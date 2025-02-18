@@ -10,7 +10,7 @@ import fitz
 import google.generativeai as genai
 from dotenv import load_dotenv
 from concurrent.futures import ThreadPoolExecutor
-
+from server.config import settings
 from server.utils.backgound_task import background_pinecone_task
 
 load_dotenv()
@@ -57,6 +57,7 @@ async def gpt_summarize(text, retries=2):
             # analysis = response.choices[0].message.content
 
             # GEMINI
+            genai.configure(api_key=settings.GEMINI_API_KEY_EIGHT)
             model = genai.GenerativeModel("gemini-1.5-flash")
             analysis = model.generate_content(
                 f"""You are an expert financial analyst assigned to evaluate a company's Annual or Quarterly Report. This company is listed on the Indian Stock Market. Your role is to analyze the report by internally addressing 50 critical financial questions that are commonly reviewed by investors and traders. Your analysis must be objective, data-backed, and strictly fact-based. Do not speculate or make assumptions beyond the given data.
