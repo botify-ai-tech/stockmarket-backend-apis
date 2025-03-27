@@ -85,6 +85,8 @@ class UserProfile(BaseModel):
     role: Optional[str] = None
     device: Optional[str] = None
     is_social: Optional[bool] = False
+    tour_step:Optional[int] = 0
+    tour_taken:Optional[bool] = False
 
 
 class ChangePassword(BaseModel):
@@ -105,3 +107,7 @@ class GoogleAuthSchema(BaseModel):
 
 class DeleteUser(BaseModel):
     email: str
+
+class UpdatetourSetps(BaseModel):
+    tour_step:int
+    tour_taken:bool

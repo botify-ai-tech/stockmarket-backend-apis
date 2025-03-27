@@ -22,7 +22,7 @@ from server.utils.auth import (
 from server.utils.common import validate_email_send_otp
 from firebase_admin import credentials, auth
 from server.endpoints.deps import get_db
-
+from server.models.user import User
 
 cred = credentials.Certificate("credentials.json")
 firebase_admin.initialize_app(cred)
@@ -115,7 +115,7 @@ async def login_for_access_token(
 
 
 @user_router.post("/profile", response_model=schemas.UserProfile)
-async def get_profile(current_user=Depends(get_current_user)):
+async def get_profile(current_user:User=Depends(get_current_user)):
     try:
         profile = schemas.UserProfile(
             id=current_user.id,
@@ -125,6 +125,8 @@ async def get_profile(current_user=Depends(get_current_user)):
             role=current_user.role,
             device=current_user.device,
             is_social=current_user.is_social,
+            tour_step = current_user.tour_step if current_user.tour_step is not None else 0,
+            tour_taken=current_user.tour_taken if current_user.tour_taken is not None else False
         )
         return JSONResponse(
             status_code=200,
@@ -155,6 +157,31 @@ async def get_profile(current_user=Depends(get_current_user)):
                 "message": "Something went wrong!",
             },
         )
+
+
+@user_router.patch("/tour_step")
+def update_tour_steps(payload:schemas.UpdatetourSetps,current_user:User=Depends(get_current_user),db: Session = Depends(get_db)):
+    current_user.tour_step = payload.tour_step
+    current_user.tour_taken = payload.tour_taken
+    try:
+        db.add(current_user)
+        db.commit()
+        db.refresh(current_user)
+        return JSONResponse(
+            {
+                "success":True,
+                "data":"User tour data updated"
+            }
+        )
+    except Exception as e:
+        return JSONResponse(
+            {
+                "success":False,
+                "data":None,
+                "error":str(e)
+            }
+        )
+    
 
 
 @user_router.post("/signup")
