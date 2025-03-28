@@ -174,6 +174,7 @@ def update_tour_steps(payload:schemas.UpdatetourSetps,current_user:User=Depends(
             }
         )
     except Exception as e:
+        print(str(e))
         return JSONResponse(
             {
                 "success":False,
