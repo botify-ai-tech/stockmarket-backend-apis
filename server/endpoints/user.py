@@ -159,7 +159,7 @@ async def get_profile(current_user:User=Depends(get_current_user)):
         )
 
 
-@user_router.patch("/tour_step")
+@user_router.post("/tour_step")
 def update_tour_steps(payload:schemas.UpdatetourSetps,current_user:User=Depends(get_current_user),db: Session = Depends(get_db)):
     current_user.tour_step = payload.tour_step
     current_user.tour_taken = payload.tour_taken
