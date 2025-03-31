@@ -95,7 +95,7 @@ class ChangePassword(BaseModel):
 
 
 class ResetPassword(BaseModel):
-    email: EmailStr
+    # email: EmailStr
     new_password: str
 
 class RefreshToken(BaseModel):

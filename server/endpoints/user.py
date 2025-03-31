@@ -519,21 +519,27 @@ async def reset_forgot_password(
         id = verify_token.id
         user = crud.user.get_by_id(db, id=id)
         if user:
-            email = user.email
-            if not email == data.email:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Please provide a valid email address. Your email is not registered on our website.",
-                )
+            
+            # email = user.email
+            # if not email == data.email:
+            #     raise HTTPException(
+            #         status_code=status.HTTP_400_BAD_REQUEST,
+            #         detail="Please provide a valid email address. Your email is not registered on our website.",
+            #     )
 
             new_password = data.new_password
 
             hashed_password = get_password_hash(new_password)
+            # user.hashed_password = hashed_password
+            # db.add(user)
+            # db.commit()
+            # db.refresh(user)
             crud.user.update(
                 db,
                 db_obj=user,
                 obj_in=schemas.UserUpdate(hashed_password=hashed_password),
             )
+
 
             return JSONResponse(
                 status_code=200,
