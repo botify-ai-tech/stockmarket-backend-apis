@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, Text, INTEGER
 from sqlalchemy.orm import relationship
 
 from server.db.base_class import Base
@@ -21,7 +21,8 @@ class User(Base):
     is_social = Column(Boolean, default=False)
     device = Column(String)
     role = Column(String, default=0)
-
+    tour_taken = Column(Boolean,default=False)
+    tour_step = Column(INTEGER,default=0)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
