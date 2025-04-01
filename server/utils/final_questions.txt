@@ -1,0 +1,58 @@
+1. What is the company's total revenue per the annual report?
+2. Has the company's revenue changed since last fiscal year(s)?
+3. What are the net earnings of the company per the report?
+4. How is the company’s expenditure broken down?
+5. What is the company’s operational profit margin?
+6. Has the company experienced a rise or a fall in net income since last year(s)?
+7. Have any major investment risks been outlined in the report?
+8. What does the company's total equity amount to?
+9. Can the company's current and future liabilities be explained?
+10. What is the dividend per-share paid by the company this year versus last year(s)?
+11. What is the company's earnings per share (EPS)?
+12. What does the company's price-to-earnings (P/E) ratio amount to?
+13. What are the company's primary financial and non-financial performance indicators?
+14. What is the company's return on equity (ROE)?
+15. How much of the company's budget was allocated towards research and development?
+16. Can the company's debt-to-equity ratio be explained?
+17. Did the company provide any projections for its future financials?
+18. What are the income-generating business activities for the company?
+19. How much cash and cash equivalents does the company currently hold?
+20. What trends are discernable in the company's inventory turnover ratio?
+21. Has there been a change in the amount of tax paid by the company this year compared to last year(s)?
+22. What were the major capital expenditures made by the company this fiscal year?
+23. What are the primary sources of cash inflow and outflow for the company?
+24. What is the current ratio of the company?
+25. Are there any impairments of the company's assets?
+26. What is the company's return on assets (ROA)?
+27. Are there any off-balance sheet liabilities?
+28. Have there been changes in the company's accounting policies recently?
+29. Can you provide a summarization of the company's risk management strategies and compliance?
+30. Is the company involved in any legal or regulatory issues?
+31. What are the key strategic initiatives outlined in the annual report alongside their financial implications?
+32. Can the key highlights of the auditor's report be explained?
+33. How does the company's fiscal performance compare to its industry benchmarks/peers?
+34. Were there any notable mergers, acquisitions, or divestitures this year and if so, what were their financial impacts?
+35. What are the strategies and projections for the company's sustainable growth?
+36. How does the company perceive its anticipated impact from the macroeconomic environment on its financials?
+37. How does the company finance its activities: ratio of debt vs equity?
+38. Can you provide a breakdown of the company's revenue sources?
+39. Have there been any changes in the cost of goods sold (COGS)? How does it compare to the revenue?
+40. Can you discuss the trend in the gross profit margin over the fiscal year?
+41. Is there a significant change identified in Research and Development (R&D) expenses?
+42. Have the company's interest expenses increased or decreased in this fiscal year?
+43. Provide a summary of the company's cash flow statement for this fiscal year.
+44. Can you explain the net operating cash flows? 
+45. Has there been any significant investing cash flows made by the company?
+46. What is the trend in the cash flow from financing activities?
+47. Can you give a brief on the company's summarized balance sheet for this fiscal year?
+48. How has the company's total asset base changed from last year(s)?
+49. Have there been a significant amount of transactions with related parties?
+50. Does the report mention any event that might have a significant future impact on the financials?
+51. What is the opinion of the auditors on the company's financial statements?
+52. Can you identify and explain any red flags raised by auditors?
+53. Does the company's performance sync with its stated objectives and strategies?
+54. Is the company's dividend distribution sustainable?
+55. Does the company have adequate insurance against its risk exposures? 
+56. How has the company's performance been affected by the macroeconomic conditions?
+57. What are the key strategic initiatives taken this fiscal year?
+58. Can you outline the company's planned growth for the future?
