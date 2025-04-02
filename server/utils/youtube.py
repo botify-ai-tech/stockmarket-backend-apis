@@ -66,8 +66,8 @@ async def translate_text(url, source_language='hi', dest_language='en'):
     return translated_chunks
 
 async def generate_youtube_summary(url,retries=2,user_id=None, background_tasks=None):
-    print(url)
     text = await translate_text(url)
+    print(text[:20])
     if not text:
         text.error("No text provided for summarization.")
         return "[ERROR: No text to summarize]"
@@ -162,6 +162,7 @@ async def generate_youtube_summary(url,retries=2,user_id=None, background_tasks=
             model_instance = genai.GenerativeModel(model)
             response1 = model_instance.generate_content(prompt)
             response1 = response1.text
+            print(f"---"*100)
             response2 = []
             response2.append(
                 {
