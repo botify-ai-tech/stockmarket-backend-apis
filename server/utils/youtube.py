@@ -56,7 +56,8 @@ async def translate_text(url, source_language='hi', dest_language='en'):
     chunk_size = 2200
     chunks = [transcript[i:i+chunk_size] for i in range(0, len(transcript), chunk_size)]
 
-    source_lang = await get_available_languages(url) # Get source language once
+    source_lang = await get_available_languages(url)
+    print(source_lang) # Get source language once
     translated_chunks = []
 
     for chunk in chunks:
