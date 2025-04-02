@@ -1,10 +1,11 @@
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 
 # from server.config import settings
 # from server.db.init_db import init_db
 
-from .api import api_router
+from server.api import api_router
 
 async def app_startup():
     try:
@@ -27,7 +28,7 @@ app = FastAPI(
 )
 
 app.include_router(api_router, prefix="/v1")
-
+app.mount("/static", StaticFiles(directory="static"), name="static")
 app.add_middleware(
     CORSMiddleware,
     allow_origins="*",
