@@ -66,7 +66,7 @@ async def translate_text(url, source_language='hi', dest_language='en'):
     return translated_chunks
 
 async def generate_youtube_summary(url,retries=2,user_id=None, background_tasks=None):
-    retries = int(retries) if isinstance(retries, (int, str)) and str(retries).isdigit() else 2
+    print(url)
     text = await translate_text(url)
     if not text:
         text.error("No text provided for summarization.")
