@@ -15,6 +15,7 @@ from fastapi.responses import JSONResponse
 from server import crud, schemas
 from server.utils.auth import get_current_user
 from server.utils.summary import generate_financial_summary
+from server.utils.youtube import generate_youtube_summary
 from sqlalchemy.orm import Session
 from server.endpoints.deps import get_db
 from server.utils.pinecone import PineconeExecute
@@ -225,7 +226,7 @@ async def general_chat(
                     "content_topic": chat_.content_topic,
                     "created_at": str(chat_.created_at),
                 }
-
+                
                 return JSONResponse(
                     status_code=200,
                     content={
@@ -319,6 +320,159 @@ async def general_chat(
                 "message": "Something went wrong!",
             },
         )
+
+
+
+
+@summary_router.post("/youtube-summary")
+async def general_chat(
+    url: Optional[str] = Form(None),
+    question: Optional[str] = Form(None),
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+    background_tasks: BackgroundTasks = BackgroundTasks(),
+    session_id: Optional[str] = Form(None),
+    content_topic: Optional[str] = Form(None),
+):
+    try:
+        if not session_id:
+            session_id = str(uuid.uuid4())
+
+        if (question and url):
+            raise HTTPException(
+                status_code=400,
+                detail="Please sent any one 'url' or 'question'.",
+            )
+
+        if not question:
+            user_id = current_user.id
+            analysis = await generate_youtube_summary(
+                 url, user_id, background_tasks
+            )
+            if not analysis:
+                raise HTTPException(
+                    status_code=400, detail="Error in generating summary"
+                )
+            if analysis:
+                detailed = analysis[0].get("detailed_analysis")
+
+                chat_ = crud.chat.create(
+                    db,
+                    obj_in=schemas.CreateChat(
+                        user_id=current_user.id,
+                        answer=detailed,
+                        url=url if url else None,
+                        session_id=session_id,
+                        content_topic=content_topic,
+                    ),
+                )
+
+                response = {
+                    "id": chat_.id,
+                    "user_id": chat_.user_id,
+                    "question": chat_.question,
+                    "answer": chat_.answer,
+                    "filename": chat_.filename,
+                    "url": chat_.url,
+                    "session_id": chat_.session_id,
+                    "content_topic": chat_.content_topic,
+                    "created_at": str(chat_.created_at),
+                }
+                return JSONResponse(
+                    status_code=200,
+                    content={
+                        "success": True,
+                        "data": response,
+                        "error": None,
+                        "message": "Bot answer generated successfully.",
+                    },
+                )
+
+        else:
+            user_id = current_user.id
+            query_text = question
+            if not query_text:
+                raise HTTPException(status_code=400, detail="Query text is required")
+
+            pine_cone = PineconeExecute(user_id=user_id, texts=query_text)
+            query_embedding = pine_cone.embed_text_with_retries(text=query_text)
+            if not query_embedding:
+                raise HTTPException(
+                    status_code=500, detail="Failed to generate query embedding"
+                )
+
+            results = pine_cone.search_in_pinecone(query_embedding=query_embedding)
+
+            content = (
+                " ".join([res["metadata"]["text"] for res in results])
+                if results
+                else []
+            )
+
+            if content:
+                answer = pine_cone.construct_prompt(
+                    content=content, question=query_text
+                )
+            else:
+                answer = (
+                    "No relevant information found Please provied the valide details."
+                )
+
+            chat_ = crud.chat.create(
+                db,
+                obj_in=schemas.CreateChat(
+                    user_id=user_id,
+                    question=query_text,
+                    answer=answer,
+                    session_id=session_id,
+                    content_topic=content_topic,
+                ),
+            )
+
+            response = {
+                "id": chat_.id,
+                "user_id": chat_.user_id,
+                "question": chat_.question,
+                "answer": chat_.answer,
+                "filename": chat_.filename,
+                "url": chat_.url,
+                "session_id": chat_.session_id,
+                "content_topic": chat_.content_topic,
+                "created_at": str(chat_.created_at),
+            }
+
+            return JSONResponse(
+                status_code=200,
+                content={
+                    "success": True,
+                    "data": response,
+                    "error": None,
+                    "message": "Bot answer generated successfully.",
+                },
+            )
+
+    except HTTPException as e:
+        return JSONResponse(
+            status_code=e.status_code,
+            content={
+                "success": False,
+                "data": None,
+                "error": str(e.detail),
+                "message": str(e.detail),
+            },
+        )
+    except Exception as e:
+        return JSONResponse(
+            status_code=500,
+            content={
+                "success": False,
+                "data": None,
+                "error": str(e),
+                "message": "Something went wrong!",
+            },
+        )
+
+
 
 
 @summary_router.delete("/delete-chat/{session_id}")
