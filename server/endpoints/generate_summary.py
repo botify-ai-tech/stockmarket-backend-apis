@@ -1,3 +1,4 @@
+import traceback
 import uuid
 import regex as re
 from typing import Optional
@@ -610,6 +611,7 @@ async def general_chat(
             )
 
     except HTTPException as e:
+        traceback.print_exc()
         return JSONResponse(
             status_code=e.status_code,
             content={
@@ -620,6 +622,7 @@ async def general_chat(
             },
         )
     except Exception as e:
+        traceback.print_exc()
         return JSONResponse(
             status_code=500,
             content={

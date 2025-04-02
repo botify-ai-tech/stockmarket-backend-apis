@@ -56,7 +56,8 @@ async def translate_text(url, source_language='hi', dest_language='en'):
     chunk_size = 2200
     chunks = [transcript[i:i+chunk_size] for i in range(0, len(transcript), chunk_size)]
 
-    source_lang = await get_available_languages(url) # Get source language once
+    source_lang = await get_available_languages(url)
+    print(source_lang) # Get source language once
     translated_chunks = []
 
     for chunk in chunks:
@@ -66,8 +67,8 @@ async def translate_text(url, source_language='hi', dest_language='en'):
     return translated_chunks
 
 async def generate_youtube_summary(url,retries=2,user_id=None, background_tasks=None):
-    retries = int(retries) if isinstance(retries, (int, str)) and str(retries).isdigit() else 2
     text = await translate_text(url)
+    print(text[:20])
     if not text:
         text.error("No text provided for summarization.")
         return "[ERROR: No text to summarize]"
@@ -162,6 +163,7 @@ async def generate_youtube_summary(url,retries=2,user_id=None, background_tasks=
             model_instance = genai.GenerativeModel(model)
             response1 = model_instance.generate_content(prompt)
             response1 = response1.text
+            print(f"---"*100)
             response2 = []
             response2.append(
                 {
