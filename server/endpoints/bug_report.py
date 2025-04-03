@@ -91,7 +91,7 @@ async def get_bug_reports(db: Session = Depends(get_db)):
         for bug in bug_reports
     ]
     return JSONResponse(
-            status_code=201,
+            status_code=200,
             content= {
                 "success":True,
                 "data" : bug_reports_list,

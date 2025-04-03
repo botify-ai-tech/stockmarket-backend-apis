@@ -1,4 +1,5 @@
 from typing import List
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from fastapi import APIRouter, Depends
 from server.endpoints.deps import get_db
@@ -24,15 +25,45 @@ async def create_contact_us(
     db.commit()
     db.refresh(new_contact)
 
-    return ContactUsOutput(
-        email=new_contact.email,
-        full_name=new_contact.full_name,
-        message=new_contact.message,
-        phone_number=new_contact.phone_number
-    )
+    # return ContactUsOutput(
+    #     email=new_contact.email,
+    #     full_name=new_contact.full_name,
+    #     message=new_contact.message,
+    #     phone_number=new_contact.phone_number
+    # )
+    return JSONResponse(
+            status_code=201,
+            content= {
+                "success":True,
+                "data" : {
+                    'full_name':new_contact.full_name,
+                    'email':new_contact.email,
+                    'phone_number':new_contact.message,
+                    'message':new_contact.message,
+                },
+                "message":'bug report created'
+            }
+        )
 
 
 @contact_us_router.get("", response_model=List[ContactUsOutput])
 async def get_contact_us(db: Session = Depends(get_db)):
-    bug_reports = db.query(ContactUs).order_by(ContactUs.created_at.desc()).all()
-    return bug_reports
+    contact_us = db.query(ContactUs).order_by(ContactUs.created_at.desc()).all()
+    contact_us_list = [
+        {
+            'full_name':contact.full_name,
+            'email':contact.email,
+            'phone_number':contact.message,
+            'message':contact.message,
+        }
+        for contact in contact_us
+    ]
+    return JSONResponse(
+            status_code=200,
+            content= {
+                "success":True,
+                "data" : contact_us_list,
+                'message':'bug reports fetched!'
+            }
+            
+        ) 
