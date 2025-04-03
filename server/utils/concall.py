@@ -19,20 +19,22 @@ load_dotenv()
 gemini_ai_key = os.getenv("GEMINI_AI_KEY")
 genai.configure(api_key=gemini_ai_key)
 
-async def extract_text(file,url):
+async def extract_text(file, url):
     try:
         if file:
             input_binary = await file.read()
-            with io.BytesIO(input_binary) as pdf_file:
-                doc = fitz.open(stream=pdf_file, filetype="pdf")
         else:
-            response = requests.get(url)
-            if response.status_code == 200:
-                input_binary = response.content
-                with io.BytesIO(input_binary) as pdf_file:
-                    doc = fitz.open(stream=pdf_file, filetype="pdf")
-            else:
-                print(f"Failed to retrieve PDF. Status code: {response.status_code}")
+            headers = {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+            }
+            response = requests.get(url, headers=headers)
+            if response.status_code != 200:
+                logging.critical(f"Failed to retrieve PDF. Status code: {response.status_code}")
+                return []
+            input_binary = response.content
+
+        with io.BytesIO(input_binary) as pdf_file:
+            doc = fitz.open(stream=pdf_file, filetype="pdf")
         return doc
     except Exception as e:
         logging.critical(f"Unable to open the PDF file: {e}")
@@ -145,7 +147,9 @@ async def questionans(chunks,retries=2):
             model = "gemini-2.0-flash"
             model_instance = genai.GenerativeModel(model)
             response = model_instance.generate_content(prompt)
+            print(response.text)
             return response.text
+            
         except Exception as e:
             logging.error(
                 f"Gemini AI API error on attempt {attempt + 1}/{retries}: {e}"

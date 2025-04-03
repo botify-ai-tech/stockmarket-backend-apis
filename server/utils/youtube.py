@@ -1,7 +1,5 @@
 from urllib.parse import urlparse, parse_qs
 from youtube_transcript_api import YouTubeTranscriptApi
-from deep_translator import GoogleTranslator
-from googletrans import Translator
 import requests
 from dotenv import load_dotenv
 import os
@@ -23,14 +21,16 @@ async def get_video_id(youtube_url):
     return None
 
 async def get_available_languages(youtube_url):
-    video_id =await get_video_id(youtube_url)
+    video_id = await get_video_id(youtube_url)
     if not video_id:
         return "Invalid YouTube URL."
+
     try:
-        transcript_list = YouTubeTranscriptApi.list_transcripts(video_id)
-        languages = [transcript.language for transcript in transcript_list]
-        languages = languages[0][:2].lower()
-        return languages
+        # Run the API call in a separate thread since it's blocking
+        transcript_list = await asyncio.to_thread(YouTubeTranscriptApi.list_transcripts, video_id)
+        
+        languages = [transcript.language_code for transcript in transcript_list]  # Use `.language_code`
+        return languages  # Return the full list of available languages
     except Exception as e:
         return f"Error fetching available languages: {e}"
 
@@ -40,35 +40,22 @@ async def get_transcript(video_url):
         return "Invalid YouTube URL."
 
     try:
-        transcript = YouTubeTranscriptApi.get_transcript(video_id, languages=[await get_available_languages(video_url)])
-        text = "\n".join([entry['text'] for entry in transcript])
-        return text
+        available_languages = await get_available_languages(video_url)
+
+        if isinstance(available_languages, str):  # If an error string is returned
+            return available_languages
+
+        if "en" in available_languages:  # Correctly check if English is available
+            transcript = await asyncio.to_thread(YouTubeTranscriptApi.get_transcript, video_id, languages=["en"])
+            text = "\n".join([entry['text'] for entry in transcript])
+            return text
+        else:
+            return "Transcript not available in English."
     except Exception as e:
         return f"Error: {e}"
 
-async def translate_text(url, source_language='hi', dest_language='en'):
-    if await get_available_languages(url) == 'en':
-        return await get_transcript(url)
-    
-    translator = Translator()
-    transcript = await get_transcript(url)
 
-    chunk_size = 2200
-    chunks = [transcript[i:i+chunk_size] for i in range(0, len(transcript), chunk_size)]
-
-    source_lang = await get_available_languages(url)
-    print(source_lang) # Get source language once
-    translated_chunks = []
-
-    for chunk in chunks:
-        result = await translator.translate(chunk, src=source_lang, dest=dest_language)  # ✅ No `await`
-        translated_chunks.append(result.text)  # ✅ Properly access `.text`
-
-    return translated_chunks
-
-async def generate_youtube_summary(url,retries=2,user_id=None, background_tasks=None):
-    text = await translate_text(url)
-    print(text[:20])
+async def report_gen(text,retries=2):
     if not text:
         text.error("No text provided for summarization.")
         return "[ERROR: No text to summarize]"
@@ -95,6 +82,7 @@ async def generate_youtube_summary(url,retries=2,user_id=None, background_tasks=
     "- **Predictive Insights:** Where possible, forecast future performance based on historical trends, numerical metrics, and financial patterns. Ensure every prediction is justified with solid reasoning and past data trends.\n"
    "- **Coloring Scheme:** Positive numerical data should be highlighted in green as <span style='color:green;'>red text</span>, and negative data should be highlighted in red <span style='color:red;'>red text</span>. Ensure that the output does not use Markdown for color formatting.\n\n"
     "-**Do Not** add any data that is not available such as **DO NOT ADD LINES LIKE *The retrieved data does not lend itself to complex visual representations beyond tables and structured lists. The table above summarizes key financial metrics."
+    "-**Do Not** add a TABLE IF THE DATA INSIDE IT IS UNAVAILABLE AND EMPTY TABLE MUST NOT BE IN THE FINAL OUTPUT"
     "## Extracted Segment from the Video:\n"
     "```\n"
     f"{text}\n"
@@ -157,25 +145,11 @@ async def generate_youtube_summary(url,retries=2,user_id=None, background_tasks=
     "  - ✅ **Correct:** The company turned profitable, reporting a profit after tax of <font color='green'>1,455.36</font> lakhs for FY 2017-18 compared to a loss of <font color='red'>512.01</font> lakhs in FY 2016-17.\n"
     "  - ❌ **Incorrect:** The company turned profitable, reporting a profit after tax of ` <font color='green'>1,455.36</font> ` lakhs for FY 2017-18 compared to a loss of ` <font color='red'>512.01</font> ` lakhs in FY 2016-17.\n"
     )
-    for attempt in range(int(retries)):
-        try:
+    for attempt in range(retries):
+        try:    
             model = "gemini-2.0-flash-thinking-exp-01-21"
             model_instance = genai.GenerativeModel(model)
             response1 = model_instance.generate_content(prompt)
-            response1 = response1.text
-            print(f"---"*100)
-            response2 = []
-            response2.append(
-                {
-                "sequence_number": "overall",
-                "pages": "Overall Summary",
-                # "concise_analysis": concise_summary,
-                "detailed_analysis": response1,
-                }
-            )
-            return response2
-                    
-
             return response1.text
         except Exception as e:
             logging.error(
@@ -185,4 +159,18 @@ async def generate_youtube_summary(url,retries=2,user_id=None, background_tasks=
                 time.sleep(2)
             else:
                 logging.error("Max retries reached. Returning empty analysis.")
-                return "[ERROR: Unable to generate summary]"
+                return "[ERROR: Unable to generate summary]"           
+
+async def generate_youtube_summary(url,user_id, background_tasks):
+    #text = await get_transcript(url)
+    response2 = await report_gen(url)
+    response3 = []
+    response3.append(
+        {
+        "sequence_number": "overall",
+        "pages": "Overall Summary",
+        # "concise_analysis": concise_summary,
+        "detailed_analysis": response2,
+        }
+    )
+    return response3
