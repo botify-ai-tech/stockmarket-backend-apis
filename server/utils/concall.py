@@ -147,7 +147,6 @@ async def questionans(chunks,retries=2):
             model = "gemini-2.0-flash"
             model_instance = genai.GenerativeModel(model)
             response = model_instance.generate_content(prompt)
-            print(response.text)
             return response.text
             
         except Exception as e:
