@@ -16,6 +16,7 @@ class Chat(Base):
     content_topic = Column(String)
     filename = Column(String)
     url = Column(String)
+    flag = Column(String, nullable=True)
 
     is_deleted = Column(Boolean, default=False)
 

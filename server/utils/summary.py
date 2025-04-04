@@ -204,8 +204,7 @@ async def generate_financial_summary(file,url,user_id, background_tasks):
         "sequence_number": "overall",
         "pages": "Overall Summary",
         # "concise_analysis": concise_summary,
-        "detailed_analysis": response2,
-        "text" : text,
+        "detailed_analysis": response2
         }
     )
     return response3

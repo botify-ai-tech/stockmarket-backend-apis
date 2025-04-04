@@ -12,6 +12,7 @@ class ChatBase(BaseModel):
     url: Optional[str] = None
     content_topic: Optional[str] = None
     is_deleted: Optional[bool] = False
+    flag: Optional[str] = None
 
 
 class CreateChat(ChatBase):

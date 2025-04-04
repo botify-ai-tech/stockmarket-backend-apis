@@ -65,6 +65,7 @@ async def summary_chat(
                     "url": chat.url,
                     "content_topic": chat.content_topic,
                     "created_at": str(chat.created_at),
+                    "flag" : chat.flag,
                 }
             )
 
@@ -133,6 +134,7 @@ async def summary_chat(
                     "url": chat.url,
                     "content_topic": chat.content_topic,
                     "created_at": str(chat.created_at),
+                    "flag" : chat.flag,
                 }
             )
 
@@ -215,6 +217,7 @@ async def general_chat(
                         url=url if url else None,
                         session_id=session_id,
                         content_topic=content_topic,
+                        flag = "1",
                     ),
                 )
 
@@ -228,6 +231,7 @@ async def general_chat(
                     "session_id": chat_.session_id,
                     "content_topic": chat_.content_topic,
                     "created_at": str(chat_.created_at),
+                    "flag" : chat_.flag
                 }
 
                 return JSONResponse(
@@ -278,6 +282,7 @@ async def general_chat(
                     answer=answer,
                     session_id=session_id,
                     content_topic=content_topic,
+                    flag = "1",
                 ),
             )
 
@@ -291,6 +296,7 @@ async def general_chat(
                 "session_id": chat_.session_id,
                 "content_topic": chat_.content_topic,
                 "created_at": str(chat_.created_at),
+                "flag" : chat_.flag
             }
 
             return JSONResponse(
@@ -372,6 +378,7 @@ async def general_chat(
                         url=url if url else None,
                         session_id=session_id,
                         content_topic=content_topic,
+                        flag = "3",
                     ),
                 )
 
@@ -385,6 +392,7 @@ async def general_chat(
                     "session_id": chat_.session_id,
                     "content_topic": chat_.content_topic,
                     "created_at": str(chat_.created_at),
+                    "flag" : chat_.flag
                 }
 
                 return JSONResponse(
@@ -435,6 +443,7 @@ async def general_chat(
                     answer=answer,
                     session_id=session_id,
                     content_topic=content_topic,
+                    flag = "3",
                 ),
             )
 
@@ -448,6 +457,7 @@ async def general_chat(
                 "session_id": chat_.session_id,
                 "content_topic": chat_.content_topic,
                 "created_at": str(chat_.created_at),
+                "flag" : chat_.flag
             }
 
             return JSONResponse(
@@ -524,6 +534,7 @@ async def general_chat(
                         url=url if url else None,
                         session_id=session_id,
                         content_topic=content_topic,
+                        flag = "2",
                     ),
                 )
 
@@ -537,6 +548,7 @@ async def general_chat(
                     "session_id": chat_.session_id,
                     "content_topic": chat_.content_topic,
                     "created_at": str(chat_.created_at),
+                    "flag" : chat_.flag
                 }
                 return JSONResponse(
                     status_code=200,
@@ -586,6 +598,7 @@ async def general_chat(
                     answer=answer,
                     session_id=session_id,
                     content_topic=content_topic,
+                    flag = "2",
                 ),
             )
 
@@ -599,6 +612,8 @@ async def general_chat(
                 "session_id": chat_.session_id,
                 "content_topic": chat_.content_topic,
                 "created_at": str(chat_.created_at),
+                "flag" : chat_.flag
+                
             }
 
             return JSONResponse(
