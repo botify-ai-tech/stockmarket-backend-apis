@@ -34,8 +34,10 @@ async def extract_text(file, url):
             input_binary = response.content
 
         with io.BytesIO(input_binary) as pdf_file:
-            doc = fitz.open(stream=pdf_file, filetype="pdf")
+            doc = fitz.open(stream=pdf_file, filetype="pdf")                 
         return doc
+        
+
     except Exception as e:
         logging.critical(f"Unable to open the PDF file: {e}")
         return []
@@ -85,21 +87,11 @@ async def questionans(chunks,question,retries=2):
     f"{question}"
     )
 
-    for attempt in range(retries):
-        try:
-            model = "gemini-2.0-flash-thinking-exp-01-21"
-            model_instance = genai.GenerativeModel(model)
-            response1 = model_instance.generate_content(prompt)
-            return response1.text
-        except Exception as e:
-            logging.error(
-                f"Gemini AI API error on attempt {attempt + 1}/{retries}: {e}"
-            )
-            if attempt < retries - 1:
-                time.sleep(2)
-            else:
-                logging.error("Max retries reached. Returning empty analysis.")
-                return "[ERROR: Unable to generate summary]"
+    model = "gemini-2.0-flash-thinking-exp-01-21"
+    model_instance = genai.GenerativeModel(model)
+    response1 = model_instance.generate_content(prompt)
+    return response1.text
+
 
 async def report_gen(response,retries=2):
     if not response:
@@ -119,6 +111,7 @@ async def report_gen(response,retries=2):
     "- **Predictive Insights:** Where possible, forecast future performance based on historical trends, numerical metrics, and financial patterns. Ensure every prediction is justified with solid reasoning and past data trends.\n"
     "- **Coloring Scheme:** Positive numerical data should be highlighted in green as <span style='color:green;'>green text</span>, and negative data should be highlighted in red <span style='color:red;'>red text</span>. Ensure that the output does not use Markdown for color formatting.\n\n"
     "-**Do Not** add a TABLE IF THE DATA INSIDE IT IS UNAVAILABLE AND EMPTY TABLE MUST NOT BE IN THE FINAL OUTPUT"
+    "should not inclue conversational text such as 'Here's a structured company insight report based on the provided financial data'"
     "## Extracted Segment from the Video:\n"
     "**Extracted Financial Data:**\n"
     f"{response}\n\n"
@@ -133,9 +126,12 @@ async def report_gen(response,retries=2):
     "6. **Predictive Analysis** – Forecast future financial performance based on historical data trends, numerical progression, and reasonable assumptions, ensuring every prediction has strong supporting evidence.\n"
     "7. **Visual Financial Representation** – If applicable, structure key financial data in a visually intuitive format.\n\n"
 
-
+    "Strickly follow this output format if you have all the data required to generate the report\n"
+    "If you do not have sufficent data, follow this format\n"
+    
+    
     "**Output Format:**\n"
-    "# 📊 [Company Name] Overview\n"
+    "# 📊 [Company Name]\n Try to fetch name from the document and if name is not available, then leave it as Company information\n"
     "## 💰 Summary\n"
     "[Provide a concise but data-driven summary in bullet points, ensuring all key points are backed by financial figures.]\n\n"
 
@@ -157,7 +153,7 @@ async def report_gen(response,retries=2):
     "| 🔍 Metric | 📈 Last Reported Value | 📊 Forecasted Next Value | 🔎 Prediction Rationale |\n"
     "|----------|----------------------|----------------------|----------------------|\n"
     "[For each available financial metric (e.g., revenue, net profit, EPS, debt levels, and all possible predictions), predict the next logical data point based on historical trends, growth patterns, and financial ratios. Provide a detailed explanation for each prediction.]\n\n"
-
+    "add the following line at the end of each report 'This report is for informational purposes only and should not be considered as investment advice. Investors should conduct their own research and consult with a financial advisor before making investment decisions'"
     "**Additional Instructions:**\n"
     "- **Coloring Scheme:** Positive numerical data should be highlighted in green as <font color='green'> Text </font>, and negative data should be highlighted in <font color='red'> Text </font>.\n"
     "- **Avoid Speculation:** Stick to the provided data; do not infer or speculate beyond the given information.\n"
@@ -170,41 +166,75 @@ async def report_gen(response,retries=2):
     )
 
 
+    model = "gemini-2.0-flash"
+    model_instance = genai.GenerativeModel(model)
+    response = model_instance.generate_content(prompt2)
+    return response.text
+
+def checker(input):
+    prompt3 = (
+        "You are a Checker LLM. You will receive an output from another LLM which will be related to Finance or financial summary and you must respond with only one word: either 'RIGHT' or 'WRONG'. "
+        "Do not include any additional words, explanations, or punctuation. "
+        "If the input contains error messages, apologies, or phrases like 'Unable to generate', 'I am unable to', '[ERROR]', or indicates missing data, respond with 'WRONG'. "
+        "If the input contains conversational language such as 'Okay now I understand', 'Sure! Here’s an improved version', 'Let me know if', 'Sure! Here’s the grammatically correct version','here is the generated summary','gibberish such as fmhgbdlmbhdf' or similar assistant-style or interactive phrases, respond with 'WRONG'. "
+        "If the input is complete, accurate, and valid financial content, respond with 'RIGHT'.\n\n"
+        f"Here is the original report:\n{input}"
+    )
+    model = "gemini-2.0-flash"
+    model_instance = genai.GenerativeModel(model)
+    response = model_instance.generate_content(prompt3)
+    return response.text
 
 
-    for attempt in range(retries):
-        try:
-            model = "gemini-2.0-flash"
-            model_instance = genai.GenerativeModel(model)
-            response = model_instance.generate_content(prompt2)
-            return response.text
-        except Exception as e:
-            logging.error(
-                f"Gemini AI API error on attempt {attempt + 1}/{retries}: {e}"
-            )
-            if attempt < retries - 1:
-                time.sleep(2)
-            else:
-                logging.error("Max retries reached. Returning empty analysis.")
-                return "[ERROR: Unable to generate summary]"
+async def generate_financial_summary(file, url, user_id, background_tasks):
+    attempt = 0
+    response3 = []
 
-async def generate_financial_summary(file,url,user_id, background_tasks):
+    doc = await extract_text(file, url)
 
-    doc = await extract_text(file,url)
+    if not doc:
+        response3.append(
+            {
+                "sequence_number": "overall",
+                "pages": "Overall Summary",
+                "detailed_analysis": "PDF parsing failed. Please try again."
+            }
+        )
+        return response3  
+
     text = "\n".join([page.get_text("text") for page in doc])
-    #background_tasks.add_task(background_pinecone_task, doc, user_id)
+
+    # Optional background task, uncomment if needed
+    # background_tasks.add_task(background_pinecone_task, doc, user_id)
+
     chunks = await chunk_text_by_tokens(text, chunk_size=950000)
+
     with open("server/utils/final_questions.txt", "r", encoding="utf-8") as file:
         question = file.read()
-    response = await questionans(chunks,question)
-    response2 = await report_gen(response)
-    response3 = []
+
+    response = await questionans(chunks, question)
+
+    while attempt < 2:
+        response2 = await report_gen(response)
+        res = checker(response2)
+
+        if "wrong" not in res.lower():
+            response3.append(
+                {
+                    "sequence_number": "overall",
+                    "pages": "Overall Summary",
+                    "detailed_analysis": response2
+                }
+            )
+            return response3
+
+        attempt += 1
+
     response3.append(
         {
-        "sequence_number": "overall",
-        "pages": "Overall Summary",
-        # "concise_analysis": concise_summary,
-        "detailed_analysis": response2
+            "sequence_number": "overall",
+            "pages": "Overall Summary",
+            "detailed_analysis": "Response generation failed. Please try again."
         }
     )
     return response3

@@ -134,6 +134,7 @@ async def report_gen(text,retries=2):
     "| 🔍 Metric | 📈 Last Reported Value | 📊 Forecasted Next Value | 🔎 Prediction Rationale |\n"
     "|----------|----------------------|----------------------|----------------------|\n"
     "[For each available financial metric (e.g., revenue, net profit, EPS, debt levels, and all possible predictions), predict the next logical data point based on historical trends, growth patterns, and financial ratios. Provide a detailed explanation for each prediction.]\n\n"
+    "add the following line at the end of each report 'This report is for informational purposes only and should not be considered as investment advice. Investors should conduct their own research and consult with a financial advisor before making investment decisions'"
 
     "**Additional Instructions:**\n"
     "- **Coloring Scheme:** Positive numerical data should be highlighted in green as <font color='green'> Text </font>, and negative data should be highlighted in <font color='red'> Text </font>.\n"
@@ -144,33 +145,51 @@ async def report_gen(text,retries=2):
     "- **Hardcoded Formatting Rule:** When presenting financial results in a sentence format, do **not** use the backtick (`) symbol. Example:\n"
     "  - ✅ **Correct:** The company turned profitable, reporting a profit after tax of <font color='green'>1,455.36</font> lakhs for FY 2017-18 compared to a loss of <font color='red'>512.01</font> lakhs in FY 2016-17.\n"
     "  - ❌ **Incorrect:** The company turned profitable, reporting a profit after tax of ` <font color='green'>1,455.36</font> ` lakhs for FY 2017-18 compared to a loss of ` <font color='red'>512.01</font> ` lakhs in FY 2016-17.\n"
+    )  
+    model = "gemini-2.0-flash-thinking-exp-01-21"
+    model_instance = genai.GenerativeModel(model)
+    response1 = model_instance.generate_content(prompt)
+    return response1.text
+
+def checker(input):
+    prompt3 = (
+        "You are a Checker LLM. You will receive an output from another LLM which will be related to Finance or financial summary and you must respond with only one word: either 'RIGHT' or 'WRONG'. "
+        "Do not include any additional words, explanations, or punctuation. "
+        "If the input contains error messages, apologies, or phrases like 'Unable to generate', 'I am unable to', '[ERROR]', or indicates missing data, respond with 'WRONG'. "
+        "If the input contains conversational language such as 'Okay now I understand', 'Sure! Here’s an improved version', 'Let me know if', 'Sure! Here’s the grammatically correct version','here is the generated summary','gibberish such as fmhgbdlmbhdf' or similar assistant-style or interactive phrases, respond with 'WRONG'. "
+        "If the input is complete, accurate, and valid financial content, respond with 'RIGHT'.\n\n"
+        f"Here is the original report:\n{input}"
     )
-    for attempt in range(retries):
-        try:    
-            model = "gemini-2.0-flash-thinking-exp-01-21"
-            model_instance = genai.GenerativeModel(model)
-            response1 = model_instance.generate_content(prompt)
-            return response1.text
-        except Exception as e:
-            logging.error(
-                f"Gemini AI API error on attempt {attempt + 1}/{retries}: {e}"
-            )
-            if attempt < retries - 1:
-                time.sleep(2)
-            else:
-                logging.error("Max retries reached. Returning empty analysis.")
-                return "[ERROR: Unable to generate summary]"           
+    model = "gemini-2.0-flash"
+    model_instance = genai.GenerativeModel(model)
+    response = model_instance.generate_content(prompt3)
+    return response.text           
 
 async def generate_youtube_summary(url,user_id, background_tasks):
-    #text = await get_transcript(url)
-    response2 = await report_gen(url)
+    attempt = 0
     response3 = []
+    while attempt < 2:
+        response2 = await report_gen(url)
+        res = checker(response2)
+
+        if "wrong" not in res.lower():
+            response3.append(
+                {
+                    "sequence_number": "overall",
+                    "pages": "Overall Summary",
+                    "detailed_analysis": response2
+                }
+            )
+            return response3
+
+        attempt += 1
+
     response3.append(
         {
-        "sequence_number": "overall",
-        "pages": "Overall Summary",
-        # "concise_analysis": concise_summary,
-        "detailed_analysis": response2,
+            "sequence_number": "overall",
+            "pages": "Overall Summary",
+            "detailed_analysis": "Response generation failed. Please try again."
         }
     )
     return response3
+
