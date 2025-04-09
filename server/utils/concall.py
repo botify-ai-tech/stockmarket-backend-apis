@@ -151,12 +151,21 @@ async def questionans(chunks,retries=2):
             
 def checker(input):
     prompt3 = (
-        "You are a Checker LLM. You will receive an output from another LLM which will be related to Finance or financial summary and you must respond with only one word: either 'RIGHT' or 'WRONG'. "
-        "Do not include any additional words, explanations, or punctuation. "
-        "If the input contains error messages, apologies, or phrases like 'Unable to generate', 'I am unable to', '[ERROR]', or indicates missing data, respond with 'WRONG'. "
-        "If the input contains conversational language such as 'Okay now I understand', 'Sure! Here’s an improved version', 'Let me know if', 'Sure! Here’s the grammatically correct version','here is the generated summary','gibberish such as fmhgbdlmbhdf' or similar assistant-style or interactive phrases, respond with 'WRONG'. "
-        "If the input is complete, accurate, and valid financial content, respond with 'RIGHT'.\n\n"
-        f"Here is the original report:\n{input}"
+    "You are a Checker LLM. Your task is to evaluate the output from another LLM related to Finance or financial summaries. "
+    "Respond strictly with one word: either 'RIGHT' or 'WRONG'. Do not include any additional words, explanations, or punctuation.\n\n"
+
+    "Respond with 'WRONG' if any of the following are true:\n"
+    "- The input contains error messages, apologies, or phrases like 'Unable to generate', 'I am unable to', '[ERROR]', or indicates missing data.\n"
+    "- The input includes conversational or assistant-style language such as:\n"
+    "  'Okay now I understand', 'Sure! Here’s an improved version', 'Let me know if', 'Here is the generated summary', "
+    "'Sure! Here’s the grammatically correct version', or any similar interactive phrases.\n"
+    "- The input contains gibberish like 'fmhgbdlmbhdf' or similar non-sensical strings.\n"
+    "- The input includes the backtick character (`), such as in (`<font color='green'>1,455.36</font>`).\n\n"
+
+    "Respond with 'RIGHT' only if the input is a complete, accurate, and valid financial summary with no conversational tone or formatting issues.\n"
+    "For example, (<font color='green'>1,455.36</font>) is acceptable and should be marked as 'RIGHT'.\n\n"
+
+    f"Here is the original report:\n{input}"
     )
     model = "gemini-2.0-flash"
     model_instance = genai.GenerativeModel(model)
