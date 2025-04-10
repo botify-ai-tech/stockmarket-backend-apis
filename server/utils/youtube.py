@@ -139,6 +139,7 @@ async def report_gen(text,retries=2):
     "**Additional Instructions:**\n"
     "- **Coloring Scheme:** Positive numerical data should be highlighted in green as <font color='green'> Text </font>, and negative data should be highlighted in <font color='red'> Text </font>.\n"
     "- **Avoid Speculation:** Stick to the provided data; do not infer or speculate beyond the given information.\n"
+    "- **Avoid Multiple empty lines:** Do not print multiple empty lines and not also  ----------------------------------------- lines like this\n"
     "- **Ensure Clarity:** Present insights in a structured and easy-to-read format.\n"
     "- **Use Strong Justifications:** Every claim or insight must be directly backed by numerical data from the report.\n"
     "- **Future Prediction Accuracy:** Ensure forecasts are based on past trends, growth rates, and financial metrics, avoiding unjustified speculation.\n"
@@ -163,9 +164,31 @@ def checker(input):
     "'Sure! Here’s the grammatically correct version', or any similar interactive phrases.\n"
     "- The input contains gibberish like 'fmhgbdlmbhdf' or similar non-sensical strings.\n"
     "- The input includes the backtick character (`), such as in (`<font color='green'>1,455.36</font>`).\n\n"
-
     "Respond with 'RIGHT' only if the input is a complete, accurate, and valid financial summary with no conversational tone or formatting issues.\n"
     "For example, (<font color='green'>1,455.36</font>) is acceptable and should be marked as 'RIGHT'.\n\n"
+    "If Input has too much of an empty space such as multiple blank lines, it should be marked as 'WRONG'.\n\n"
+    "- **Avoid Multiple empty lines:** Do not print multiple empty lines and not also  ----------------------------------------- lines like this if it is in inpur return WRONG\n"
+
+    "Try to generate whole as given below format and **if it is half generated or not in proper markdown response will be 'WRONG'** \n\n"
+    "**Output Format:**\n"
+    "# 📊 [Company Name] Overview\n"
+    "## 💰 Summary\n"
+   
+    "## 💰 Financial Health\n"
+    
+    "## 📈 Investment Insights\n"
+   
+    "## 📊 Key Financial Metrics\n"
+    "| 📌 Metric | 📉 Value | 📋 Explanation |\n"
+    "|----------|---------|---------------|\n"
+    
+    "## 📊 Comparative Analysis\n"
+    
+    "## 🔮 Predictive Analysis\n"
+    "| 🔍 Metric | 📈 Last Reported Value | 📊 Forecasted Next Value | 🔎 Prediction Rationale |\n"
+    "|----------|----------------------|----------------------|----------------------|\n"
+    "[For each available financial metric (e.g., revenue, net profit, EPS, debt levels, and all possible predictions), predict the next logical data point based on historical trends, growth patterns, and financial ratios. Provide a detailed explanation for each prediction.]\n\n"
+    "add the following line at the end of each report 'This report is for informational purposes only and should not be considered as investment advice. Investors should conduct their own research and consult with a financial advisor before making investment decisions'"
 
     f"Here is the original report:\n{input}"
     )
