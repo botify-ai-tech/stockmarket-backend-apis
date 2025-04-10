@@ -220,7 +220,8 @@ async def generate_youtube_summary(url,user_id, background_tasks):
         {
             "sequence_number": "overall",
             "pages": "Overall Summary",
-            "detailed_analysis": "Response generation failed. Please try again."
+            "detailed_analysis": "Response generation failed. Please try again.",
+            "status" : False
         }
     )
     return response3
