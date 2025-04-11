@@ -200,6 +200,16 @@ async def general_chat(
             analysis = await generate_financial_summary(
                 file, url, user_id, background_tasks
             )
+            if analysis[0].get("status") == False :
+                return JSONResponse(
+                    status_code=400,
+                    content={
+                        "success": False,
+                        "data": None,
+                        "error": None,
+                        "message": analysis[0].get("detailed_analysis"),
+                        }
+                )
             if not analysis:
                 raise HTTPException(
                     status_code=400, detail="Error in generating summary"
@@ -361,6 +371,16 @@ async def general_chat(
             analysis = await generate_concall_summary(
                 file, url, user_id, background_tasks
             )
+            if analysis[0].get("status") == False :
+                return JSONResponse(
+                    status_code=400,
+                    content={
+                        "success": False,
+                        "data": None,
+                        "error": None,
+                        "message": analysis[0].get("detailed_analysis"),
+                        }
+            )
             if not analysis:
                 raise HTTPException(
                     status_code=400, detail="Error in generating summary"
@@ -519,6 +539,16 @@ async def general_chat(
             analysis = await generate_youtube_summary(
                  url, user_id, background_tasks
             )
+            if analysis[0].get("status") == False :
+                return JSONResponse(
+                    status_code=400,
+                    content={
+                        "success": False,
+                        "data": None,
+                        "error": None,
+                        "message": analysis[0].get("detailed_analysis"),
+                        }
+                )            
             if not analysis:
                 raise HTTPException(
                     status_code=400, detail="Error in generating summary"
