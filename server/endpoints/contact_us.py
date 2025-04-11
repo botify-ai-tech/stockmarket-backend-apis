@@ -25,12 +25,6 @@ async def create_contact_us(
     db.commit()
     db.refresh(new_contact)
 
-    # return ContactUsOutput(
-    #     email=new_contact.email,
-    #     full_name=new_contact.full_name,
-    #     message=new_contact.message,
-    #     phone_number=new_contact.phone_number
-    # )
     return JSONResponse(
             status_code=201,
             content= {
@@ -38,7 +32,7 @@ async def create_contact_us(
                 "data" : {
                     'full_name':new_contact.full_name,
                     'email':new_contact.email,
-                    'phone_number':new_contact.message,
+                    'phone_number':new_contact.phone_number,
                     'message':new_contact.message,
                 },
                 "message":'bug report created'
@@ -53,7 +47,7 @@ async def get_contact_us(db: Session = Depends(get_db)):
         {
             'full_name':contact.full_name,
             'email':contact.email,
-            'phone_number':contact.message,
+            'phone_number':contact.phone_number,
             'message':contact.message,
         }
         for contact in contact_us

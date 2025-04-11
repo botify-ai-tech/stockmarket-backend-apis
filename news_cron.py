@@ -3,6 +3,7 @@ import os
 import random
 import regex as re
 import time
+import unicodedata
 from dotenv import load_dotenv
 from datetime import datetime, timedelta
 
@@ -18,6 +19,7 @@ from server.models.news import NewsItem
 
 import google.generativeai as genai
 
+
 load_dotenv()
 
 gemini_ai_key = os.getenv("GEMINI_AI_KEY")
@@ -26,6 +28,25 @@ genai.configure(api_key=gemini_ai_key)
 session = SessionLocal()
 
 twenty_four_hours_ago = datetime.now() - timedelta(hours=24)
+
+def normalize_title(title):
+    title = unicodedata.normalize("NFKD", title)
+    title = title.encode("ascii", "ignore").decode("utf-8")
+    title = title.lower()
+    title = re.sub(r"\s+", "", title)            
+    title = re.sub(r"[^\w]", "", title)          
+    return title
+
+def is_duplicate_title(title):
+    normalized = normalize_title(title)
+
+    recent_news = session.query(NewsItem).order_by(NewsItem.created_at.desc()).limit(200).all()
+
+    for news in recent_news:
+        if normalize_title(news.title) == normalized:
+            return True
+
+    return False
 
 
 def globle_news():
@@ -92,8 +113,9 @@ def globle_news():
             "link": link,
             "similar": similar_news,
         }
-        existing_news = session.query(NewsItem).filter_by(title=title).first()
-        if existing_news:
+        
+        # check already exist
+        if is_duplicate_title(title):
             continue
 
         retries = 3  # Retry up to 3 times
@@ -221,17 +243,21 @@ def globle_news():
 
         elif "minute" in time_to_out_news:
             if "minutes" in time_to_out_news:
-                ago_news = float(time_to_out_news.replace(" minutes ago", ""))
+                minutes = float(time_to_out_news.replace(" minutes ago", ""))
+                ago_news = minutes / 60
             else:
-                ago_news = float(time_to_out_news.replace(" minute ago", ""))
+                minutes = float(time_to_out_news.replace(" minute ago", ""))
+                ago_news = minutes / 60
         elif "second" in time_to_out_news:
             if "seconds" in time_to_out_news:
-                ago_news = float(time_to_out_news.replace(" seconds ago", ""))
+                seconds = float(time_to_out_news.replace(" seconds ago", ""))
+                ago_news = seconds / 3600
             else:
-                ago_news = float(time_to_out_news.replace(" second ago", ""))
+                seconds = float(time_to_out_news.replace(" second ago", ""))
+                ago_news = seconds / 3600
 
         updated_time = datetime.now() - timedelta(hours=ago_news)
-
+        
         news_entry = NewsItem(
             title=title,
             published_date=published_date,
