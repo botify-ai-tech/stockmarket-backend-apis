@@ -8,6 +8,8 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.wait import WebDriverWait
 import regex as re
 import google.generativeai as genai
+from sqlalchemy.exc import SQLAlchemyError
+from selenium.common.exceptions import NoSuchElementException
 
 from server.config import settings
 from server.models.ratio import CalculateRatio, Company
@@ -43,20 +45,22 @@ session = SessionLocal()
 
 
 
-def ration():
+def     ration(share):
 
     all_screener_data_list = []
     all_screener_data_dict = {}
 
-    with open("ratio\\nsc.txt", "r", encoding="utf-8") as f:
-        shares = f.readlines()
+    
+    try :
+        # with open("ratio\\nsc.txt", "r", encoding="utf-8") as f:
+        #     shares = f.readlines()
 
-    for share in shares[740:]:
-        share = share.strip("\n")
-        existing_data = session.query(Company).filter(Company.share_symbol == share).first()
-        if existing_data:
-            print("data is skiped")
-            continue
+        # for share in shares[740:]:
+        #     share = share.strip("\n")
+            # existing_data = session.query(Company).filter(Company.share_symbol == share).first()
+            # if existing_data:
+            #     print("data is skiped")
+            #     continue
 
         chrome_options = Options()
         chrome_options.add_argument("--headless")  
@@ -962,73 +966,158 @@ def ration():
         valuation_ratios_data = valuation_ratios(all_screener_data_dict, share_name)
         ratio_details_dict["ration"].update({"valuation_ratios": valuation_ratios_data})
 
-        company_entry = Company(
-            share_name=share_name,
-            current_date=current_date,
-            share_symbol=share,
-            share_price=share_price,
-            compnay_info_doc=None,
-            market_cap=market_cap,
-            high_low=high_low,
-            pe_ratio=pe_ratio,
-            pb_ratio=p_b,
-            enterprise_value=enterprise_value,
-            book_value=book_value,
-            dividend_yield=dividend_yield,
-            promoter_holding=promoter_holding,
-            eps=eps,
-            average_pe=average_pe,
-            sectore=sectore,
-            industry=industry,
-            sales_growth=sales_growth,
-            profit_growth=profit_growth,
-            roce=roce,
-            cash=cash,
-            debt=debt,
-            roe=roe,
-            face_value=face_value,
-            bse=bse,
-            nse=nse,
-            chart=chart,
-            s_pros=s_pros,
-            s_cons=s_cons,
-            s_peer_comparison=s_peer_comparison,
-            s_quarterly_results=s_quarterly_results,
-            s_profit_loss=s_profit_loss,
-            s_balance_sheet=s_balance_sheet,
-            s_cash_flows=s_cash_flows,
-            s_ratios=s_ratios,
-            s_shareholding_pattern_quarterly=s_shareholding_pattern_quarterly,
-            s_shareholding_pattern_yearly=s_shareholding_pattern_yearly,
-            s_documents=s_documents,
-            t_strengths=t_strengths,
-            t_limitations=t_limitations,
-            t_quarterly_results=t_quarterly_results,
-            t_profit_loss=t_profit_loss,
-            t_balance_sheet_equity_and_liabilities=t_balance_sheet_equity_and_liabilities,
-            t_balance_sheet_assets=t_balance_sheet_assets,
-            t_cash_flows=t_cash_flows,
+
+        existing_company = (
+            session.query(Company)
+            .filter(Company.share_symbol == share)
+            .first()
         )
 
-        session.add(company_entry)
-        session.commit()
+        if existing_company:
+            # Update existing record
+            existing_company.share_name = share_name
+            existing_company.current_date = current_date
+            existing_company.share_price = share_price
+            existing_company.market_cap = market_cap
+            existing_company.high_low = high_low
+            existing_company.pe_ratio = pe_ratio
+            existing_company.pb_ratio = p_b
+            existing_company.enterprise_value = enterprise_value
+            existing_company.book_value = book_value
+            existing_company.dividend_yield = dividend_yield
+            existing_company.promoter_holding = promoter_holding
+            existing_company.eps = eps
+            existing_company.average_pe = average_pe
+            existing_company.sectore = sectore
+            existing_company.industry = industry
+            existing_company.sales_growth = sales_growth
+            existing_company.profit_growth = profit_growth
+            existing_company.roce = roce
+            existing_company.cash = cash
+            existing_company.debt = debt
+            existing_company.roe = roe
+            existing_company.face_value = face_value
+            existing_company.bse = bse
+            existing_company.nse = nse
+            existing_company.chart = chart
+            existing_company.s_pros = s_pros
+            existing_company.s_cons = s_cons
+            existing_company.s_peer_comparison = s_peer_comparison
+            existing_company.s_quarterly_results = s_quarterly_results
+            existing_company.s_profit_loss = s_profit_loss
+            existing_company.s_balance_sheet = s_balance_sheet
+            existing_company.s_cash_flows = s_cash_flows
+            existing_company.s_ratios = s_ratios
+            existing_company.s_shareholding_pattern_quarterly = s_shareholding_pattern_quarterly
+            existing_company.s_shareholding_pattern_yearly = s_shareholding_pattern_yearly
+            existing_company.s_documents = s_documents
+            existing_company.t_strengths = t_strengths
+            existing_company.t_limitations = t_limitations
+            existing_company.t_quarterly_results = t_quarterly_results
+            existing_company.t_profit_loss = t_profit_loss
+            existing_company.t_balance_sheet_equity_and_liabilities = t_balance_sheet_equity_and_liabilities
+            existing_company.t_balance_sheet_assets = t_balance_sheet_assets
+            existing_company.t_cash_flows = t_cash_flows
 
+            logging.info("Company Data Updated.")
+
+        else:
+            company_entry = Company(
+                share_name=share_name,
+                current_date=current_date,
+                share_symbol=share,
+                share_price=share_price,
+                compnay_info_doc=None,
+                market_cap=market_cap,
+                high_low=high_low,
+                pe_ratio=pe_ratio,
+                pb_ratio=p_b,
+                enterprise_value=enterprise_value,
+                book_value=book_value,
+                dividend_yield=dividend_yield,
+                promoter_holding=promoter_holding,
+                eps=eps,
+                average_pe=average_pe,
+                sectore=sectore,
+                industry=industry,
+                sales_growth=sales_growth,
+                profit_growth=profit_growth,
+                roce=roce,
+                cash=cash,
+                debt=debt,
+                roe=roe,
+                face_value=face_value,
+                bse=bse,
+                nse=nse,
+                chart=chart,
+                s_pros=s_pros,
+                s_cons=s_cons,
+                s_peer_comparison=s_peer_comparison,
+                s_quarterly_results=s_quarterly_results,
+                s_profit_loss=s_profit_loss,
+                s_balance_sheet=s_balance_sheet,
+                s_cash_flows=s_cash_flows,
+                s_ratios=s_ratios,
+                s_shareholding_pattern_quarterly=s_shareholding_pattern_quarterly,
+                s_shareholding_pattern_yearly=s_shareholding_pattern_yearly,
+                s_documents=s_documents,
+                t_strengths=t_strengths,
+                t_limitations=t_limitations,
+                t_quarterly_results=t_quarterly_results,
+                t_profit_loss=t_profit_loss,
+                t_balance_sheet_equity_and_liabilities=t_balance_sheet_equity_and_liabilities,
+                t_balance_sheet_assets=t_balance_sheet_assets,
+                t_cash_flows=t_cash_flows,
+            )
+
+            session.add(company_entry)
+
+            logging.info("Company Data Inserted.")
+        session.commit()
+        
+    # -----------------------------------------------------------------------------------
         ratio_details_list.append(ratio_details_dict)
+    # -----------------------------------------------------------------------------------
 
-        claculate_ratio = CalculateRatio(
-            company_id=company_entry.id,
-            share_symbol=share,
-            liquidity_ratio=liquidity_ratios_data,
-            solvency_ratio=solvency_ratios_data,
-            efficiency_ratio=efficiency_ratios_data,
-            growth_ratio=growth_ratios_data,
-            coverage_ratio=coverage_ratios_data,
-            financial_ratio=financial_ratios_data,
-            profitability_ratio=profitability_ratios_data,
-            valuation_ratios=valuation_ratios_data,
+        existing_ratio = (
+            session.query(CalculateRatio)
+            .filter(CalculateRatio.share_symbol == share)
+            .first()
         )
-        session.add(claculate_ratio)
+        if existing_ratio:
+            # Update existing record instead of creating a new one
+            existing_ratio.liquidity_ratio = liquidity_ratios_data
+            existing_ratio.solvency_ratio = solvency_ratios_data
+            existing_ratio.efficiency_ratio = efficiency_ratios_data
+            existing_ratio.growth_ratio = growth_ratios_data
+            existing_ratio.coverage_ratio = coverage_ratios_data
+            existing_ratio.financial_ratio = financial_ratios_data
+            existing_ratio.profitability_ratio = profitability_ratios_data
+            existing_ratio.valuation_ratios = valuation_ratios_data
+
+            logging.info("CalculateRatio Data Updated.")
+        else:
+            claculate_ratio = CalculateRatio(
+                company_id=company_entry.id,
+                share_symbol=share,
+                liquidity_ratio=liquidity_ratios_data,
+                solvency_ratio=solvency_ratios_data,
+                efficiency_ratio=efficiency_ratios_data,
+                growth_ratio=growth_ratios_data,
+                coverage_ratio=coverage_ratios_data,
+                financial_ratio=financial_ratios_data,
+                profitability_ratio=profitability_ratios_data,
+                valuation_ratios=valuation_ratios_data,
+            )
+            session.add(claculate_ratio)
+
+            logging.info("CalculateRatio Data Inserted.")
         session.commit()
+
+        return {
+            "status": 200,
+            "message": "Data Inserted Successfully",
+        }
         # ------------------------------------------------------- Save the data -------------------------------------------------------
 
     #     all_screener_data_list.append(
@@ -1054,5 +1143,22 @@ def ration():
         except:
             pass
 
+    except NoSuchElementException:
+        logging.error(f"Failed to find stock name for {share}")
+        return {"unscraped_companies": share}
 
-ration()
+
+    except SQLAlchemyError as db_error:
+        session.rollback()
+        logging.error(f"Database error: {str(db_error)}")
+        return {"error": "Database update failed", "details": str(db_error)}
+
+    except Exception as e:
+        logging.error(f"Unexpected error: {str(e)}")
+        return {"error": "An unexpected error occurred", "details": str(e)}
+    finally:
+        session.close() 
+
+
+# if __name__ == "__main__" :
+#     # ration("AARON")

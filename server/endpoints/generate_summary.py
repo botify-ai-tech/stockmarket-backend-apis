@@ -200,19 +200,32 @@ async def general_chat(
             analysis = await generate_financial_summary(
                 file, url, user_id, background_tasks
             )
+
+            if analysis[0].get("status") == False :
+                return JSONResponse(
+                    status_code=400,
+                    content={
+                        "success": False,
+                        "data": None,
+                        "error": analysis[0].get("detailed_analysis"),
+                        "message": "Something went wrong!",
+                        }   
+                )
+
             if not analysis:
                 raise HTTPException(
                     status_code=400, detail="Error in generating summary"
                 )
             if analysis:
                 detailed = analysis[0].get("detailed_analysis")
-                detailed_analysis = regex(detailed)
+                
+            
 
                 chat_ = crud.chat.create(
                     db,
                     obj_in=schemas.CreateChat(
                         user_id=current_user.id,
-                        answer=detailed,
+                        z=detailed,
                         filename=file.filename if file else None,
                         url=url if url else None,
                         session_id=session_id,

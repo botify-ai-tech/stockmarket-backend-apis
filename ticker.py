@@ -77,8 +77,12 @@ def ticker(company):
 
         # Extract the number value (which is inside a span with class 'Number')
         number_span = div.find("span", class_="Number")
+        number_p = div.find("p")
+
         if number_span:
             number_value = number_span.get_text(strip=True)
+        if number_p:
+            number_value = number_p.get_text(strip=True)
 
         # Add the extracted data to the dictionary
         if label_text and number_value:

@@ -206,7 +206,8 @@ async def generate_financial_summary(file, url, user_id, background_tasks):
             {
                 "sequence_number": "overall",
                 "pages": "Overall Summary",
-                "detailed_analysis": "PDF parsing failed. Please try again."
+                "detailed_analysis": "PDF parsing failed. Please try again.",
+                "status" : False
             }
         )
         return response3  

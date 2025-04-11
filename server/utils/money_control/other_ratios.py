@@ -1497,7 +1497,7 @@ def valuation_ratios(data, stock_name):
     book_value = next(
     (
         float(item["Book Value"].replace("₹ ", "").replace(",", "").replace(" Cr.", "").replace("₹", "")) 
-        if item["Book Value"] and item["Book Value"].strip() != "" and item["Book Value"].replace(",", "").replace("₹", "").replace(" Cr.", "").replace("₹", "").isnumeric() 
+        if item["Book Value"] and item["Book Value"].strip() != "" and item["Book Value"].replace(",", "").replace("₹", "").replace(" Cr.", "").replace("₹", "").strip().replace(".", "").isdigit()
         else 0.0
         for item in share_info
         if "Book Value" in item
