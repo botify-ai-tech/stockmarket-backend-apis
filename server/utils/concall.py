@@ -16,7 +16,27 @@ from server.utils.backgound_task import background_pinecone_task
 
 load_dotenv()
 
-gemini_ai_key = os.getenv("GEMINI_AI_KEY")
+import random
+
+gemini_keys = [
+    "GEMINI_API_KEY_ONE",
+    "GEMINI_API_KEY_TWO",
+    "GEMINI_API_KEY_THREE",
+    "GEMINI_API_KEY_FIVE",
+    "GEMINI_API_KEY_SEVEN",
+    "GEMINI_API_KEY_EIGHT",
+    "GEMINI_API_KEY_NINE",
+    "GEMINI_API_KEY_TEN",
+    "GEMINI_AI_KEY",
+    "DHARMIK_GEMINI_AI_KEY",
+    "HARSH_GEMINI_AI_KEY",
+    "HET_GEMINI_AI_KEY"
+]
+
+def get_random_key_name():
+    return random.choice(gemini_keys)
+
+gemini_ai_key = os.getenv(get_random_key_name())
 genai.configure(api_key=gemini_ai_key)
 
 async def extract_text(file, url):
@@ -150,7 +170,6 @@ def checker(input):
     "- The input includes conversational or assistant-style language such as:\n"
     "  'Okay now I understand', 'Sure! Here’s an improved version', 'Let me know if', 'Here is the generated summary', "
     "'Sure! Here’s the grammatically correct version', or any similar interactive phrases.\n"
-    "-if input consist any another format such as 'INR','Rs','$','Rupees' then it is wrong only correct format is '₹'\n"
     "- The input contains gibberish like 'fmhgbdlmbhdf' or similar non-sensical strings.\n"
     "- The input includes the backtick character (`), such as in (`<font color='green'>1,455.36</font>`).\n\n"
     "Respond with 'RIGHT' only if the input is a complete, accurate, and valid financial summary with no conversational tone or formatting issues.\n"
