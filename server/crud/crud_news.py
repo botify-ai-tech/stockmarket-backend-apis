@@ -35,6 +35,11 @@ class CRUDNEWS(CRUDBase[NewsItem, CreateNews, UpdateNews]):
     def get_new_search_query(self, db: Session, search: str, skip: int = 0, limit: int = 10) -> NewsItem:
         last_24, last_48 = self._get_time_bounds()
 
+        search_filter = or_(
+            NewsItem.company_name.ilike(f"%{search}%"),
+            NewsItem.sectors.any(search),
+        )
+
         base_filter = lambda time: and_(
             NewsItem.created_at >= time,
             or_(
@@ -44,12 +49,16 @@ class CRUDNEWS(CRUDBase[NewsItem, CreateNews, UpdateNews]):
         )
 
         news_24 = db.query(NewsItem).filter(base_filter(last_24)).order_by(NewsItem.created_at.desc()).offset(skip).limit(limit).all()
-
         if news_24:
             return news_24
 
-        return db.query(NewsItem).filter(base_filter(last_48)).order_by(NewsItem.created_at.desc()).offset(skip).limit(limit).all()
+        news_48 = db.query(NewsItem).filter(base_filter(last_48)).order_by(NewsItem.created_at.desc()).offset(skip).limit(limit).all()
+        if news_48:
+            return news_48
 
+        # fallback to latest 20 items regardless of time
+        return db.query(NewsItem).filter(search_filter).order_by(NewsItem.created_at.desc()).offset(skip).limit(limit).all()        
+    
     def get_total_new_search_query(self, db: Session, search: str) -> NewsItem:
         last_24, last_48 = self._get_time_bounds()
 
@@ -62,31 +71,47 @@ class CRUDNEWS(CRUDBase[NewsItem, CreateNews, UpdateNews]):
         )
 
         count_24 = db.query(NewsItem).filter(base_filter(last_24)).count()
-
         if count_24:
             return count_24
 
-        return db.query(NewsItem).filter(base_filter(last_48)).count()
+        count_48 = db.query(NewsItem).filter(base_filter(last_48)).count()
+        if count_48:
+            return count_48
+
+        # fallback to total count of recent 20 news items for search
+        return db.query(NewsItem).filter(
+            or_(
+                NewsItem.company_name.ilike(f"%{search}%"),
+                NewsItem.sectors.any(search),
+            )
+        ).count()
 
     def get_new_without_search_query(self, db: Session, skip: int = 0, limit: int = 10) -> NewsItem:
         last_24, last_48 = self._get_time_bounds()
 
         news_24 = db.query(NewsItem).filter(NewsItem.created_at >= last_24).order_by(NewsItem.created_at.desc()).offset(skip).limit(limit).all()
-
         if news_24:
             return news_24
 
-        return db.query(NewsItem).filter(NewsItem.created_at >= last_48).order_by(NewsItem.created_at.desc()).offset(skip).limit(limit).all()
+        news_48 = db.query(NewsItem).filter(NewsItem.created_at >= last_48).order_by(NewsItem.created_at.desc()).offset(skip).limit(limit).all()
+        if news_48:
+            return news_48
+
+        # fallback to latest 20 news
+        return db.query(NewsItem).order_by(NewsItem.created_at.desc()).limit(20).all()
 
     def get_total_news_without_search_query(self, db: Session) -> NewsItem:
         last_24, last_48 = self._get_time_bounds()
 
         count_24 = db.query(NewsItem).filter(NewsItem.created_at >= last_24).count()
-
         if count_24:
             return count_24
 
-        return db.query(NewsItem).filter(NewsItem.created_at >= last_48).count()
+        count_48 = db.query(NewsItem).filter(NewsItem.created_at >= last_48).count()
+        if count_48:
+            return count_48
+
+        return db.query(NewsItem).count()
 
     def saved_news(self, db: Session, news_ids: list[int]) -> list[NewsItem]:
         query = db.query(NewsItem).filter(NewsItem.id.in_(news_ids)).all()
