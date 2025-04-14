@@ -77,9 +77,10 @@ async def questionans(chunks,retries=2):
     "- **Comparative Evaluation:** Compare financial ratios, growth trends, and industry benchmarks where applicable, ensuring all comparisons are backed by figures.\n"
     "- **Structured & Visual:** Use tables, bullet points, and structured formatting to enhance clarity and comprehension.\n"
     "- **Predictive Insights:** Where possible, forecast future performance based on historical trends, numerical metrics, and financial patterns. Ensure every prediction is justified with solid reasoning and past data trends.\n"
-   "- **Coloring Scheme:** Positive numerical data should be highlighted in green as <span style='color:green;'>red text</span>, and negative data should be highlighted in red <span style='color:red;'>red text</span>. Ensure that the output does not use Markdown for color formatting.\n\n"
+    "- **Coloring Scheme:** Positive numerical data should be highlighted in green as <span style='color:green;'>red text</span>, and negative data should be highlighted in red <span style='color:red;'>red text</span>. Ensure that the output does not use Markdown for color formatting.\n\n"
     "-**Do Not** add any data that is not available such as **DO NOT ADD LINES LIKE *The retrieved data does not lend itself to complex visual representations beyond tables and structured lists. The table above summarizes key financial metrics."
     "## Extracted Segment from the Video:\n"
+    "All financial numbers representing money should be expressed only in the **₹ (Indian Rupee)** format. If any data is in a different currency or format, it must be converted to the **₹** format.\n\n"
     "```\n"
     f"{chunks}\n"
     "```\n\n"
@@ -94,18 +95,6 @@ async def questionans(chunks,retries=2):
     "5. **Key Financial Metrics Table** – Present structured financial data where applicable with detailed explanations.\n"
     "6. **Predictive Analysis** – Forecast future financial performance based on historical data trends, numerical progression, and reasonable assumptions, ensuring every prediction has strong supporting evidence.\n"
     "7. **Visual Financial Representation** – If applicable, structure key financial data in a visually intuitive format.\n\n"
-
-
-    "**Task:**\n"
-    "Based solely on the provided data, generate a detailed company insight report including:\n"
-    "1. **Company Overview** – Key highlights from the report, explained with numerical data.\n"
-    "2. **Financial Health Evaluation** – Revenue trends, profitability, debt levels, and other critical metrics with clear breakdowns and justifications.\n"
-    "3. **Investment Viability** – Strengths, weaknesses, risks, and potential opportunities, all elaborated with evidence from financial statements.\n"
-    "4. **Comparative Analysis** – Compare financial performance across different time periods within the company’s own data set, ensuring all comparisons are backed by figures.\n"
-    "5. **Key Financial Metrics Table** – Present structured financial data where applicable with detailed explanations.\n"
-    "6. **Predictive Analysis** – Forecast future financial performance based on historical data trends, numerical progression, and reasonable assumptions, ensuring every prediction has strong supporting evidence.\n"
-    "7. **Visual Financial Representation** – If applicable, structure key financial data in a visually intuitive format.\n\n"
-
 
     "**Output Format:**\n"
     "# 📊 [Company Name] Overview\n"
@@ -137,8 +126,10 @@ async def questionans(chunks,retries=2):
     "- **Avoid Speculation:** Stick to the provided data; do not infer or speculate beyond the given information.\n"
     "- **Ensure Clarity:** Present insights in a structured and easy-to-read format.\n"
     "- **Use Strong Justifications:** Every claim or insight must be directly backed by numerical data from the report.\n"
+    "- **All financial numbers representing money should be expressed only in the **₹ (Indian Rupee)** format. If any data is in a different currency or format, it must be converted to the **₹** format.**\n\n"
     "- **Future Prediction Accuracy:** Ensure forecasts are based on past trends, growth rates, and financial metrics, avoiding unjustified speculation.\n"
     "- **Hardcoded Formatting Rule:** When presenting financial results in a sentence format, do **not** use the backtick (`) symbol. Example:\n"
+    
     "  - ✅ **Correct:** The company turned profitable, reporting a profit after tax of <font color='green'>1,455.36</font> lakhs for FY 2017-18 compared to a loss of <font color='red'>512.01</font> lakhs in FY 2016-17.\n"
     "  - ❌ **Incorrect:** The company turned profitable, reporting a profit after tax of ` <font color='green'>1,455.36</font> ` lakhs for FY 2017-18 compared to a loss of ` <font color='red'>512.01</font> ` lakhs in FY 2016-17.\n"
     )
@@ -159,11 +150,34 @@ def checker(input):
     "- The input includes conversational or assistant-style language such as:\n"
     "  'Okay now I understand', 'Sure! Here’s an improved version', 'Let me know if', 'Here is the generated summary', "
     "'Sure! Here’s the grammatically correct version', or any similar interactive phrases.\n"
+    "-if input consist any another format such as 'INR','Rs','$','Rupees' then it is wrong only correct format is '₹'\n"
     "- The input contains gibberish like 'fmhgbdlmbhdf' or similar non-sensical strings.\n"
     "- The input includes the backtick character (`), such as in (`<font color='green'>1,455.36</font>`).\n\n"
-
     "Respond with 'RIGHT' only if the input is a complete, accurate, and valid financial summary with no conversational tone or formatting issues.\n"
     "For example, (<font color='green'>1,455.36</font>) is acceptable and should be marked as 'RIGHT'.\n\n"
+    "If Input has too much of an empty space such as multiple blank lines, it should be marked as 'WRONG'.\n\n"
+    "- **Avoid Multiple empty lines:** Do not print multiple empty lines and not also  ----------------------------------------- lines like this if it is in inpur return WRONG\n"
+
+    "Try to generate whole as given below format and **if it is half generated or not in proper markdown response will be 'WRONG'** \n\n"
+    "**Output Format:**\n"
+    "# 📊 [Company Name] Overview\n"
+    "## 💰 Summary\n"
+   
+    "## 💰 Financial Health\n"
+    
+    "## 📈 Investment Insights\n"
+   
+    "## 📊 Key Financial Metrics\n"
+    "| 📌 Metric | 📉 Value | 📋 Explanation |\n"
+    "|----------|---------|---------------|\n"
+    
+    "## 📊 Comparative Analysis\n"
+    
+    "## 🔮 Predictive Analysis\n"
+    "| 🔍 Metric | 📈 Last Reported Value | 📊 Forecasted Next Value | 🔎 Prediction Rationale |\n"
+    "|----------|----------------------|----------------------|----------------------|\n"
+    "[For each available financial metric (e.g., revenue, net profit, EPS, debt levels, and all possible predictions), predict the next logical data point based on historical trends, growth patterns, and financial ratios. Provide a detailed explanation for each prediction.]\n\n"
+    "add the following line at the end of each report 'This report is for informational purposes only and should not be considered as investment advice. Investors should conduct their own research and consult with a financial advisor before making investment decisions'"
 
     f"Here is the original report:\n{input}"
     )
