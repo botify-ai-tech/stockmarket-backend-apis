@@ -98,7 +98,7 @@ class CRUDNEWS(CRUDBase[NewsItem, CreateNews, UpdateNews]):
             return news_48
 
         # fallback to latest 20 news
-        return db.query(NewsItem).order_by(NewsItem.created_at.desc()).limit(20).all()
+        return db.query(NewsItem).order_by(NewsItem.created_at.desc()).offset(skip).limit(limit).all()
 
     def get_total_news_without_search_query(self, db: Session) -> NewsItem:
         last_24, last_48 = self._get_time_bounds()
