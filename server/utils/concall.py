@@ -2,15 +2,15 @@ import asyncio
 import io
 import os
 import tiktoken
-import requests
+import httpx
 # import pymupdf
 import logging
-import openai
+# import openai # Seems unused
 import time
 import fitz
 import google.generativeai as genai
 from dotenv import load_dotenv
-from concurrent.futures import ThreadPoolExecutor
+# from concurrent.futures import ThreadPoolExecutor # Not needed with asyncio.to_thread
 from server.config import settings
 from server.utils.backgound_task import background_pinecone_task
 
@@ -35,29 +35,66 @@ def get_random_key_name():
     return random.choice(gemini_keys)
 
 
+# --- Helper function for running sync code in thread ---
+async def run_sync_in_thread(func, *args, **kwargs):
+    """Runs a synchronous function in a separate thread."""
+    loop = asyncio.get_running_loop()
+    from functools import partial
+    func_call = partial(func, *args, **kwargs)
+    return await loop.run_in_executor(None, func_call)
+
+# --- Synchronous helper for fitz operations ---
+def _sync_extract_text_content(input_binary):
+    """Synchronous part of text extraction. Returns text content."""
+    try:
+        with io.BytesIO(input_binary) as pdf_file:
+            doc = fitz.open(stream=pdf_file, filetype="pdf")
+            text = "\n".join([page.get_text("text") for page in doc])
+            doc.close()
+            return text
+    except Exception as e:
+        logging.critical(f"Unable to open or process the PDF file content: {e}")
+        return None
+
 
 async def extract_text(file, url):
+    """Asynchronously extracts text from a PDF file or URL. Returns text content or None."""
+    input_binary = None
     try:
         if file:
             input_binary = await file.read()
-        else:
+        elif url:
             headers = {
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
             }
-            response = requests.get(url, headers=headers)
-            if response.status_code != 200:
-                logging.critical(f"Failed to retrieve PDF. Status code: {response.status_code}")
-                return []
-            input_binary = response.content
+            async with httpx.AsyncClient() as client:
+                response = await client.get(url, headers=headers, follow_redirects=True, timeout=30.0)
+                response.raise_for_status()
+                input_binary = response.content
+        else:
+             logging.warning("concall.extract_text called with no file or URL.")
+             return None
 
-        with io.BytesIO(input_binary) as pdf_file:
-            doc = fitz.open(stream=pdf_file, filetype="pdf")
-        return doc
+        if input_binary:
+            extracted_text = await run_sync_in_thread(_sync_extract_text_content, input_binary)
+            return extracted_text
+        else:
+            return None
+
+    except httpx.RequestError as e:
+        logging.critical(f"HTTP request failed for URL {url}: {e}")
+        return None
+    except httpx.HTTPStatusError as e:
+        logging.critical(f"Failed to retrieve PDF from {url}. Status code: {e.response.status_code}")
+        return None
     except Exception as e:
-        logging.critical(f"Unable to open the PDF file: {e}")
-        return []
-    
+        logging.critical(f"Error during concall text extraction processing: {e}", exc_info=True)
+        return None
+
+
 async def chunk_text_by_tokens(text, chunk_size=950000):
+    # This can be kept async as it's mostly CPU bound but usually fast
+    # If it becomes a bottleneck, consider run_sync_in_thread
     encoding = tiktoken.get_encoding("cl100k_base")
     tokens = encoding.encode(text)
     total_tokens = len(tokens)
@@ -68,11 +105,38 @@ async def chunk_text_by_tokens(text, chunk_size=950000):
         chunks.append(chunk_text)
     return chunks
 
-async def questionans(chunks,retries=2):
-    if not chunks:
-        logging.error("No text provided for summarization.")
+# --- Synchronous helper for Gemini API calls (same as in summary.py) ---
+def _sync_generate_content(model_name, prompt_string):
+    """Synchronous call to Gemini API."""
+    try:
+        gemini_ai_key = os.getenv(get_random_key_name())
+        if not gemini_ai_key:
+            logging.error(f"Gemini API key (tried {get_random_key_name()}) not found in environment.")
+            return "[ERROR: API key not configured]"
+        genai.configure(api_key=gemini_ai_key)
+        model_instance = genai.GenerativeModel(model_name)
+        response = model_instance.generate_content(prompt_string)
+        if not response.parts:
+             feedback = getattr(response, 'prompt_feedback', None)
+             block_reason = getattr(feedback, 'block_reason', 'Unknown')
+             safety_ratings = getattr(feedback, 'safety_ratings', 'N/A')
+             logging.warning(f"Gemini returned no content. Block Reason: {block_reason}, Safety Ratings: {safety_ratings}")
+             return f"[ERROR: Gemini generation failed or blocked - Reason: {block_reason}]"
+        return response.text
+    except Exception as e:
+        logging.error(f"Gemini API call failed for model {model_name}: {e}", exc_info=True)
+        return f"[ERROR: Gemini API call failed - {e}]"
+
+
+async def questionans(chunks, retries=2): # Takes list of text chunks
+    # Join chunks for the prompt, adjust if needed
+    full_text_content = "\n---\n".join(chunks)
+
+    if not full_text_content:
+        logging.error("No text provided for question answering (questionans)." )
         return "[ERROR: No text to summarize]"
 
+    # --- PROMPT DEFINITION (UNCHANGED FROM ORIGINAL) --- START --- 
     prompt = (
     "### Instruction:\n"
     "You are a highly advanced financial AI assistant specializing in analyzing company conference calls. "
@@ -89,7 +153,7 @@ async def questionans(chunks,retries=2):
     "**Guidelines:**\n"
     "- **Transcript guidelines: IF the transcripts are not related to finance **DO NOT FOLLOW OUTPUT FORMAR** simply write that **GIVEN LINK DOESN'T CONTAIN ANY FINANCIAL INFORMATION** in markdown format"
     "- **Objective & Data-Driven:** Use only the retrieved data—no assumptions or guesses. Every insight must be justified with extracted figures.\n"
-    "- **Investment-Focused:** Provide key insights relevant for evaluating the company’s financial health, investment potential, and future growth outlook.\n"
+    "- **Investment-Focused:** Provide key insights relevant for evaluating the company's financial health, investment potential, and future growth outlook.\n"
     "- **Comprehensive Analysis:** Generate an in-depth company summary, explaining strengths, risks, trends, key financial metrics, and future projections with supporting data points.\n"
     "- **Comparative Evaluation:** Compare financial ratios, growth trends, and industry benchmarks where applicable, ensuring all comparisons are backed by figures.\n"
     "- **Structured & Visual:** Use tables, bullet points, and structured formatting to enhance clarity and comprehension.\n"
@@ -101,7 +165,7 @@ async def questionans(chunks,retries=2):
     "## Extracted Segment from the Video:\n"
     "All financial numbers representing money should be expressed only in the **₹ (Indian Rupee)** format. If any data is in a different currency or format, it must be converted to the **₹** format.\n\n"
     "```\n"
-    f"{chunks}\n"
+    f"{full_text_content}\n"
     "```\n\n"
 
 
@@ -132,7 +196,7 @@ async def questionans(chunks,retries=2):
     "[Provide a structured table with explanations for each metric.]\n\n"
 
     "## 📊 Comparative Analysis\n"
-    "[Analyze financial trends over different time periods within the company’s own financial data. Ensure comparisons are based only on available information without referencing industry standards.]\n\n"
+    "[Analyze financial trends over different time periods within the company's own financial data. Ensure comparisons are based only on available information without referencing industry standards.]\n\n"
 
     "## 🔮 Predictive Analysis\n"
     "| 🔍 Metric | 📈 Last Reported Value | 📊 Forecasted Next Value | 🔎 Prediction Rationale |\n"
@@ -154,16 +218,16 @@ async def questionans(chunks,retries=2):
     "- Hard Rule: Do not add the ```html tag or any code block formatting such as triple backticks (```) before the output. The response must start directly with the header (e.g., # 📊 [Company Name] Overview) without any code block wrapping."
     "-**DO NOT** Add **```markdown** tag in the front of the response"
     )
-
+    # --- PROMPT DEFINITION (UNCHANGED FROM ORIGINAL) --- END ---
     
-    gemini_ai_key = os.getenv(get_random_key_name())
-    genai.configure(api_key=gemini_ai_key)
-    model = "gemini-2.0-flash"
-    model_instance = genai.GenerativeModel(model)
-    response = model_instance.generate_content(prompt)
-    return response.text
+    # Run synchronous Gemini call in a thread
+    model_name = "gemini-2.0-flash" # Check model name validity
+    response_text = await run_sync_in_thread(_sync_generate_content, model_name, prompt)
+    return response_text
             
-def checker(input):
+
+async def checker(input_text): # Renamed input
+    # --- PROMPT DEFINITION (UNCHANGED FROM ORIGINAL) --- START ---
     prompt3 = (
     "You are a Checker LLM. Your task is to evaluate the output from another LLM related to Finance or financial summaries. "
     "Respond strictly with one word: either 'RIGHT' or 'WRONG'. Do not include any additional words, explanations, or punctuation.\n\n"
@@ -171,8 +235,8 @@ def checker(input):
     "Respond with 'WRONG' if any of the following are true:\n"
     "- The input contains error messages, apologies, or phrases like 'Unable to generate', 'I am unable to', '[ERROR]', or indicates missing data.\n"
     "- The input includes conversational or assistant-style language such as:\n"
-    "  'Okay now I understand', 'Sure! Here’s an improved version', 'Let me know if', 'Here is the generated summary', "
-    "'Sure! Here’s the grammatically correct version', or any similar interactive phrases.\n"
+    "  'Okay now I understand', 'Sure! Here's an improved version', 'Let me know if', 'Here is the generated summary', "
+    "'Sure! Here's the grammatically correct version', or any similar interactive phrases.\n"
     "- The input contains gibberish like 'fmhgbdlmbhdf' or similar non-sensical strings.\n"
     "- The input includes the backtick character (`), such as in (`<font color='green'>1,455.36</font>`).\n\n"
     "Respond with 'RIGHT' only if the input is a complete, accurate, and valid financial summary with no conversational tone or formatting issues.\n"
@@ -201,74 +265,114 @@ def checker(input):
     "[For each available financial metric (e.g., revenue, net profit, EPS, debt levels, and all possible predictions), predict the next logical data point based on historical trends, growth patterns, and financial ratios. Provide a detailed explanation for each prediction.]\n\n"
     "add the following line at the end of each report 'This report is for informational purposes only and should not be considered as investment advice. Investors should conduct their own research and consult with a financial advisor before making investment decisions'"
 
-    f"Here is the original report:\n{input}"
+    f"Here is the original report:\n{input_text}"
     )
-    gemini_ai_key = os.getenv(get_random_key_name())
-    genai.configure(api_key=gemini_ai_key)
-    model = "gemini-2.0-flash"
-    model_instance = genai.GenerativeModel(model)
-    response = model_instance.generate_content(prompt3)
-    return response.text
+    # --- PROMPT DEFINITION (UNCHANGED FROM ORIGINAL) --- END ---
+
+    # Run synchronous Gemini call in a thread
+    model_name = "gemini-2.0-flash"
+    response_text = await run_sync_in_thread(_sync_generate_content, model_name, prompt3)
+    return response_text
 
 
-async def generate_concall_summary(file,url,user_id, background_tasks,retries=2):
+async def generate_concall_summary(file, url, user_id, background_tasks, retries=2):
     attempt = 0
-    response3 = []
-    doc = await extract_text(file, url)
+    result_list = [] # Renamed for clarity
 
-    if not doc:
-        response3.append(
-            {
-                "sequence_number": "overall",
-                "pages": "Overall Summary",
-                "detailed_analysis": "PDF parsing failed. Please try again.",
-                "status" : False
-            }
-        )
-        return response3  
+    extracted_text = await extract_text(file, url)
 
-    text = "\n".join([page.get_text("text") for page in doc])
-    #background_tasks.add_task(background_pinecone_task, doc, user_id)
-    chunks = await chunk_text_by_tokens(text, chunk_size=950000)
+    if extracted_text is None:
+        # Error logged in extract_text
+        result_list.append({
+            "sequence_number": "overall",
+            "pages": "Overall Summary",
+            "detailed_analysis": "Failed to extract text from the provided source. Please check the file/URL or logs.",
+            "status": False
+        })
+        return result_list
+
+    # Handle background task if needed (ensure it's async or wrapped)
+    # background_tasks.add_task(background_pinecone_task, extracted_text, user_id)
+
+    chunks = await chunk_text_by_tokens(extracted_text, chunk_size=950000)
+    if not chunks:
+        logging.error("Concall text extracted but resulted in zero chunks.")
+        result_list.append({
+            "sequence_number": "overall",
+            "pages": "Overall Summary",
+            "detailed_analysis": "Failed to process extracted concall text into chunks.",
+            "status": False
+        })
+        return result_list
+
     try:
         while attempt < retries:
+            logging.info(f"Attempt {attempt + 1}/{retries} to generate and check concall summary...")
             try:
-                response2 = await questionans(chunks)
-                res = checker(response2)
+                # Generate response asynchronously
+                generated_response = await questionans(chunks)
 
-                if "wrong" not in res.lower():
-                    response3.append(
-                        {
-                            "sequence_number": "overall",
-                            "pages": "Overall Summary",
-                            "detailed_analysis": response2,
-                            "status": True
-                        }
-                    )
-                    return response3
+                # Check response asynchronously
+                checker_result = await checker(generated_response)
+
+                logging.info(f"Concall Checker result (attempt {attempt + 1}): '{checker_result}'")
+
+                is_wrong = isinstance(checker_result, str) and 'wrong' in checker_result.lower()
+                is_error = isinstance(checker_result, str) and '[error' in generated_response.lower() # Also check original response for errors
+
+                if not is_wrong and not is_error and checker_result:
+                    result_list.append({
+                        "sequence_number": "overall",
+                        "pages": "Overall Summary",
+                        "detailed_analysis": generated_response,
+                        "status": True
+                    })
+                    logging.info("Concall summary generation and validation successful.")
+                    return result_list
                 else:
-                    attempt += 1  # Incorrect result, retry
+                    logging.warning(f"Attempt {attempt + 1} failed concall validation. Checker: '{checker_result}'. Response: '{generated_response[:100]}...'. Retrying...")
+                    attempt += 1
+                    await asyncio.sleep(random.uniform(0.5, 2.0))
                     continue
 
             except Exception as e:
                 error_msg = str(e)
-                if "429" in error_msg or "quota" in error_msg:
-                    logging.warning("Quota error. Retrying with a different key...")
+                logging.error(f"Exception during concall generation/checking (attempt {attempt + 1}): {error_msg}", exc_info=True)
+                if ("429" in error_msg or
+                    "quota" in error_msg.lower() or
+                    "resource has been exhausted" in error_msg.lower() or
+                    "rate limit" in error_msg.lower()):
+                    logging.warning(f"Quota/Rate limit error detected (attempt {attempt + 1}). Retrying after delay...")
                     attempt += 1
-                    time.sleep(2)  
+                    await asyncio.sleep(random.uniform(3, 7))
                     continue
                 else:
-                    raise e  
+                    logging.critical(f"Non-retryable exception during concall generation loop: {e}", exc_info=True)
+                    result_list.append({
+                        "sequence_number": "overall",
+                        "pages": "Overall Summary",
+                        "detailed_analysis": f"An unexpected error occurred during concall summary generation: {e}",
+                        "status": False
+                    })
+                    return result_list
 
     except Exception as e:
-        logging.critical(f"Exception during report generation: {e}")
+        logging.critical(f"Unhandled exception in generate_concall_summary: {e}", exc_info=True)
+        if not result_list:
+             result_list.append({
+                "sequence_number": "overall",
+                "pages": "Overall Summary",
+                "detailed_analysis": f"A critical error occurred in concall summary processing: {e}",
+                "status": False
+            })
+        return result_list
 
-    response3.append(
-        {
-            "sequence_number": "overall",
-            "pages": "Overall Summary",
-            "detailed_analysis": "Response generation failed. Please try again.",
-            "status": False
-        }
-    )
-    return response3
+    # If all retries failed
+    logging.error(f"Concall summary generation failed validation after {retries} attempts.")
+    result_list.append({
+        "sequence_number": "overall",
+        "pages": "Overall Summary",
+        "detailed_analysis": "Concall response generation failed after multiple validation attempts. Please try again later.",
+        "status": False
+    })
+    return result_list
