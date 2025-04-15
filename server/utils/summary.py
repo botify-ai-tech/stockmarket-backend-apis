@@ -154,6 +154,7 @@ async def report_gen(chunks, retries=2): # Now takes chunks (list of text) direc
     "Your goal is to provide investors with accurate insights, summaries, financial health evaluations, and predictive insights derived directly from the given data.\n\n"
 
     "**Guidelines:**\n"
+    "Strictly No HTML or markdown Code Blocks: Under no circumstances should the output include ```html or any kind of code block formatting. This is strictly prohibited and must be avoided at all costs."
     "- **Objective & Data-Driven:** Use only the retrieved data—no assumptions or guesses. Every insight must be justified with extracted figures.\n"
     "- **Investment-Focused:** Provide key insights relevant for evaluating the company's financial health, investment potential, and future growth outlook.\n"
     "- **Comprehensive Analysis:** Generate an in-depth company summary, explaining strengths, risks, trends, key financial metrics, and future projections with supporting data points.\n"
@@ -216,7 +217,7 @@ async def report_gen(chunks, retries=2): # Now takes chunks (list of text) direc
     "- **Hardcoded Formatting Rule:** When presenting financial results in a sentence format, do **not** use the backtick (`) symbol. Example:\n"
     "  - ✅ **Correct:** The company turned profitable, reporting a profit after tax of <font color='green'>1,455.36</font> lakhs for FY 2017-18 compared to a loss of <font color='red'>512.01</font> lakhs in FY 2016-17.\n"
     "  - ❌ **Incorrect:** The company turned profitable, reporting a profit after tax of ` <font color='green'>1,455.36</font> ` lakhs for FY 2017-18 compared to a loss of ` <font color='red'>512.01</font> ` lakhs in FY 2016-17.\n"
-    "-**DO not Add **```html** tag in the front of the response"
+    "Strictly No HTML or markdown Code Blocks: Under no circumstances should the output include ```html or any kind of code block formatting. This is strictly prohibited and must be avoided at all costs."
     )
     # --- PROMPT DEFINITION (UNCHANGED FROM ORIGINAL) --- END --- 
 
@@ -232,8 +233,9 @@ async def checker(input_text): # Renamed 'input' to 'input_text'
     "Respond strictly with one word: either 'RIGHT' or 'WRONG'. Do not include any additional words, explanations, or punctuation.\n\n"
 
     "Respond with 'WRONG' if any of the following are true:\n"
+    "Strictly No HTML or markdown Code Blocks: Under no circumstances should the output include ```html or any kind of code block formatting. This is strictly prohibited and must be avoided at all costs."
     "- The input contains error messages, apologies, or phrases like 'Unable to generate', 'I am unable to', '[ERROR]', or indicates missing data.\n"
-    "- The input includes conversational or assistant-style language such as:\n"
+    "- The input includes conversational or assistant-style language such as: Here's the company insight report based on the provided financial data\n"
     "  'Okay now I understand', 'Sure! Here's an improved version', 'Let me know if', 'Here is the generated summary', "
     "'Sure! Here's the grammatically correct version', or any similar interactive phrases.\n"
     "- The input contains gibberish like 'fmhgbdlmbhdf' or similar non-sensical strings.\n"
