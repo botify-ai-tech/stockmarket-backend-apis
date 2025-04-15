@@ -12,25 +12,21 @@ import logging
 import random
 
 gemini_keys = [
-    "GEMINI_API_KEY_ONE",
-    "GEMINI_API_KEY_TWO",
-    "GEMINI_API_KEY_THREE",
-    "GEMINI_API_KEY_FIVE",
-    "GEMINI_API_KEY_SEVEN",
-    "GEMINI_API_KEY_EIGHT",
-    "GEMINI_API_KEY_NINE",
-    "GEMINI_API_KEY_TEN",
-    "GEMINI_AI_KEY",
-    "DHARMIK_GEMINI_AI_KEY",
-    "HARSH_GEMINI_AI_KEY",
-    "HET_GEMINI_AI_KEY"
+    "GEMINI_API_KEY_11",
+    "GEMINI_API_KEY_12",
+    "GEMINI_API_KEY_13",
+    "GEMINI_API_KEY_14",
+    "GEMINI_API_KEY_15",
+    "GEMINI_API_KEY_16",
+    "GEMINI_API_KEY_17",
+    "GEMINI_API_KEY_18",
+    "GEMINI_API_KEY_19",
+    "GEMINI_API_KEY_20"
 ]
 
 def get_random_key_name():
     return random.choice(gemini_keys)
  
-genai.configure(api_key=os.getenv(get_random_key_name()))
-
 
 async def get_video_id(youtube_url):
     parsed_url = urlparse(youtube_url)
@@ -156,7 +152,11 @@ async def report_gen(text,retries=2):
     "- **Hardcoded Formatting Rule:** When presenting financial results in a sentence format, do **not** use the backtick (`) symbol. Example:\n"
     "  - ✅ **Correct:** The company turned profitable, reporting a profit after tax of <font color='green'>1,455.36</font> lakhs for FY 2017-18 compared to a loss of <font color='red'>512.01</font> lakhs in FY 2016-17.\n"
     "  - ❌ **Incorrect:** The company turned profitable, reporting a profit after tax of ` <font color='green'>1,455.36</font> ` lakhs for FY 2017-18 compared to a loss of ` <font color='red'>512.01</font> ` lakhs in FY 2016-17.\n"
+        "-**DO not Add **```html** tag in the front of the response"
+        "-**DO not Add **```markdown** tag in the front of the response"
     )  
+    gemini_ai_key = os.getenv(get_random_key_name())
+    genai.configure(api_key=gemini_ai_key)
     model = "gemini-2.0-flash-thinking-exp-01-21"
     model_instance = genai.GenerativeModel(model)
     response1 = model_instance.generate_content(prompt)
@@ -173,6 +173,7 @@ def checker(input):
     "  'Okay now I understand', 'Sure! Here’s an improved version', 'Let me know if', 'Here is the generated summary', "
     "'Sure! Here’s the grammatically correct version', or any similar interactive phrases.\n"
     "- The input contains gibberish like 'fmhgbdlmbhdf' or similar non-sensical strings.\n"
+    "= if response contain **```html** then response should be WRONG"
     "- The input includes the backtick character (`), such as in (`<font color='green'>1,455.36</font>`).\n\n"
     "Respond with 'RIGHT' only if the input is a complete, accurate, and valid financial summary with no conversational tone or formatting issues.\n"
     "For example, (<font color='green'>1,455.36</font>) is acceptable and should be marked as 'RIGHT'.\n\n"
@@ -202,36 +203,55 @@ def checker(input):
 
     f"Here is the original report:\n{input}"
     )
+    gemini_ai_key = os.getenv(get_random_key_name())
+    genai.configure(api_key=gemini_ai_key)
     model = "gemini-2.0-flash"
     model_instance = genai.GenerativeModel(model)
     response = model_instance.generate_content(prompt3)
-    return response.text           
+    return response.text          
 
-async def generate_youtube_summary(url,user_id, background_tasks):
+async def generate_youtube_summary(url,user_id, background_tasks,retries=2):
     attempt = 0
     response3 = []
-    while attempt < 2:
-        response2 = await report_gen(url)
-        res = checker(response2)
+    try:
+        while attempt < retries:
+            try:
+                response2 = await report_gen(url)
+                res = checker(response2)
 
-        if "wrong" not in res.lower():
-            response3.append(
-                {
-                    "sequence_number": "overall",
-                    "pages": "Overall Summary",
-                    "detailed_analysis": response2
-                }
-            )
-            return response3
+                if "wrong" not in res.lower():
+                    response3.append(
+                        {
+                            "sequence_number": "overall",
+                            "pages": "Overall Summary",
+                            "detailed_analysis": response2,
+                            "status": True
+                        }
+                    )
+                    return response3
+                else:
+                    attempt += 1  # Incorrect result, retry
+                    continue
 
-        attempt += 1
+            except Exception as e:
+                error_msg = str(e)
+                if "429" in error_msg or "quota" in error_msg:
+                    logging.warning("Quota error. Retrying with a different key...")
+                    attempt += 1
+                    time.sleep(2)  
+                    continue
+                else:
+                    raise e  
+
+    except Exception as e:
+        logging.critical(f"Exception during report generation: {e}")
 
     response3.append(
         {
             "sequence_number": "overall",
             "pages": "Overall Summary",
             "detailed_analysis": "Response generation failed. Please try again.",
-            "status" : False
+            "status": False
         }
     )
     return response3

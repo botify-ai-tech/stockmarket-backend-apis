@@ -19,25 +19,21 @@ load_dotenv()
 import random
 
 gemini_keys = [
-    "GEMINI_API_KEY_ONE",
-    "GEMINI_API_KEY_TWO",
-    "GEMINI_API_KEY_THREE",
-    "GEMINI_API_KEY_FIVE",
-    "GEMINI_API_KEY_SEVEN",
-    "GEMINI_API_KEY_EIGHT",
-    "GEMINI_API_KEY_NINE",
-    "GEMINI_API_KEY_TEN",
-    "GEMINI_AI_KEY",
-    "DHARMIK_GEMINI_AI_KEY",
-    "HARSH_GEMINI_AI_KEY",
-    "HET_GEMINI_AI_KEY"
+    "GEMINI_API_KEY_11",
+    "GEMINI_API_KEY_12",
+    "GEMINI_API_KEY_13",
+    "GEMINI_API_KEY_14",
+    "GEMINI_API_KEY_15",
+    "GEMINI_API_KEY_16",
+    "GEMINI_API_KEY_17",
+    "GEMINI_API_KEY_18",
+    "GEMINI_API_KEY_19",
+    "GEMINI_API_KEY_20"
 ]
 
 def get_random_key_name():
     return random.choice(gemini_keys)
 
-gemini_ai_key = os.getenv(get_random_key_name())
-genai.configure(api_key=gemini_ai_key)
 
 async def extract_text(file, url):
     try:
@@ -73,7 +69,7 @@ async def chunk_text_by_tokens(text, chunk_size=950000):
         chunks.append(chunk_text)
     return chunks
 
-async def questionans(chunks,question,retries=2):
+# async def questionans(chunks,question,retries=2):
     if not chunks:
         logging.error("No text provided for summarization.")
         return "[ERROR: No text to summarize]"
@@ -131,9 +127,11 @@ async def report_gen(response,retries=2):
     "- **Predictive Insights:** Where possible, forecast future performance based on historical trends, numerical metrics, and financial patterns. Ensure every prediction is justified with solid reasoning and past data trends.\n"
     "- **Coloring Scheme:** Positive numerical data should be highlighted in green as <span style='color:green;'>green text</span>, and negative data should be highlighted in red <span style='color:red;'>red text</span>. Ensure that the output does not use Markdown for color formatting.\n\n"
     "-**Do Not** add a TABLE IF THE DATA INSIDE IT IS UNAVAILABLE AND EMPTY TABLE MUST NOT BE IN THE FINAL OUTPUT"
+    "-**DO not Add **```html** tag in the front of the response"
     "should not inclue conversational text such as 'Here's a structured company insight report based on the provided financial data'"
     "## Extracted Segment from the Video:\n"
     "**Extracted Financial Data:**\n"
+    "Try to fetch as much as required data possible"
     "All financial numbers representing money should be expressed only in the **₹ (Indian Rupee)** format. If any data is in a different currency or format, it must be converted to the **₹** format.\n\n"
     f"{response}\n\n"
 
@@ -184,9 +182,11 @@ async def report_gen(response,retries=2):
     "- **Hardcoded Formatting Rule:** When presenting financial results in a sentence format, do **not** use the backtick (`) symbol. Example:\n"
     "  - ✅ **Correct:** The company turned profitable, reporting a profit after tax of <font color='green'>1,455.36</font> lakhs for FY 2017-18 compared to a loss of <font color='red'>512.01</font> lakhs in FY 2016-17.\n"
     "  - ❌ **Incorrect:** The company turned profitable, reporting a profit after tax of ` <font color='green'>1,455.36</font> ` lakhs for FY 2017-18 compared to a loss of ` <font color='red'>512.01</font> ` lakhs in FY 2016-17.\n"
+    "-**DO not Add **```html** tag in the front of the response"
     )
 
-
+    gemini_ai_key = os.getenv(get_random_key_name())
+    genai.configure(api_key=gemini_ai_key)
     model = "gemini-2.0-flash"
     model_instance = genai.GenerativeModel(model)
     response = model_instance.generate_content(prompt2)
@@ -203,6 +203,7 @@ def checker(input):
     "  'Okay now I understand', 'Sure! Here’s an improved version', 'Let me know if', 'Here is the generated summary', "
     "'Sure! Here’s the grammatically correct version', or any similar interactive phrases.\n"
     "- The input contains gibberish like 'fmhgbdlmbhdf' or similar non-sensical strings.\n"
+    "= if response contain **```html** then response should be WRONG"
     "- The input includes the backtick character (`), such as in (`<font color='green'>1,455.36</font>`).\n\n"
     "Respond with 'RIGHT' only if the input is a complete, accurate, and valid financial summary with no conversational tone or formatting issues.\n"
     "For example, (<font color='green'>1,455.36</font>) is acceptable and should be marked as 'RIGHT'.\n\n"
@@ -232,13 +233,15 @@ def checker(input):
 
     f"Here is the original report:\n{input}"
     )
+    gemini_ai_key = os.getenv(get_random_key_name())
+    genai.configure(api_key=gemini_ai_key)
     model = "gemini-2.0-flash"
     model_instance = genai.GenerativeModel(model)
     response = model_instance.generate_content(prompt3)
     return response.text
 
 
-async def generate_financial_summary(file, url, user_id, background_tasks):
+async def generate_financial_summary(file, url, user_id, background_tasks,retries=2):
     attempt = 0
     response3 = []
 
@@ -249,7 +252,7 @@ async def generate_financial_summary(file, url, user_id, background_tasks):
             {
                 "sequence_number": "overall",
                 "pages": "Overall Summary",
-                "detailed_analysis": "PDF parsing failed. Please try again.",
+                "detailed_analysis": "Please upload a valid PDF or try again later.",
                 "status" : False
             }
         )
@@ -262,33 +265,49 @@ async def generate_financial_summary(file, url, user_id, background_tasks):
 
     chunks = await chunk_text_by_tokens(text, chunk_size=950000)
 
-    with open("server/utils/final_questions.txt", "r", encoding="utf-8") as file:
-        question = file.read()
+    # with open("server/utils/final_questions.txt", "r", encoding="utf-8") as file:
+    #     question = file.read()
 
-    response = await questionans(chunks, question)
+    # response = await questionans(chunks, question)
+    try:
+        while attempt < retries:
+            try:
+                response2 = await report_gen(chunks)
+                res = checker(response2)
 
-    while attempt < 2:
-        response2 = await report_gen(response)
-        res = checker(response2)
+                if "wrong" not in res.lower():
+                    response3.append(
+                        {
+                            "sequence_number": "overall",
+                            "pages": "Overall Summary",
+                            "detailed_analysis": response2,
+                            "status": True
+                        }
+                    )
+                    return response3
+                else:
+                    attempt += 1  # Incorrect result, retry
+                    continue
 
-        if "wrong" not in res.lower():
-            response3.append(
-                {
-                    "sequence_number": "overall",
-                    "pages": "Overall Summary",
-                    "detailed_analysis": response2
-                }
-            )
-            return response3
+            except Exception as e:
+                error_msg = str(e)
+                if "429" in error_msg or "quota" in error_msg:
+                    logging.warning("Quota error. Retrying with a different key...")
+                    attempt += 1
+                    time.sleep(2)  
+                    continue
+                else:
+                    raise e  
 
-        attempt += 1
+    except Exception as e:
+        logging.critical(f"Exception during report generation: {e}")
 
     response3.append(
         {
             "sequence_number": "overall",
             "pages": "Overall Summary",
             "detailed_analysis": "Response generation failed. Please try again.",
-            "status" : False
+            "status": False
         }
     )
     return response3

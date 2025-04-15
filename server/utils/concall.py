@@ -19,25 +19,22 @@ load_dotenv()
 import random
 
 gemini_keys = [
-    "GEMINI_API_KEY_ONE",
-    "GEMINI_API_KEY_TWO",
-    "GEMINI_API_KEY_THREE",
-    "GEMINI_API_KEY_FIVE",
-    "GEMINI_API_KEY_SEVEN",
-    "GEMINI_API_KEY_EIGHT",
-    "GEMINI_API_KEY_NINE",
-    "GEMINI_API_KEY_TEN",
-    "GEMINI_AI_KEY",
-    "DHARMIK_GEMINI_AI_KEY",
-    "HARSH_GEMINI_AI_KEY",
-    "HET_GEMINI_AI_KEY"
+    "GEMINI_API_KEY_11",
+    "GEMINI_API_KEY_12",
+    "GEMINI_API_KEY_13",
+    "GEMINI_API_KEY_14",
+    "GEMINI_API_KEY_15",
+    "GEMINI_API_KEY_16",
+    "GEMINI_API_KEY_17",
+    "GEMINI_API_KEY_18",
+    "GEMINI_API_KEY_19",
+    "GEMINI_API_KEY_20"
 ]
 
 def get_random_key_name():
     return random.choice(gemini_keys)
 
-gemini_ai_key = os.getenv(get_random_key_name())
-genai.configure(api_key=gemini_ai_key)
+
 
 async def extract_text(file, url):
     try:
@@ -97,6 +94,8 @@ async def questionans(chunks,retries=2):
     "- **Comparative Evaluation:** Compare financial ratios, growth trends, and industry benchmarks where applicable, ensuring all comparisons are backed by figures.\n"
     "- **Structured & Visual:** Use tables, bullet points, and structured formatting to enhance clarity and comprehension.\n"
     "- **Predictive Insights:** Where possible, forecast future performance based on historical trends, numerical metrics, and financial patterns. Ensure every prediction is justified with solid reasoning and past data trends.\n"
+    "- Hard Rule: Do not add the ```html tag or any code block formatting such as triple backticks (```) before the output. The response must start directly with the header (e.g., # 📊 [Company Name] Overview) without any code block wrapping."
+    "-**DO NOT** Add **```markdown** tag in the front of the response"
     "- **Coloring Scheme:** Positive numerical data should be highlighted in green as <span style='color:green;'>red text</span>, and negative data should be highlighted in red <span style='color:red;'>red text</span>. Ensure that the output does not use Markdown for color formatting.\n\n"
     "-**Do Not** add any data that is not available such as **DO NOT ADD LINES LIKE *The retrieved data does not lend itself to complex visual representations beyond tables and structured lists. The table above summarizes key financial metrics."
     "## Extracted Segment from the Video:\n"
@@ -152,9 +151,13 @@ async def questionans(chunks,retries=2):
     
     "  - ✅ **Correct:** The company turned profitable, reporting a profit after tax of <font color='green'>1,455.36</font> lakhs for FY 2017-18 compared to a loss of <font color='red'>512.01</font> lakhs in FY 2016-17.\n"
     "  - ❌ **Incorrect:** The company turned profitable, reporting a profit after tax of ` <font color='green'>1,455.36</font> ` lakhs for FY 2017-18 compared to a loss of ` <font color='red'>512.01</font> ` lakhs in FY 2016-17.\n"
+    "- Hard Rule: Do not add the ```html tag or any code block formatting such as triple backticks (```) before the output. The response must start directly with the header (e.g., # 📊 [Company Name] Overview) without any code block wrapping."
+    "-**DO NOT** Add **```markdown** tag in the front of the response"
     )
 
-
+    
+    gemini_ai_key = os.getenv(get_random_key_name())
+    genai.configure(api_key=gemini_ai_key)
     model = "gemini-2.0-flash"
     model_instance = genai.GenerativeModel(model)
     response = model_instance.generate_content(prompt)
@@ -200,13 +203,15 @@ def checker(input):
 
     f"Here is the original report:\n{input}"
     )
+    gemini_ai_key = os.getenv(get_random_key_name())
+    genai.configure(api_key=gemini_ai_key)
     model = "gemini-2.0-flash"
     model_instance = genai.GenerativeModel(model)
     response = model_instance.generate_content(prompt3)
     return response.text
 
 
-async def generate_concall_summary(file,url,user_id, background_tasks):
+async def generate_concall_summary(file,url,user_id, background_tasks,retries=2):
     attempt = 0
     response3 = []
     doc = await extract_text(file, url)
@@ -225,28 +230,45 @@ async def generate_concall_summary(file,url,user_id, background_tasks):
     text = "\n".join([page.get_text("text") for page in doc])
     #background_tasks.add_task(background_pinecone_task, doc, user_id)
     chunks = await chunk_text_by_tokens(text, chunk_size=950000)
-    while attempt < 2:
-        response2 = await questionans(chunks)
-        res = checker(response2)
+    try:
+        while attempt < retries:
+            try:
+                response2 = await questionans(chunks)
+                res = checker(response2)
 
-        if "wrong" not in res.lower():
-            response3.append(
-                {
-                    "sequence_number": "overall",
-                    "pages": "Overall Summary",
-                    "detailed_analysis": response2
-                }
-            )
-            return response3
+                if "wrong" not in res.lower():
+                    response3.append(
+                        {
+                            "sequence_number": "overall",
+                            "pages": "Overall Summary",
+                            "detailed_analysis": response2,
+                            "status": True
+                        }
+                    )
+                    return response3
+                else:
+                    attempt += 1  # Incorrect result, retry
+                    continue
 
-        attempt += 1
+            except Exception as e:
+                error_msg = str(e)
+                if "429" in error_msg or "quota" in error_msg:
+                    logging.warning("Quota error. Retrying with a different key...")
+                    attempt += 1
+                    time.sleep(2)  
+                    continue
+                else:
+                    raise e  
+
+    except Exception as e:
+        logging.critical(f"Exception during report generation: {e}")
 
     response3.append(
         {
             "sequence_number": "overall",
             "pages": "Overall Summary",
             "detailed_analysis": "Response generation failed. Please try again.",
-            "status" : False
+            "status": False
         }
     )
     return response3

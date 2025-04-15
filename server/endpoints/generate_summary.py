@@ -1,3 +1,4 @@
+import logging
 import traceback
 import uuid
 import regex as re
@@ -216,7 +217,6 @@ async def general_chat(
                 )
             if analysis:
                 detailed = analysis[0].get("detailed_analysis")
-                detailed_analysis = regex(detailed)
 
                 chat_ = crud.chat.create(
                     db,
@@ -253,6 +253,7 @@ async def general_chat(
                         "message": "Bot answer generated successfully.",
                     },
                 )
+                
 
         else:
             user_id = current_user.id
@@ -318,6 +319,7 @@ async def general_chat(
                     "message": "Bot answer generated successfully.",
                 },
             )
+    
 
     except HTTPException as e:
         return JSONResponse(
