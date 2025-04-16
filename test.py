@@ -1,87 +1,87 @@
-import logging
-import time
-from bs4 import BeautifulSoup
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.chrome.options import Options
-from selenium.common.exceptions import NoSuchElementException, WebDriverException
+# import logging
+# import time
+# from bs4 import BeautifulSoup
+# from selenium import webdriver
+# from selenium.webdriver.common.by import By
+# from selenium.webdriver.chrome.options import Options
+# from selenium.common.exceptions import NoSuchElementException, WebDriverException
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s",
-)
+# logging.basicConfig(
+#     level=logging.INFO,
+#     format="%(asctime)s - %(levelname)s - %(message)s",
+# )
 
-def scrap_daily1(share):
-    all_screener_data_dict = {}
+# def scrap_daily1(share):
+#     all_screener_data_dict = {}
 
-    try:
-        logging.info("Starting Ticker scraping")
+#     try:
+#         logging.info("Starting Ticker scraping")
 
-        # Set Chrome options for headless scraping
-        chrome_options = Options()
-        chrome_options.add_argument("--headless")
-        chrome_options.add_argument("--disable-gpu")
-        chrome_options.add_argument("--window-size=1920,1080")
-        chrome_options.add_argument("--no-sandbox")
-        chrome_options.add_argument("--disable-dev-shm-usage")
+#         # Set Chrome options for headless scraping
+#         chrome_options = Options()
+#         chrome_options.add_argument("--headless")
+#         chrome_options.add_argument("--disable-gpu")
+#         chrome_options.add_argument("--window-size=1920,1080")
+#         chrome_options.add_argument("--no-sandbox")
+#         chrome_options.add_argument("--disable-dev-shm-usage")
 
-        driver = webdriver.Chrome(options=chrome_options)
-        driver.get(f"https://ticker.finology.in/company/{share}")
-        time.sleep(2)
+#         driver = webdriver.Chrome(options=chrome_options)
+#         driver.get(f"https://ticker.finology.in/company/{share}")
+#         time.sleep(2)
 
-        company_essentials_html = driver.find_element(
-            By.XPATH,
-            "//div[@id='mainContent_divCompanyEssentials']//div[@id='mainContent_updAddRatios']",
-        ).get_attribute("outerHTML")
-        driver.quit()
+#         company_essentials_html = driver.find_element(
+#             By.XPATH,
+#             "//div[@id='mainContent_divCompanyEssentials']//div[@id='mainContent_updAddRatios']",
+#         ).get_attribute("outerHTML")
+#         driver.quit()
 
-        soup = BeautifulSoup(company_essentials_html, "html.parser")
-        data = {}
-        divs = soup.find_all("div", class_="col-6 col-md-4 compess")
+#         soup = BeautifulSoup(company_essentials_html, "html.parser")
+#         data = {}
+#         divs = soup.find_all("div", class_="col-6 col-md-4 compess")
 
-        for div in divs:
-            label = div.find("small")
-            label_text = label.get_text(strip=True) if label else ""
-            number_span = div.find("span", class_="Number")
-            number_p = div.find("p")
-            number_value = (
-                number_span.get_text(strip=True) if number_span
-                else number_p.get_text(strip=True) if number_p
-                else "0"
-            )
-            if label_text:
-                data[label_text] = number_value
+#         for div in divs:
+#             label = div.find("small")
+#             label_text = label.get_text(strip=True) if label else ""
+#             number_span = div.find("span", class_="Number")
+#             number_p = div.find("p")
+#             number_value = (
+#                 number_span.get_text(strip=True) if number_span
+#                 else number_p.get_text(strip=True) if number_p
+#                 else "0"
+#             )
+#             if label_text:
+#                 data[label_text] = number_value
 
-        all_screener_data_dict[share] = {
-            "Ticker": {
-                "Company Essentials": [data]
-            }
-        }
+#         all_screener_data_dict[share] = {
+#             "Ticker": {
+#                 "Company Essentials": [data]
+#             }
+#         }
 
-        essentials = all_screener_data_dict[share]["Ticker"]["Company Essentials"][0]
-        print(f"\n📊 Company Overview: {share}")
-        print(f"Market Cap        : {essentials.get('Market Cap')}")
-        print(f"Enterprise Value  : {essentials.get('Enterprise Value')}")
-        print(f"P/B Ratio         : {essentials.get('P/B')}")
-        print(f"P/E Ratio         : {essentials.get('P/E')}")
-        print(f"Total Debt        : {essentials.get('DEBT')}")
-        print(f"Dividend Yield    : {essentials.get('Div. Yield')}")
+#         essentials = all_screener_data_dict[share]["Ticker"]["Company Essentials"][0]
+#         print(f"\n📊 Company Overview: {share}")
+#         print(f"Market Cap        : {essentials.get('Market Cap')}")
+#         print(f"Enterprise Value  : {essentials.get('Enterprise Value')}")
+#         print(f"P/B Ratio         : {essentials.get('P/B')}")
+#         print(f"P/E Ratio         : {essentials.get('P/E')}")
+#         print(f"Total Debt        : {essentials.get('DEBT')}")
+#         print(f"Dividend Yield    : {essentials.get('Div. Yield')}")
 
-    except NoSuchElementException:
-        logging.error(f"Failed to find elements for {share}")
-        return {"share": share, "status": "Failed"}
+#     except NoSuchElementException:
+#         logging.error(f"Failed to find elements for {share}")
+#         return {"share": share, "status": "Failed"}
 
-    except WebDriverException as e:
-        logging.error(f"[{share}] WebDriver error: {str(e)}")
-        return {"share": share, "status": "Failed", "error": str(e)}
+#     except WebDriverException as e:
+#         logging.error(f"[{share}] WebDriver error: {str(e)}")
+#         return {"share": share, "status": "Failed", "error": str(e)}
 
-    except Exception as e:
-        logging.error(f"Error scraping {share}: {str(e)}")
-        return {"share": share, "status": "Error", "error": str(e)}
+#     except Exception as e:
+#         logging.error(f"Error scraping {share}: {str(e)}")
+#         return {"share": share, "status": "Error", "error": str(e)}
 
 
-if __name__ == "__main__":
-    scrap_daily1("A2ZINFRA")
+# if __name__ == "__main__":
+#     scrap_daily1("A2ZINFRA")
 
 
 # def get_new_search_query(
@@ -158,7 +158,7 @@ if __name__ == "__main__":
 
 
 
-#     from concurrent.futures import ThreadPoolExecutor, as_completed
+# from concurrent.futures import ThreadPoolExecutor, as_completed
 # from datetime import datetime
 # from io import StringIO 
 # from server.db.base import SessionLocal
@@ -510,3 +510,53 @@ if __name__ == "__main__":
         #         driver.quit()
         #     except:
         #         pass
+
+import json
+import os
+import random
+import regex as re
+import time
+import unicodedata
+from dotenv import load_dotenv
+from datetime import datetime, timedelta
+
+from bs4 import BeautifulSoup
+import requests
+
+from fastapi.responses import JSONResponse
+from fastapi import HTTPException
+
+from server.utils.prompt import gemini_prompt
+from server.db.base import SessionLocal
+from server.models.news import NewsItem
+
+import google.generativeai as genai
+session = SessionLocal()
+
+twenty_four_hours_ago = datetime.now() - timedelta(hours=24)
+def normalize_title(title):
+    title = unicodedata.normalize("NFKD", title)
+    title = title.encode("ascii", "ignore").decode("utf-8")
+    title = title.lower()
+    title = re.sub(r'\s+', ' ', title).strip()  # Replace multiple spaces with single space
+    return title
+
+def is_duplicate_title(title):
+    normalized = normalize_title(title)
+    print(normalized)
+    recent_news = session.query(NewsItem).filter(
+        NewsItem.created_at >= twenty_four_hours_ago
+    ).all()
+
+    for news in recent_news:
+        if normalize_title(news.title) == normalized:
+            print(news.id)
+            print(news.title)
+            continue
+
+    return False
+
+
+title = "Q4 results today: Wipro, Waaree Renewables among 10 companies to announce earnings on Wednesday"
+if is_duplicate_title(title):
+    print(title)
