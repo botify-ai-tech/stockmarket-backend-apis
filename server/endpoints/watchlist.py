@@ -68,9 +68,9 @@ async def create_and_update_watchlist(
                 "error": None,
                 "data": watchlist_data,
                 "message": (
-                    "Success! The company is now in your watchlist.!!"
+                    "The company is added to your watchlist."
                     if flag
-                    else "Success! The company has been removed from your watchlist.!!"
+                    else "The company is removed from your watchlist."
                 ),
             },
         )
@@ -123,7 +123,7 @@ async def get_watchlist(
                 "success": True,
                 "error": None,
                 "data": watchlist_data,
-                "message": "Success! The company is now in your watchlist.!!",
+                "message": "The company is added to your watchlist.",
             },
         )
 
