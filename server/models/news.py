@@ -10,7 +10,7 @@ class NewsItem(Base):
     # __tablename__ = "news_items"
 
     id = Column(String(length=36), default=lambda: str(uuid.uuid4()), primary_key=True)
-    title = Column(String)
+    title = Column(String, unique=True)
     published_date = Column(String)
     summary = Column(String)
     classification = Column(String)

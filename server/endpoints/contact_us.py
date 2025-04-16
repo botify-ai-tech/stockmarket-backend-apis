@@ -35,7 +35,7 @@ async def create_contact_us(
                     'phone_number':new_contact.phone_number,
                     'message':new_contact.message,
                 },
-                "message":'bug report created'
+                "message":'Message submitted successfully.'
             }
         )
 
@@ -57,7 +57,7 @@ async def get_contact_us(db: Session = Depends(get_db)):
             content= {
                 "success":True,
                 "data" : contact_us_list,
-                'message':'bug reports fetched!'
+                'message':'Contact fetched successfully'
             }
             
         ) 

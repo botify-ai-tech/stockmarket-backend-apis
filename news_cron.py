@@ -16,6 +16,7 @@ from fastapi import HTTPException
 from server.utils.prompt import gemini_prompt
 from server.db.base import SessionLocal
 from server.models.news import NewsItem
+from sqlalchemy.exc import IntegrityError
 
 import google.generativeai as genai
 
@@ -256,37 +257,42 @@ def globle_news():
 
         updated_time = datetime.now() - timedelta(hours=ago_news)
 
-        
-        news_entry = NewsItem(
-            title=title,
-            published_date=published_date,
-            summary=summary,
-            classification=classification,
-            type_of_impact=type_of_impact,
-            small_description=small_description,
-            description=impact_description,
-            sectors=sectors_impacted,
-            category=category_impacted,
-            Country=Country,
-            company_name=company_name,
-            stock_name=stocks_impacted,
-            scale_of_impact=scale_of_impact,
-            timeframe_of_impact=timeframe_of_impact,
-            investor_sentiment=investor_sentiment,
-            market_volatility=market_volatility,
-            detailed_explanation=Impact_detailed_explanation,
-            time_to_out_news=time_to_out_news,
-            feed=feed,
-            other_news_link=link,
-            similar=similar_news,
-            created_at=updated_time,
-            image=None
-        )
-
         try:
+
+            news_entry = NewsItem(
+                title=title,
+                published_date=published_date,
+                summary=summary,
+                classification=classification,
+                type_of_impact=type_of_impact,
+                small_description=small_description,
+                description=impact_description,
+                sectors=sectors_impacted,
+                category=category_impacted,
+                Country=Country,
+                company_name=company_name,
+                stock_name=stocks_impacted,
+                scale_of_impact=scale_of_impact,
+                timeframe_of_impact=timeframe_of_impact,
+                investor_sentiment=investor_sentiment,
+                market_volatility=market_volatility,
+                detailed_explanation=Impact_detailed_explanation,
+                time_to_out_news=time_to_out_news,
+                feed=feed,
+                other_news_link=link,
+                similar=similar_news,
+                created_at=updated_time,
+                image=None
+            )
+
+        
             session.add(news_entry)
             session.commit()
             print(f"Successfully stored news: {title}")
+        except IntegrityError:
+            session.rollback()
+            print(f"Already exists in DB (duplicate): {title}")
+            continue
         except Exception as e:
             session.rollback()
             print(f"Error storing news {title}: {str(e)}")
