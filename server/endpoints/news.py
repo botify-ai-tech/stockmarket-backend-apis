@@ -113,7 +113,7 @@ def globle_news(
                     "success": True,
                     "error": None,
                     "data": None,
-                    "message": "News unsaved.",
+                    "message": "The news has been removed from your saved list.",
                 },
             )
 
@@ -130,7 +130,7 @@ def globle_news(
                     "success": True,
                     "error": None,
                     "data": jsonify(save_news),
-                    "message": "News saved successfully",
+                    "message": "News added to your saved list.",
                 },
             )
     except HTTPException:

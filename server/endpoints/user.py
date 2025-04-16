@@ -591,7 +591,7 @@ async def update_profile(
         user_obj = crud.user.update(db, db_obj=user_obj, obj_in=data)
         return JSONResponse(
             status_code=200,
-            content={"success": True, "message": "Profile updated successfully."},
+            content={"success": True, "message": "Profile changes applied successfully."},
         )
 
     except HTTPException as e:
