@@ -27,25 +27,24 @@ genai.configure(api_key=gemini_ai_key)
 
 session = SessionLocal()
 
-twenty_four_hours_ago = datetime.now() - timedelta(hours=24)
 
 def normalize_title(title):
     title = unicodedata.normalize("NFKD", title)
     title = title.encode("ascii", "ignore").decode("utf-8")
     title = title.lower()
-    title = re.sub(r"\s+", "", title)            
-    title = re.sub(r"[^\w]", "", title)          
+    title = re.sub(r'\s+', ' ', title).strip()  
     return title
 
 def is_duplicate_title(title):
     normalized = normalize_title(title)
-
-    recent_news = session.query(NewsItem).order_by(NewsItem.created_at.desc()).limit(200).all()
-
-    for news in recent_news:
+    
+    # Get all news and check normalized titles
+    all_news = session.query(NewsItem).all()
+    
+    for news in all_news:
         if normalize_title(news.title) == normalized:
             return True
-
+    
     return False
 
 
@@ -114,11 +113,10 @@ def globle_news():
             "similar": similar_news,
         }
         
-        # check already exist
         if is_duplicate_title(title):
             continue
 
-        retries = 3  # Retry up to 3 times
+        retries = 3  
         success = False
 
         while retries > 0 and not success:
@@ -257,6 +255,7 @@ def globle_news():
                 ago_news = seconds / 3600
 
         updated_time = datetime.now() - timedelta(hours=ago_news)
+
         
         news_entry = NewsItem(
             title=title,
@@ -284,8 +283,14 @@ def globle_news():
             image=None
         )
 
-        session.add(news_entry)
-        session.commit()
+        try:
+            session.add(news_entry)
+            session.commit()
+            print(f"Successfully stored news: {title}")
+        except Exception as e:
+            session.rollback()
+            print(f"Error storing news {title}: {str(e)}")
+            continue
 
         start_news += 1
         print(f"scraped number of news is {start_news}")
