@@ -9,7 +9,7 @@ import google.generativeai as genai
 from dotenv import load_dotenv
 from youtube_transcript_api import YouTubeTranscriptApi
 from server.utils.backgound_task import background_pinecone_task # Check if this needs async adaptation
-
+from server.utils.improver import run_sync_in_thread,_sync_extract_text_content,_sync_generate_content,improver,checker,get_random_key_name
 load_dotenv()
 
 # Configure logging
@@ -142,6 +142,7 @@ async def transcript_summary(transcript_text): # Takes transcript text
     "All financial numbers representing money should be expressed only in the **₹ (Indian Rupee)** format. If any data is in a different currency or format, it must be converted to the **₹** format.\n\n"
     "```\n"
     f"{transcript_text}\n"
+    "If the provided data does not contain an annual report or any relevant company financial information, respond only with: The provided document does not contain an transcript of concall or company-specific financial information. Do not include any additional text, formatting, or output."
     "```\n\n"
 
 
@@ -201,57 +202,7 @@ async def transcript_summary(transcript_text): # Takes transcript text
     summary_text = await run_sync_in_thread(_sync_generate_content, model_name, prompt)
     return summary_text
 
-# --- Checker Function (Similar to other files) --- 
-async def checker(input_text):
-    """Validates the generated summary using Gemini asynchronously."""
-    # --- PROMPT DEFINITION (UNCHANGED FROM ORIGINAL) --- START ---
-    prompt3 = (
-    "You are a Checker LLM. Your task is to evaluate the output from another LLM related to Finance or financial summaries. "
-    "Respond strictly with one word: either 'RIGHT' or 'WRONG'. Do not include any additional words, explanations, or punctuation.\n\n"
 
-    "Respond with 'WRONG' if any of the following are true:\n"
-    "- The input contains error messages, apologies, or phrases like 'Unable to generate', 'I am unable to', '[ERROR]', or indicates missing data.\n"
-    "- The input includes conversational or assistant-style language such as:\n"
-    "  'Okay now I understand', 'Sure! Here's an improved version', 'Let me know if', 'Here is the generated summary', "
-    "'Sure! Here's the grammatically correct version', or any similar interactive phrases.\n"
-    "- The input contains gibberish like 'fmhgbdlmbhdf' or similar non-sensical strings.\n"
-    "- The input includes the backtick character (`), such as in (`<font color='green'>1,455.36</font>`).\n\n"
-    "Respond with 'RIGHT' only if the input is a complete, accurate, and valid financial summary with no conversational tone or formatting issues.\n"
-    "For example, (<font color='green'>1,455.36</font>) is acceptable and should be marked as 'RIGHT'.\n\n"
-    "If Input has too much of an empty space such as multiple blank lines, it should be marked as 'WRONG'.\n\n"
-    "- **Avoid Multiple empty lines:** Do not print multiple empty lines and not also  ----------------------------------------- lines like this if it is in inpur return WRONG\n"
-
-    "Try to generate whole as given below format and **if it is half generated or not in proper markdown response will be 'WRONG'** \n\n"
-    "**Output Format:**\n"
-    "# 📊 [Company Name] Overview\n"
-    "## 💰 Summary\n"
-   
-    "## 💰 Financial Health\n"
-    
-    "## 📈 Investment Insights\n"
-   
-    "## 📊 Key Financial Metrics\n"
-    "| 📌 Metric | 📉 Value | 📋 Explanation |\n"
-    "|----------|---------|---------------|\n"
-    
-    "## 📊 Comparative Analysis\n"
-    
-    "## 🔮 Predictive Analysis\n"
-    "| 🔍 Metric | 📈 Last Reported Value | 📊 Forecasted Next Value | 🔎 Prediction Rationale |\n"
-    "|----------|----------------------|----------------------|----------------------|\n"
-    "[For each available financial metric (e.g., revenue, net profit, EPS, debt levels, and all possible predictions), predict the next logical data point based on historical trends, growth patterns, and financial ratios. Provide a detailed explanation for each prediction.]\n\n"
-    "add the following line at the end of each report 'This report is for informational purposes only and should not be considered as investment advice. Investors should conduct their own research and consult with a financial advisor before making investment decisions'"
-
-    f"Here is the original report:\n{input_text}"
-    )
-    # --- PROMPT DEFINITION (UNCHANGED FROM ORIGINAL) --- END ---
-
-    model_name = "gemini-2.0-flash"
-    # Run synchronous Gemini call in a thread
-    check_result = await run_sync_in_thread(_sync_generate_content, model_name, prompt3)
-    return check_result
-
-# --- Main Orchestration Function --- 
 async def generate_youtube_summary(url: str, user_id, background_tasks, retries=2): # Takes 'url' which contains transcript text
     attempt = 0
     result_list = []
@@ -271,91 +222,80 @@ async def generate_youtube_summary(url: str, user_id, background_tasks, retries=
         })
         return result_list
 
-    # --- Removed Video ID extraction and Transcript Fetching --- 
-    # video_id = extract_video_id(url) 
-    # if not video_id:
-    #     # ... (error handling removed) ...
-    #     return result_list
-    # logging.info(f"Extracted video ID: {video_id}")
-    # transcript_text = await get_transcript_from_youtube(video_id)
-    # if transcript_text is None:
-    #     # ... (error handling removed) ...
-    #     return result_list
-    # --- End of Removed Section ---
-    
-    # Optional background task (ensure it's async or wrapped properly)
-    # Ensure background_pinecone_task can handle raw text if used
-    # background_tasks.add_task(background_pinecone_task, transcript_text, user_id) 
-
     try:
         while attempt < retries:
-            # logging.info(f"Attempt {attempt + 1}/{retries} to generate and check YouTube summary (from provided text)...") # Removed this log
+            logging.info(f"Attempt {attempt + 1}/{retries} to generate and check financial summary...")
             try:
-                # Generate summary asynchronously using the provided text
-                summary_content = await transcript_summary(transcript_text)
+                # Generate report asynchronously
+                report_content = await transcript_summary(transcript_text)
+                improve_content = await improver(report_content)
+                # Check report asynchronously
+                checker_result = await checker(improve_content)
 
-                # Check summary asynchronously
-                checker_result = await checker(summary_content)
+                logging.info(f"Checker result (attempt {attempt + 1}): '{checker_result}'")
 
-                # logging.info(f"YouTube Checker result (attempt {attempt + 1}): '{checker_result}'") # Removed this log
-
+                # More robust check for 'WRONG', handling potential None/errors from checker itself
                 is_wrong = isinstance(checker_result, str) and 'wrong' in checker_result.lower()
-                is_error = isinstance(checker_result, str) and '[error' in summary_content.lower() # Check original summary for errors too
+                is_error = isinstance(checker_result, str) and '[error' in checker_result.lower()
 
-                if not is_wrong and not is_error and checker_result:
+                if not is_wrong and not is_error and checker_result: # Ensure it's not None/empty and not wrong/error
                     result_list.append({
                         "sequence_number": "overall",
                         "pages": "Overall Summary",
-                        "detailed_analysis": summary_content,
+                        "detailed_analysis": improve_content,
                         "status": True
                     })
-                    # logging.info("YouTube summary generation and validation successful.") # Removed this log
+                    logging.info("Report generation and validation successful.")
                     return result_list
                 else:
-                    logging.warning(f"Attempt {attempt + 1} failed YouTube validation. Checker: '{checker_result}'. Summary: '{summary_content[:100]}...'. Retrying...")
+                    logging.warning(f"Attempt {attempt + 1} failed validation. Checker result: '{checker_result}'. Retrying...")
                     attempt += 1
-                    await asyncio.sleep(random.uniform(0.5, 2.0))
-                    continue
+                    await asyncio.sleep(random.uniform(0.5, 2.0)) # Delay before retry
+                    continue # Move to next attempt
 
             except Exception as e:
+                # Catch errors during the generation/checking process within the loop
                 error_msg = str(e)
-                logging.error(f"Exception during YouTube summary generation/checking (attempt {attempt + 1}): {error_msg}", exc_info=True)
-                if ("429" in error_msg or
-                    "quota" in error_msg.lower() or
+                logging.error(f"Exception during report generation/checking (attempt {attempt + 1}): {error_msg}", exc_info=True)
+                # Check for specific rate limit errors (adjust based on actual Gemini error details)
+                # Use lower() for case-insensitive matching
+                if ("429" in error_msg or 
+                    "quota" in error_msg.lower() or 
                     "resource has been exhausted" in error_msg.lower() or
                     "rate limit" in error_msg.lower()):
-                    logging.warning(f"Quota/Rate limit error detected (attempt {attempt + 1}). Retrying after delay...")
+                    logging.warning(f"Quota/Rate limit error detected (attempt {attempt + 1}). Retrying after longer delay...")
                     attempt += 1
-                    await asyncio.sleep(random.uniform(3, 7))
+                    await asyncio.sleep(random.uniform(3, 7)) # Longer delay for rate limits
                     continue
                 else:
-                    logging.critical(f"Non-retryable exception during YouTube summary generation loop: {e}", exc_info=True)
+                    # For other unexpected errors within the loop, stop retrying for this request
+                    logging.critical(f"Non-retryable exception during report generation loop: {e}", exc_info=True)
                     result_list.append({
                         "sequence_number": "overall",
                         "pages": "Overall Summary",
-                        "detailed_analysis": f"An unexpected error occurred during YouTube summary generation: {e}",
+                        "detailed_analysis": f"An unexpected error occurred during report generation: {e}",
                         "status": False
                     })
                     return result_list
 
     except Exception as e:
-        logging.critical(f"Unhandled exception in generate_youtube_summary: {e}", exc_info=True)
-        if not result_list:
+        # This catches errors outside the while loop (e.g., initial setup before retries)
+        logging.critical(f"Unhandled exception in generate_financial_summary: {e}", exc_info=True)
+        # Ensure a failure response is sent back
+        if not result_list: # Avoid adding duplicate failure messages
              result_list.append({
                 "sequence_number": "overall",
                 "pages": "Overall Summary",
-                "detailed_analysis": f"A critical error occurred in YouTube summary processing: {e}",
+                "detailed_analysis": f"A critical error occurred: {e}",
                 "status": False
             })
         return result_list
 
-    # If all retries failed
-    logging.error(f"YouTube summary generation failed validation after {retries} attempts.")
+    logging.error(f"Report generation failed validation after {retries} attempts.")
     result_list.append({
         "sequence_number": "overall",
         "pages": "Overall Summary",
-        "detailed_analysis": "YouTube summary generation failed after multiple validation attempts. Please try again later.",
+        "detailed_analysis": "this document doesn't contain required financial information",
         "status": False
     })
     return result_list
-
