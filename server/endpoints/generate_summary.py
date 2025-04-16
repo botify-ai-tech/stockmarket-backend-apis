@@ -250,7 +250,7 @@ async def general_chat(
                         "success": True,
                         "data": response,
                         "error": None,
-                        "message": "Bot answer generated successfully.",
+                        "message": "The analysis has been successfully completed.",
                     },
                 )
                 
@@ -316,7 +316,7 @@ async def general_chat(
                     "success": True,
                     "data": response,
                     "error": None,
-                    "message": "Bot answer generated successfully.",
+                    "message": "The analysis has been successfully completed.",
                 },
             )
     
@@ -423,7 +423,7 @@ async def general_chat(
                         "success": True,
                         "data": response,
                         "error": None,
-                        "message": "Bot answer generated successfully.",
+                        "message": "The analysis has been successfully completed.",
                     },
                 )
 
@@ -488,7 +488,7 @@ async def general_chat(
                     "success": True,
                     "data": response,
                     "error": None,
-                    "message": "Bot answer generated successfully.",
+                    "message": "The analysis has been successfully completed.",
                 },
             )
 
@@ -588,7 +588,7 @@ async def general_chat(
                         "success": True,
                         "data": response,
                         "error": None,
-                        "message": "Bot answer generated successfully.",
+                        "message": "The analysis has been successfully completed.",
                     },
                 )
 
@@ -654,7 +654,7 @@ async def general_chat(
                     "success": True,
                     "data": response,
                     "error": None,
-                    "message": "Bot answer generated successfully.",
+                    "message": "The analysis has been successfully completed.",
                 },
             )
 

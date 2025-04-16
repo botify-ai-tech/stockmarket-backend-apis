@@ -9,56 +9,21 @@ import logging
 import time
 import fitz
 import google.generativeai as genai
+from server.utils.improver import run_sync_in_thread,_sync_extract_text_content,_sync_generate_content,improver,checker,get_random_key_name
 from dotenv import load_dotenv
 # from concurrent.futures import ThreadPoolExecutor
-from server.config import settings
-from server.utils.backgound_task import background_pinecone_task
+import random
 
 load_dotenv()
 
-import random
-
-gemini_keys = [
-    "GEMINI_API_KEY_11",
-    "GEMINI_API_KEY_12",
-    "GEMINI_API_KEY_13",
-    "GEMINI_API_KEY_14",
-    "GEMINI_API_KEY_15",
-    "GEMINI_API_KEY_16",
-    "GEMINI_API_KEY_17",
-    "GEMINI_API_KEY_18",
-    "GEMINI_API_KEY_19",
-    "GEMINI_API_KEY_20"
-]
-
-def get_random_key_name():
-    return random.choice(gemini_keys)
 
 
-# --- Helper function for running sync code in thread ---
-async def run_sync_in_thread(func, *args, **kwargs):
-    """Runs a synchronous function in a separate thread."""
-    loop = asyncio.get_running_loop()
-    # Use functools.partial to avoid issues with passing args/kwargs directly
-    from functools import partial
-    func_call = partial(func, *args, **kwargs)
-    return await loop.run_in_executor(None, func_call)
 
-# --- Synchronous helper for fitz operations ---
-def _sync_extract_text_content(input_binary):
-    """Synchronous part of text extraction. Returns text content."""
-    try:
-        with io.BytesIO(input_binary) as pdf_file:
-            doc = fitz.open(stream=pdf_file, filetype="pdf")
-            text = "\n".join([page.get_text("text") for page in doc])
-            doc.close()
-            return text
-    except Exception as e:
-        logging.critical(f"Unable to open or process the PDF file content: {e}")
-        return None
+
+
+
 
 async def extract_text(file, url):
-    """Asynchronously extracts text from a PDF file or URL. Returns text content or None."""
     input_binary = None
     try:
         if file:
@@ -107,35 +72,6 @@ async def chunk_text_by_tokens(text, chunk_size=950000):
         chunks.append(chunk_text)
     return chunks
 
-# --- Synchronous helper for Gemini API calls ---
-def _sync_generate_content(model_name, prompt_string):
-    """Synchronous call to Gemini API."""
-    try:
-        gemini_ai_key = os.getenv(get_random_key_name())
-        if not gemini_ai_key:
-            logging.error(f"Gemini API key (tried {get_random_key_name()}) not found in environment.")
-            return "[ERROR: API key not configured]"
-        genai.configure(api_key=gemini_ai_key)
-        model_instance = genai.GenerativeModel(model_name)
-        response = model_instance.generate_content(prompt_string)
-        # Consider adding more robust checking of the response object
-        # E.g., check response.prompt_feedback for block reasons
-        if not response.parts:
-             # Handle cases where generation might be blocked or return empty
-             feedback = getattr(response, 'prompt_feedback', None)
-             block_reason = getattr(feedback, 'block_reason', 'Unknown')
-             safety_ratings = getattr(feedback, 'safety_ratings', 'N/A')
-             logging.warning(f"Gemini returned no content. Block Reason: {block_reason}, Safety Ratings: {safety_ratings}")
-             return f"[ERROR: Gemini generation failed or blocked - Reason: {block_reason}]"
-        return response.text
-    except Exception as e:
-        logging.error(f"Gemini API call failed for model {model_name}: {e}", exc_info=True)
-        return f"[ERROR: Gemini API call failed - {e}]"
-
-
-# async def questionans(chunks,question,retries=2): # Original commented out function
-#     # ... (Implementation would need similar async changes if used)
-#     pass
 
 
 async def report_gen(chunks, retries=2): # Now takes chunks (list of text) directly
@@ -219,61 +155,10 @@ async def report_gen(chunks, retries=2): # Now takes chunks (list of text) direc
     "  - ❌ **Incorrect:** The company turned profitable, reporting a profit after tax of ` <font color='green'>1,455.36</font> ` lakhs for FY 2017-18 compared to a loss of ` <font color='red'>512.01</font> ` lakhs in FY 2016-17.\n"
     "Strictly No HTML or markdown Code Blocks: Under no circumstances should the output include ```html or any kind of code block formatting. This is strictly prohibited and must be avoided at all costs."
     )
-    # --- PROMPT DEFINITION (UNCHANGED FROM ORIGINAL) --- END --- 
 
     # Run synchronous Gemini call in a thread
     model_name = "gemini-2.0-flash" # Consider making model name configurable
     response_text = await run_sync_in_thread(_sync_generate_content, model_name, prompt2)
-    return response_text
-
-async def checker(input_text): # Renamed 'input' to 'input_text'
-    # --- PROMPT DEFINITION (UNCHANGED FROM ORIGINAL) --- START --- 
-    prompt3 = (
-    "You are a Checker LLM. Your task is to evaluate the output from another LLM related to Finance or financial summaries. "
-    "Respond strictly with one word: either 'RIGHT' or 'WRONG'. Do not include any additional words, explanations, or punctuation.\n\n"
-
-    "Respond with 'WRONG' if any of the following are true:\n"
-    "Strictly No HTML or markdown Code Blocks: Under no circumstances should the output include ```html or any kind of code block formatting. This is strictly prohibited and must be avoided at all costs."
-    "- The input contains error messages, apologies, or phrases like 'Unable to generate', 'I am unable to', '[ERROR]', or indicates missing data.\n"
-    "- The input includes conversational or assistant-style language such as: Here's the company insight report based on the provided financial data\n"
-    "  'Okay now I understand', 'Sure! Here's an improved version', 'Let me know if', 'Here is the generated summary', "
-    "'Sure! Here's the grammatically correct version', or any similar interactive phrases.\n"
-    "- The input contains gibberish like 'fmhgbdlmbhdf' or similar non-sensical strings.\n"
-    "= if response contain **```html** then response should be WRONG"
-    "- The input includes the backtick character (`), such as in (`<font color='green'>1,455.36</font>`).\n\n"
-    "Respond with 'RIGHT' only if the input is a complete, accurate, and valid financial summary with no conversational tone or formatting issues.\n"
-    "For example, (<font color='green'>1,455.36</font>) is acceptable and should be marked as 'RIGHT'.\n\n"
-    "If Input has too much of an empty space such as multiple blank lines, it should be marked as 'WRONG'.\n\n"
-    "- **Avoid Multiple empty lines:** Do not print multiple empty lines and not also  ----------------------------------------- lines like this if it is in inpur return WRONG\n"
-
-    "Try to generate whole as given below format and **if it is half generated or not in proper markdown response will be 'WRONG'** \n\n"
-    "**Output Format:**\n"
-    "# 📊 [Company Name] Overview\n"
-    "## 💰 Summary\n"
-   
-    "## 💰 Financial Health\n"
-    
-    "## 📈 Investment Insights\n"
-   
-    "## 📊 Key Financial Metrics\n"
-    "| 📌 Metric | 📉 Value | 📋 Explanation |\n"
-    "|----------|---------|---------------|\n"
-    
-    "## 📊 Comparative Analysis\n"
-    
-    "## 🔮 Predictive Analysis\n"
-    "| 🔍 Metric | 📈 Last Reported Value | 📊 Forecasted Next Value | 🔎 Prediction Rationale |\n"
-    "|----------|----------------------|----------------------|----------------------|\n"
-    "[For each available financial metric (e.g., revenue, net profit, EPS, debt levels, and all possible predictions), predict the next logical data point based on historical trends, growth patterns, and financial ratios. Provide a detailed explanation for each prediction.]\n\n"
-    "add the following line at the end of each report 'This report is for informational purposes only and should not be considered as investment advice. Investors should conduct their own research and consult with a financial advisor before making investment decisions'"
-
-    f"Here is the original report:\n{input_text}"
-    )
-    # --- PROMPT DEFINITION (UNCHANGED FROM ORIGINAL) --- END ---
-
-    # Run synchronous Gemini call in a thread
-    model_name = "gemini-2.0-flash"
-    response_text = await run_sync_in_thread(_sync_generate_content, model_name, prompt3)
     return response_text
 
 
@@ -288,7 +173,7 @@ async def generate_financial_summary(file, url, user_id, background_tasks, retri
         result_list.append({
             "sequence_number": "overall",
             "pages": "Overall Summary",
-            "detailed_analysis": "Failed to extract text from the provided source. Please check the file/URL or logs for details.",
+            "detailed_analysis": "Failed to extract text from the provided source. Please check the file/URL",
             "status": False
         })
         return result_list
@@ -314,10 +199,10 @@ async def generate_financial_summary(file, url, user_id, background_tasks, retri
             logging.info(f"Attempt {attempt + 1}/{retries} to generate and check financial summary...")
             try:
                 # Generate report asynchronously
-                report_content = await report_gen(chunks) # Pass list of text chunks
-
+                report_content = await report_gen(chunks)
+                improve_content = await improver(report_content)
                 # Check report asynchronously
-                checker_result = await checker(report_content)
+                checker_result = await checker(improve_content)
 
                 logging.info(f"Checker result (attempt {attempt + 1}): '{checker_result}'")
 
@@ -329,7 +214,7 @@ async def generate_financial_summary(file, url, user_id, background_tasks, retri
                     result_list.append({
                         "sequence_number": "overall",
                         "pages": "Overall Summary",
-                        "detailed_analysis": report_content,
+                        "detailed_analysis": improve_content,
                         "status": True
                     })
                     logging.info("Report generation and validation successful.")
@@ -376,17 +261,13 @@ async def generate_financial_summary(file, url, user_id, background_tasks, retri
                 "detailed_analysis": f"A critical error occurred: {e}",
                 "status": False
             })
-        return result_list # Return whatever state we're in, likely failure
+        return result_list
 
-    # If all retries failed after the loop finishes normally
     logging.error(f"Report generation failed validation after {retries} attempts.")
     result_list.append({
         "sequence_number": "overall",
         "pages": "Overall Summary",
-        "detailed_analysis": "Response generation failed after multiple validation attempts. Please try again later.",
+        "detailed_analysis": "this document doesn't contain required financial information",
         "status": False
     })
     return result_list
-
-
-
