@@ -1,7 +1,7 @@
 from typing import Optional, TypeVar
 
 from pydantic import BaseModel
-from operator import or_
+from sqlalchemy import or_, func 
 from sqlalchemy.orm import Session
 
 from server.crud.base import CRUDBase
@@ -44,45 +44,35 @@ class CRUDRATIO(CRUDBase[Ratio, CreateRatio, UpdateRatio]):
 
     def get_all_companies(
         self, db: Session, skip: int = 0, limit: int = 10, search: str = None
-    ) -> Optional[Company]:
-        if search:
-            query = db.query(Company).filter(
-                    or_(
-                        or_(
-                            Company.share_name.ilike(f"%{search}%"),
-                            Company.sectore.ilike(f"%{search}%"),
-                        ),
-                        Company.share_symbol.ilike(f"%{search}%"),
-                    ),
-                    )
-            
-            count = query.count()
-            if count > limit:
-                stocks = query.offset(skip).limit(limit).all()
-            else:
-                stocks = query.all()
+    ):
+        query = db.query(
+            Company.id,
+            Company.share_name,
+            Company.share_symbol,
+            Company.share_price,
+            Company.high_low,
+            Company.bse,
+            Company.nse,
+            Company.share_price_percentage
+        )
 
-            return stocks, count
-            # return (
-            #     db.query(Company)
-            #     .filter(
-            #         or_(
-            #             or_(
-            #                 Company.share_name.ilike(f"%{search}%"),
-            #                 Company.sectore.ilike(f"%{search}%"),
-            #             ),
-            #             Company.share_symbol.ilike(f"%{search}%"),
-            #         ),
-            #         )
-            #     .offset(skip)
-            #     .limit(limit)
-            #     .all()
-            # )
-        query = db.query(Company).filter(Company.share_symbol.in_(NIFTY50_STOCKS))
-        stocks = query.offset(skip).limit(limit).all()
-        count = query.count()
-        return stocks, count
-        # return db.query(Company).filter(Company.share_symbol.in_(NIFTY50_STOCKS)).offset(skip).limit(limit).all()
+        if search:
+            search_filter = or_(
+                Company.share_name.ilike(f"%{search}%"),
+                Company.sectore.ilike(f"%{search}%"),
+                Company.share_symbol.ilike(f"%{search}%")
+            )
+            query = query.filter(search_filter)
+        else:
+            query = query.filter(Company.share_symbol.in_(NIFTY50_STOCKS))
+
+        # Clone query for count (removes ORDER BY if any for performance)
+        count_query = query.statement.with_only_columns(func.count()).order_by(None)
+        total_count = db.execute(count_query).scalar()
+
+        results = query.offset(skip).limit(limit).all()
+
+        return results, total_count
     
 
     def get_total_companies(

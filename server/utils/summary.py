@@ -7,7 +7,7 @@ import requests
 import logging
 import openai
 import time
-import fitz
+# import fitz
 import google.generativeai as genai
 from dotenv import load_dotenv
 from concurrent.futures import ThreadPoolExecutor

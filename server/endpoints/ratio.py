@@ -20,7 +20,7 @@ ratio_router = APIRouter()
 
 
 @ratio_router.post("/ratio-analysis/{symbol}")
-def get_company_symbol(
+async def get_company_symbol(
     symbol: str,
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user),
@@ -86,7 +86,7 @@ def get_company_symbol(
 
 
 @ratio_router.post("/assessment/{symbol}")
-def assessment(
+async def assessment(
     symbol: str, db: Session = Depends(get_db), current_user=Depends(get_current_user)
 ):
     try:
@@ -260,7 +260,7 @@ def stock_list(
 
 
 @ratio_router.post("/companies")
-def companies(
+async def companies(
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user),
     skip: Optional[int] = 0,
@@ -268,8 +268,9 @@ def companies(
     search: str = None,
 ):
     try:
+        # Use optimized query function
         companies, total_count = crud.ratio.get_all_companies(db, skip, limit, search)
-        # total_count = crud.ratio.get_total_companies(db, search)
+
         if not companies:
             return JSONResponse(
                 status_code=200,
@@ -280,29 +281,35 @@ def companies(
                     "message": "No companies found.",
                 },
             )
-        all_companies = []
-        for company in companies:
-            company_details = {
-                "id" : company.id,
-                "share_name": company.share_name,
-                "share_symbol": company.share_symbol,
-                "share_price": company.share_price,
-                "high_low": company.high_low,
-                "bse": company.bse,
-                "nse": company.nse,
-                "share_percentage": company.share_price_percentage,
+
+        # Use list comprehension for performance
+        all_companies = [
+            {
+                "id": c.id,
+                "share_name": c.share_name,
+                "share_symbol": c.share_symbol,
+                "share_price": c.share_price,
+                "high_low": c.high_low,
+                "bse": c.bse,
+                "nse": c.nse,
+                "share_percentage": c.share_price_percentage,
             }
-            all_companies.append(company_details)
+            for c in companies
+        ]
 
         return JSONResponse(
             status_code=200,
             content={
                 "success": True,
                 "error": None,
-                "data": {"companies": all_companies, "total_companies": total_count},
-                "message": "companies details fetch successfully.",
+                "data": {
+                    "companies": all_companies,
+                    "total_companies": total_count,
+                },
+                "message": "Companies details fetched successfully.",
             },
         )
+
     except HTTPException as e:
         return JSONResponse(
             status_code=e.status_code,
@@ -324,8 +331,6 @@ def companies(
                 "message": "Something went wrong!",
             },
         )
-    finally:
-        db.close()
 
 
 @ratio_router.post("/profit-loss/{symbol}")
