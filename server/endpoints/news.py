@@ -25,7 +25,7 @@ def jsonify(data):
         "id": data.id,
         "title": data.title,
         "published_date": data.published_date,
-        "company_name": data.company_name,
+        "company_name": data.company_name.split(",") if isinstance(data.company_name, str) else data.company_name,
         "stock_name": data.stock_name,
         "small_description": data.small_description,
         "description": data.description,
