@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from server.crud.base import CRUDBase
 from server.load_symbols import NIFTY50_STOCKS
 from server.models.ratio import Ratio, Company, Assessment
+from server.models.ratio50 import Company50
 from server.schemas.ratio import CreateRatio, UpdateRatio
 
 UpdateSchemaType = TypeVar("UpdateSchemaType", bound=BaseModel)
@@ -45,18 +46,17 @@ class CRUDRATIO(CRUDBase[Ratio, CreateRatio, UpdateRatio]):
     def get_all_companies(
         self, db: Session, skip: int = 0, limit: int = 10, search: str = None
     ):
-        query = db.query(
-            Company.id,
-            Company.share_name,
-            Company.share_symbol,
-            Company.share_price,
-            Company.high_low,
-            Company.bse,
-            Company.nse,
-            Company.share_price_percentage
-        )
-
         if search:
+            query = db.query(
+                Company.id,
+                Company.share_name,
+                Company.share_symbol,
+                Company.share_price,
+                Company.high_low,
+                Company.bse,
+                Company.nse,
+                Company.share_price_percentage
+            )
             search_filter = or_(
                 Company.share_name.ilike(f"%{search}%"),
                 Company.sectore.ilike(f"%{search}%"),
@@ -64,16 +64,25 @@ class CRUDRATIO(CRUDBase[Ratio, CreateRatio, UpdateRatio]):
             )
             query = query.filter(search_filter)
         else:
-            query = query.filter(Company.share_symbol.in_(NIFTY50_STOCKS))
+            query = db.query(
+                Company50.id,
+                Company50.share_name,
+                Company50.share_symbol,
+                Company50.share_price,
+                Company50.high_low,
+                Company50.bse,
+                Company50.nse,
+                Company50.share_price_percentage
+            )
+            query = query.filter(Company50.share_symbol.in_(NIFTY50_STOCKS))
 
-        # Clone query for count (removes ORDER BY if any for performance)
         count_query = query.statement.with_only_columns(func.count()).order_by(None)
         total_count = db.execute(count_query).scalar()
 
         results = query.offset(skip).limit(limit).all()
 
         return results, total_count
-    
+
 
     def get_total_companies(
         self, db: Session, search: str = None
