@@ -9,7 +9,7 @@ from server.db.base_class import Base
 
 
 class Company50(Base):
-    id = Column(String, default=lambda: str(uuid.uuid4()), primary_key=True)
+    id = Column(String, primary_key=True)
     share_name = Column(String)
     current_date = Column(String)
     share_symbol = Column(String)

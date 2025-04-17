@@ -20,6 +20,7 @@ def migrate_to_company50(symbols: list[str]):
 
             if company:
                 company50 = Company50(
+                    id=company.id,
                     share_name=company.share_name,
                     current_date=company.current_date,
                     share_symbol=company.share_symbol,
