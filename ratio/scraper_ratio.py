@@ -45,7 +45,7 @@ session = SessionLocal()
 
 
 
-def     ration(share):
+def ration(share):
 
     all_screener_data_list = []
     all_screener_data_dict = {}

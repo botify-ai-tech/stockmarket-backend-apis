@@ -19,6 +19,15 @@ news_router = APIRouter()
 
 twenty_four_hours_ago = datetime.now() - timedelta(hours=24)
 
+def parse_category(category_str):
+    if not category_str:
+        return []
+    return re.findall(r'"([^"]+)"', category_str)
+
+def clean_stock_names(stocks):
+    if not stocks:
+        return []
+    return [stock.replace(".NS", "") for stock in stocks]
 
 def jsonify(data):
     return {
@@ -26,14 +35,14 @@ def jsonify(data):
         "title": data.title,
         "published_date": data.published_date,
         "company_name": data.company_name.split(",") if isinstance(data.company_name, str) and data.company_name.strip() else [],
-        "stock_name": data.stock_name,
+        "stock_name": clean_stock_names(data.stock_name) if isinstance(data.stock_name, list) else [],
         "small_description": data.small_description,
         "description": data.description,
         "time_to_out_news": data.time_to_out_news,
         "feed": data.feed,
         "link": data.other_news_link,
         "sectors": data.sectors,
-        "category": data.category,
+        "category": parse_category(data.category),
         "similar": data.similar,
         "classification": data.classification,
         "type_of_impact": data.type_of_impact,

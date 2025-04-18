@@ -15,7 +15,8 @@ def scrape_quarterly(start,end):
       
     try : 
         unscraped_companies = []
-        with open("ratio\\nsc.txt", "r", encoding="utf-8") as f:
+        # with open("ratio\\nsc.txt", "r", encoding="utf-8") as f:
+        with open("unscraped_stock.txt", "r", encoding="utf-8") as f:
             shares = f.readlines()
 
         for share in shares[start:end]:

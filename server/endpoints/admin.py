@@ -98,7 +98,7 @@ def update_quaterly_key_metrics(
             )
         
         if response.get("unscraped_companies"):
-            with open("unscraped_stock.txt", "a") as file:
+            with open("unscraped_stock2.txt", "a") as file:
                 file.write("\n".join(response["unscraped_companies"]) + "\n")
 
         return JSONResponse(
