@@ -21,11 +21,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY . .
 
 # Set up cron jobs
-RUN echo "*/15 * * * * /usr/local/bin/python3.10 /app/cnbc_cron.py >> /var/log/cnbc_cron.log 2>&1" > /etc/cron.d/mycron && \
-    echo "*/15 * * * * /usr/local/bin/python3.10 /app/news_cron.py >> /var/log/news_cron.log 2>&1" >> /etc/cron.d/mycron && \
+RUN echo "*/15 * * * * /usr/local/bin/python3.10 /app/news_cron.py >> /var/log/news_cron.log 2>&1" > /etc/cron.d/mycron && \
     chmod 0644 /etc/cron.d/mycron && \
     crontab /etc/cron.d/mycron && \
-    touch /var/log/cnbc_cron.log /var/log/news_cron.log
+    touch  /var/log/news_cron.log
 
 # Expose the application port for FastAPI
 EXPOSE 8000
