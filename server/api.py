@@ -11,6 +11,7 @@ from server.endpoints.data import data_router
 from server.endpoints.bug_report import bug_report_router
 from server.endpoints.contact_us import contact_us_router
 from server.endpoints.admin import admin_router
+from server.endpoints.news_letter import news_letter_router
 
 api_router = APIRouter()
 api_router.include_router(user_router, include_in_schema=True)
@@ -23,4 +24,5 @@ api_router.include_router(data_router, include_in_schema=True, prefix="/data", t
 api_router.include_router(bug_report_router, include_in_schema=True, prefix="/bug-report", tags=["bug-report"])
 api_router.include_router(contact_us_router, include_in_schema=True, prefix="/contact-us", tags=["contact-us"])
 api_router.include_router(admin_router, include_in_schema=True, prefix="/admin", tags=["admin"])
+api_router.include_router(news_letter_router, include_in_schema=True, prefix="/news-letter", tags=["news-letter"])
 # api_router.include_router(yt_router, include_in_schema=True, prefix="/youtube")

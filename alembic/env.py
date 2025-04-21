@@ -13,6 +13,7 @@ from server.models.watchlist import Watchlist
 from server.models.bug_report import BugReport
 from server.models.contact_us import ContactUs
 from server.models.ratio50 import Company50
+from server.models.news_letter import NewsLetter
 # from server.db.base import Base
 from server.db.base_class import Base
 from alembic import context

@@ -562,52 +562,83 @@
 
 
 
-import json
-import os
-import random
-import regex as re
-import time
-import unicodedata
-from dotenv import load_dotenv
+# import json
+# import os
+# import random
+# import regex as re
+# import time
+# import unicodedata
+# from dotenv import load_dotenv
+# from datetime import datetime, timedelta
+
+# from bs4 import BeautifulSoup
+# import requests
+
+# from fastapi.responses import JSONResponse
+# from fastapi import HTTPException
+
+# from server.utils.prompt import gemini_prompt
+# from server.db.base import SessionLocal
+# from server.models.news import NewsItem
+
+# import google.generativeai as genai
+# session = SessionLocal()
+
+# twenty_four_hours_ago = datetime.now() - timedelta(hours=24)
+# def normalize_title(title):
+#     title = unicodedata.normalize("NFKD", title)
+#     title = title.encode("ascii", "ignore").decode("utf-8")
+#     title = title.lower()
+#     title = re.sub(r'\s+', ' ', title).strip()  # Replace multiple spaces with single space
+#     return title
+
+# def is_duplicate_title(title):
+#     normalized = normalize_title(title)
+#     print(normalized)
+#     recent_news = session.query(NewsItem).filter(
+#         NewsItem.created_at >= twenty_four_hours_ago
+#     ).all()
+
+#     for news in recent_news:
+#         if normalize_title(news.title) == normalized:
+#             print(news.id)
+#             print(news.title)
+#             continue
+
+#     return False
+
+
+# title = "Q4 results today: Wipro, Waaree Renewables among 10 companies to announce earnings on Wednesday"
+# if is_duplicate_title(title):
+#     print(title)
+
+
 from datetime import datetime, timedelta
+time_to_out_news = "1 hour ago"
+if "day ago" in time_to_out_news:
+    ago_news = 24.0
+elif "hour" in time_to_out_news:
+    if "hours" in time_to_out_news:
+        ago_news = float(time_to_out_news.replace(" hours ago", ""))
+    else:
+        ago_news = float(time_to_out_news.replace(" hour ago", ""))
 
-from bs4 import BeautifulSoup
-import requests
+elif "minute" in time_to_out_news:
+    if "minutes" in time_to_out_news:
+        minutes = float(time_to_out_news.replace(" minutes ago", ""))
+        ago_news = minutes / 60
+    else:
+        minutes = float(time_to_out_news.replace(" minute ago", ""))
+        ago_news = minutes / 60
+elif "second" in time_to_out_news:
+    if "seconds" in time_to_out_news:
+        seconds = float(time_to_out_news.replace(" seconds ago", ""))
+        ago_news = seconds / 3600
+    else:
+        seconds = float(time_to_out_news.replace(" second ago", ""))
+        ago_news = seconds / 3600
 
-from fastapi.responses import JSONResponse
-from fastapi import HTTPException
-
-from server.utils.prompt import gemini_prompt
-from server.db.base import SessionLocal
-from server.models.news import NewsItem
-
-import google.generativeai as genai
-session = SessionLocal()
-
-twenty_four_hours_ago = datetime.now() - timedelta(hours=24)
-def normalize_title(title):
-    title = unicodedata.normalize("NFKD", title)
-    title = title.encode("ascii", "ignore").decode("utf-8")
-    title = title.lower()
-    title = re.sub(r'\s+', ' ', title).strip()  # Replace multiple spaces with single space
-    return title
-
-def is_duplicate_title(title):
-    normalized = normalize_title(title)
-    print(normalized)
-    recent_news = session.query(NewsItem).filter(
-        NewsItem.created_at >= twenty_four_hours_ago
-    ).all()
-
-    for news in recent_news:
-        if normalize_title(news.title) == normalized:
-            print(news.id)
-            print(news.title)
-            continue
-
-    return False
+updated_time = datetime.now() - timedelta(hours=ago_news)
 
 
-title = "Q4 results today: Wipro, Waaree Renewables among 10 companies to announce earnings on Wednesday"
-if is_duplicate_title(title):
-    print(title)
+print(updated_time)
