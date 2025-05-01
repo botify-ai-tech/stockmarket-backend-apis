@@ -283,13 +283,13 @@ async def verify_otp(data: schemas.VerifyOTP, db: Session = Depends(get_db)):
                         "success": True,
                         "error": None,
                         "data": None,
-                        "message": "OTP verified successfully, Please login.",
+                        "message": "OTP Verified sucessfully",
                     },
                 )
             else:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="OTP mismatched, Please provide correct OTP.",
+                    detail="Please enter a valid OTP",
                 )
         else:
             crud.email_otp.remove(db, id=email_otp_obj.id)
