@@ -157,7 +157,7 @@ async def report_gen(chunks, retries=2): # Now takes chunks (list of text) direc
     )
 
     # Run synchronous Gemini call in a thread
-    model_name = "gemini-2.0-flash" # Consider making model name configurable
+    model_name = "gemini-1.5-flash" # Consider making model name configurable
     response_text = await run_sync_in_thread(_sync_generate_content, model_name, prompt2)
     return response_text
 

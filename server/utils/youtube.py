@@ -197,7 +197,7 @@ async def transcript_summary(transcript_text): # Takes transcript text
     )
     # --- PROMPT DEFINITION (UNCHANGED FROM ORIGINAL) --- END ---
 
-    model_name = "gemini-2.0-flash" # Check model name
+    model_name = "gemini-1.5-flash" # Check model name
     # Run synchronous Gemini call in a thread
     summary_text = await run_sync_in_thread(_sync_generate_content, model_name, prompt)
     return summary_text

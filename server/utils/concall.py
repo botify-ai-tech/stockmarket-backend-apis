@@ -158,7 +158,7 @@ async def questionans(chunks, retries=2): # Takes list of text chunks
     "- Hard Rule: Do not add the ```html tag or any code block formatting such as triple backticks (```) before the output. The response must start directly with the header (e.g., # 📊 [Company Name] Overview) without any code block wrapping."
     "-**DO NOT** Add **```markdown** tag in the front of the response"
     )
-    model_name = "gemini-2.0-flash" # Check model name validity
+    model_name = "gemini-1.5-flash" # Check model name validity
     response_text = await run_sync_in_thread(_sync_generate_content, model_name, prompt)
     return response_text
             
